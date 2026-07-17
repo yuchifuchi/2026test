@@ -5,6 +5,7 @@
 ## 進行状況
 
 - [x] フェーズ1: 市場調査・分析
+- [x] フェーズ1.5: 候補Aの競合調査(ファクトチェック済み)
 - [ ] フェーズ2: 要件定義
 - [ ] フェーズ3: 実装(MVP)
 - [ ] フェーズ4: リリース・改善
@@ -15,6 +16,7 @@
 |---|---|
 | [docs/market-research.md](docs/market-research.md) | 市場調査レポート(海外インディー市場 / 日本市場 / 飽和領域・実現可能性) |
 | [docs/app-candidates.md](docs/app-candidates.md) | アプリ候補5案の評価・スコアリングと推奨案 |
+| [docs/competitor-analysis.md](docs/competitor-analysis.md) | 候補Aの競合分析(比較表・空白地帯・差別化戦略・ファクトチェック10件) |
 
 ## 現在の推奨案
 
