@@ -1,11 +1,13 @@
 # 2026test — 個人開発アプリプロジェクト
 
 役に立つ×マネタイズできるアプリをバイブコーディングで開発するプロジェクト。
+**方向性はエンタメ(ゲーム)に転換済み**(野球関連・RPG系、アイテム課金)。
 
 ## 進行状況
 
-- [x] フェーズ1: 市場調査・分析
-- [x] フェーズ1.5: 候補Aの競合調査(ファクトチェック済み)
+- [x] フェーズ1: 市場調査・分析(汎用アプリ向け)
+- [x] フェーズ1.5: 候補A(SaaS)の競合調査 → その後エンタメへ方向転換
+- [x] フェーズ1.6: ゲーム向け市場・法規制・競合調査
 - [ ] フェーズ2: 要件定義
 - [ ] フェーズ3: 実装(MVP)
 - [ ] フェーズ4: リリース・改善
@@ -14,16 +16,19 @@
 
 | ドキュメント | 内容 |
 |---|---|
-| [docs/market-research.md](docs/market-research.md) | 市場調査レポート(海外インディー市場 / 日本市場 / 飽和領域・実現可能性) |
-| [docs/app-candidates.md](docs/app-candidates.md) | アプリ候補5案の評価・スコアリングと推奨案 |
-| [docs/competitor-analysis.md](docs/competitor-analysis.md) | 候補Aの競合分析(比較表・空白地帯・差別化戦略・ファクトチェック10件) |
+| [docs/game-market-research.md](docs/game-market-research.md) | **ゲーム市場調査**(成功事例 / アイテム課金の法規制 / 野球ゲーム競合 / 技術選定) |
+| [docs/game-candidates.md](docs/game-candidates.md) | **ゲーム候補5案の評価と推奨案(高校野球監督シム)** |
+| [docs/market-research.md](docs/market-research.md) | (アーカイブ)汎用アプリ向け市場調査 |
+| [docs/app-candidates.md](docs/app-candidates.md) | (アーカイブ)SaaS系候補5案の評価 |
+| [docs/competitor-analysis.md](docs/competitor-analysis.md) | (アーカイブ)候補A(フリーランスSaaS)の競合分析 |
 
 ## 現在の推奨案
 
-**候補A: フリーランス向け 請求・入金管理SaaS(制度対応特化)**
+**G1: 高校野球監督シミュレーション**(架空チーム・架空選手、RPG的育成・3年周回)
 
-- ターゲット: クラウド会計未利用の個人事業主・フリーランス(市場の6割超)
-- 差別化: 請求書「発行」ではなく「回収管理 + フリーランス新法対応 + インボイス2割特例終了後の税シミュレーション」
-- 技術: Next.js + Supabase + Stripe(Web、月額980円サブスク想定)
+- 需要の空白: 公式スマホ版『栄冠クロス』が2026年3月にサ終し、スマホの監督シム本命が不在
+- 先行実証: 同ジャンルの個人開発『私を甲子園に連れてって』が累計1,290万円・最高月商257万円
+- 課金設計: 通貨なし・ガチャなしの直接販売(殿堂チケット・広告除去・エディット拡張)+リワード広告 — 資金決済法・景表法リスクを構造的に回避
+- 技術: React/Next.js(Web/PWA)→ Capacitorでモバイル化+ストアIAP
 
-詳細は [docs/app-candidates.md](docs/app-candidates.md) を参照。
+詳細は [docs/game-candidates.md](docs/game-candidates.md) を参照。
