@@ -9,7 +9,7 @@
 - [x] フェーズ1.5: 候補A(SaaS)の競合調査 → その後エンタメへ方向転換
 - [x] フェーズ1.6: ゲーム向け市場・法規制・競合調査
 - [x] フェーズ1.7: 日常系・若年層向け・SNS系の追加調査(非ゲーム路線の比較)
-- [ ] フェーズ2: 方向性決定 → 要件定義
+- [x] フェーズ2: 方向性決定(L2: 推し活管理)→ 要件定義([docs/requirements.md](docs/requirements.md))
 - [ ] フェーズ3: 実装(MVP)
 - [ ] フェーズ4: リリース・改善
 
@@ -20,7 +20,8 @@
 | [docs/game-market-research.md](docs/game-market-research.md) | ゲーム市場調査(成功事例 / アイテム課金の法規制 / 野球ゲーム競合 / 技術選定) |
 | [docs/game-candidates.md](docs/game-candidates.md) | ゲーム候補5案の評価と推奨案(G1: 高校野球監督シム) |
 | [docs/lifestyle-app-research.md](docs/lifestyle-app-research.md) | 日常系・若年層向け・SNS系の調査と候補6案(L1〜L6)、全候補比較表 |
-| [docs/oshikatsu-deep-dive.md](docs/oshikatsu-deep-dive.md) | **L2深掘り: 推し活管理アプリの競合分析・ユーザー実態・コンセプト案(当落ライフサイクル管理)** |
+| [docs/oshikatsu-deep-dive.md](docs/oshikatsu-deep-dive.md) | L2深掘り: 推し活管理アプリの競合分析・ユーザー実態・コンセプト案 |
+| [docs/requirements.md](docs/requirements.md) | **要件定義書: 当落ノート(仮称)— 機能要件・通知仕様・データモデル・画面構成・技術選定・課金設計** |
 | [docs/market-research.md](docs/market-research.md) | (アーカイブ)汎用アプリ向け市場調査 |
 | [docs/app-candidates.md](docs/app-candidates.md) | (アーカイブ)SaaS系候補5案の評価 |
 | [docs/competitor-analysis.md](docs/competitor-analysis.md) | (アーカイブ)候補A(フリーランスSaaS)の競合分析 |
