@@ -19,7 +19,8 @@
 |---|---|
 | [docs/game-market-research.md](docs/game-market-research.md) | ゲーム市場調査(成功事例 / アイテム課金の法規制 / 野球ゲーム競合 / 技術選定) |
 | [docs/game-candidates.md](docs/game-candidates.md) | ゲーム候補5案の評価と推奨案(G1: 高校野球監督シム) |
-| [docs/lifestyle-app-research.md](docs/lifestyle-app-research.md) | **日常系・若年層向け・SNS系の調査と候補6案(L1〜L6)、全候補比較表** |
+| [docs/lifestyle-app-research.md](docs/lifestyle-app-research.md) | 日常系・若年層向け・SNS系の調査と候補6案(L1〜L6)、全候補比較表 |
+| [docs/oshikatsu-deep-dive.md](docs/oshikatsu-deep-dive.md) | **L2深掘り: 推し活管理アプリの競合分析・ユーザー実態・コンセプト案(当落ライフサイクル管理)** |
 | [docs/market-research.md](docs/market-research.md) | (アーカイブ)汎用アプリ向け市場調査 |
 | [docs/app-candidates.md](docs/app-candidates.md) | (アーカイブ)SaaS系候補5案の評価 |
 | [docs/competitor-analysis.md](docs/competitor-analysis.md) | (アーカイブ)候補A(フリーランスSaaS)の競合分析 |
@@ -30,7 +31,7 @@
 |---|---|---|---|
 | ゲーム | G1: 高校野球監督シム | 26 | 広告+アイテム直接課金(先行事例: 月商257万円) |
 | 日常系 | L1: 習慣×ペット育成×ウィジェット | 24 | 低額サブスク(Finch $30M ARR / HabitKit 年$602K) |
-| 若年層 | L2: 推し活の予算・当落・遠征管理 | 24 | 買い切り+サブスク(市場3.5兆円・覇権不在) |
+| 若年層 | **L2: 推し活の予算・当落・遠征管理(深掘り済み・最有力)** | 24 | サブスク+アフィリエイト(市場3.5兆円・一気通貫アプリ不在) |
 | バズ型 | L3: 診断・分析シェア(TikTok自走) | 24 | バズ→サブスク(IsTalk: 月商250万円) |
 
 詳細比較は [docs/lifestyle-app-research.md](docs/lifestyle-app-research.md) の比較表を参照。
