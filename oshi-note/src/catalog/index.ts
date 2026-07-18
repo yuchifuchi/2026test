@@ -20,7 +20,7 @@ export function getCatalogArtist(id: string): CatalogArtist | undefined {
 export function eventsForArtist(artistId: string): CatalogEvent[] {
   const today = new Date().toISOString().slice(0, 10);
   return bundled.events
-    .filter((e) => e.artistId === artistId)
+    .filter((e) => e.artistIds.includes(artistId))
     .filter((e) => e.dates.some((d) => d >= today)) // 未来の日程が残っている公演のみ
     .sort((a, b) => (a.dates[0] ?? '').localeCompare(b.dates[0] ?? ''));
 }

@@ -22,13 +22,21 @@ export interface CatalogSlot {
   url?: string; // 申込/告知ページURL
 }
 
+export interface CatalogDateDetail {
+  date: string; // 'YYYY-MM-DD'
+  venue?: string; // ツアーで日程ごとに会場が異なる場合
+  city?: string;
+}
+
 export interface CatalogEvent {
   id: string;
-  artistId: string;
+  artistIds: string[]; // 合同イベント・フェスは複数
   title: string;
-  venue?: string;
+  venue?: string; // 単一会場の場合
   city?: string;
   dates: string[]; // 'YYYY-MM-DD'(複数日程)
+  datesDetail?: CatalogDateDetail[]; // 日程ごとの会場(ツアー用)
+  price?: string; // 例: '指定席 ¥8,000(税込)'
   slots: CatalogSlot[];
   sourceUrl: string; // 出典(必須)
   verified: boolean; // 検品済みフラグ

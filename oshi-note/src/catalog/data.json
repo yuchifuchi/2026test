@@ -1,39 +1,226 @@
 {
-  "version": 1,
-  "generatedAt": "2026-07-17T00:00:00+09:00",
+  "version": 2,
+  "generatedAt": "2026-07-17T12:00:00+09:00",
   "artists": [
-    {
-      "id": "fruits-zipper",
-      "name": "FRUITS ZIPPER",
-      "kana": "フルーツジッパー",
-      "genre": "アイドル(KAWAII LAB.)",
-      "color": "#FF6FA5",
-      "icon": "🍑"
-    },
-    {
-      "id": "candy-tune",
-      "name": "CANDY TUNE",
-      "kana": "キャンディーチューン",
-      "genre": "アイドル(KAWAII LAB.)",
-      "color": "#F2545B",
-      "icon": "🍬"
-    },
-    {
-      "id": "sweet-steady",
-      "name": "SWEET STEADY",
-      "kana": "スイートステディ",
-      "genre": "アイドル(KAWAII LAB.)",
-      "color": "#5AC8FA",
-      "icon": "🎀"
-    },
-    {
-      "id": "cutie-street",
-      "name": "CUTIE STREET",
-      "kana": "キューティーストリート",
-      "genre": "アイドル(KAWAII LAB.)",
-      "color": "#C969E6",
-      "icon": "🛍️"
-    }
+    { "id": "fruits-zipper", "name": "FRUITS ZIPPER", "kana": "フルーツジッパー", "genre": "アイドル(KAWAII LAB.)", "color": "#FF6FA5", "icon": "🍑", "officialUrl": "https://fruitszipper.asobisystem.com/", "xAccount": "FRUITS_ZIPPER" },
+    { "id": "candy-tune", "name": "CANDY TUNE", "kana": "キャンディーチューン", "genre": "アイドル(KAWAII LAB.)", "color": "#F2545B", "icon": "🍬", "officialUrl": "https://candytune.asobisystem.com/", "xAccount": "CANDY_TUNE_" },
+    { "id": "sweet-steady", "name": "SWEET STEADY", "kana": "スイートステディ", "genre": "アイドル(KAWAII LAB.)", "color": "#5AC8FA", "icon": "🎀", "officialUrl": "https://sweetsteady.asobisystem.com/", "xAccount": "SWEET_STEADY" },
+    { "id": "cutie-street", "name": "CUTIE STREET", "kana": "キューティーストリート", "genre": "アイドル(KAWAII LAB.)", "color": "#C969E6", "icon": "🛍️", "officialUrl": "https://cutiestreet.asobisystem.com/", "xAccount": "CUTIE_STREET_" }
   ],
-  "events": []
+  "events": [
+    {
+      "id": "fz-japan-tour-2026-autumn",
+      "artistIds": ["fruits-zipper"],
+      "title": "FRUITS ZIPPER JAPAN TOUR 2026 - AUTUMN -",
+      "venue": "全国18都市23公演(判明日程のみ表示)",
+      "price": "指定席 ¥8,000(税込)",
+      "dates": ["2026-09-03", "2026-09-16", "2026-09-30", "2026-10-01", "2026-10-06", "2026-10-07", "2026-11-15", "2026-11-21", "2026-11-22"],
+      "datesDetail": [
+        { "date": "2026-09-03", "venue": "よこすか芸術劇場", "city": "神奈川" },
+        { "date": "2026-09-16", "venue": "大宮ソニックシティ 大ホール", "city": "埼玉" },
+        { "date": "2026-09-30", "venue": "グランキューブ大阪", "city": "大阪" },
+        { "date": "2026-10-01", "venue": "グランキューブ大阪", "city": "大阪" },
+        { "date": "2026-10-06", "venue": "仙台サンプラザホール", "city": "宮城" },
+        { "date": "2026-10-07", "venue": "仙台サンプラザホール", "city": "宮城" },
+        { "date": "2026-11-15", "venue": "東京ガーデンシアター", "city": "東京" },
+        { "date": "2026-11-21", "venue": "沖縄コンベンションセンター", "city": "沖縄" },
+        { "date": "2026-11-22", "venue": "沖縄コンベンションセンター", "city": "沖縄" }
+      ],
+      "slots": [
+        { "templateId": "fc", "name": "FC先行(受付状況は特設ページ参照)", "url": "https://fruitszipper.asobisystem.com/feature/2026tour_autumn" }
+      ],
+      "sourceUrl": "https://fruitszipper.asobisystem.com/news/detail/78068",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "fz-luckyfes-2026",
+      "artistIds": ["fruits-zipper"],
+      "title": "LuckyFes'26(出演)",
+      "venue": "国営ひたち海浜公園",
+      "city": "茨城",
+      "dates": ["2026-08-08"],
+      "slots": [
+        { "templateId": "general", "name": "一般販売(フェス公式)", "url": "https://luckyfes.com/" }
+      ],
+      "sourceUrl": "https://luckyfes.com/news/25",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "ct-japan-tour-2026-autumn",
+      "artistIds": ["candy-tune"],
+      "title": "CANDY TUNE JAPAN TOUR 2026 - AUTUMN -",
+      "venue": "全国18都市23公演",
+      "dates": ["2026-08-29", "2026-08-30", "2026-09-04", "2026-09-09", "2026-09-10", "2026-09-19", "2026-10-02", "2026-10-04", "2026-10-08", "2026-10-09", "2026-10-26", "2026-10-27", "2026-10-29", "2026-11-10", "2026-11-12", "2026-11-17", "2026-11-19", "2026-11-24", "2026-11-26", "2026-11-30", "2026-12-01", "2026-12-08", "2026-12-09"],
+      "datesDetail": [
+        { "date": "2026-08-29", "venue": "戸田市文化会館", "city": "埼玉" },
+        { "date": "2026-08-30", "venue": "戸田市文化会館", "city": "埼玉" },
+        { "date": "2026-09-04", "venue": "カルッツかわさき 大ホール", "city": "神奈川" },
+        { "date": "2026-09-09", "venue": "グランキューブ大阪", "city": "大阪" },
+        { "date": "2026-09-10", "venue": "グランキューブ大阪", "city": "大阪" },
+        { "date": "2026-09-19", "venue": "森のホール21 大ホール", "city": "千葉" },
+        { "date": "2026-10-02", "venue": "旭川市民文化会館", "city": "北海道" },
+        { "date": "2026-10-04", "venue": "函館市民会館", "city": "北海道" },
+        { "date": "2026-10-08", "venue": "仙台サンプラザホール", "city": "宮城" },
+        { "date": "2026-10-09", "venue": "宇都宮市文化会館 大ホール", "city": "栃木" },
+        { "date": "2026-10-26", "venue": "愛知県芸術劇場 大ホール", "city": "愛知" },
+        { "date": "2026-10-27", "venue": "愛知県芸術劇場 大ホール", "city": "愛知" },
+        { "date": "2026-10-29", "venue": "三重県文化会館 大ホール", "city": "三重" },
+        { "date": "2026-11-10", "venue": "米子コンベンションセンター", "city": "鳥取" },
+        { "date": "2026-11-12", "venue": "広島文化学園HBGホール", "city": "広島" },
+        { "date": "2026-11-17", "venue": "新潟県民会館", "city": "新潟" },
+        { "date": "2026-11-19", "venue": "本多の森北電ホール", "city": "石川" },
+        { "date": "2026-11-24", "venue": "高知県民文化ホール オレンジホール", "city": "高知" },
+        { "date": "2026-11-26", "venue": "レクザムホール 大ホール", "city": "香川" },
+        { "date": "2026-11-30", "venue": "福岡サンパレス", "city": "福岡" },
+        { "date": "2026-12-01", "venue": "iichikoグランシアタ", "city": "大分" },
+        { "date": "2026-12-08", "venue": "東京ガーデンシアター", "city": "東京" },
+        { "date": "2026-12-09", "venue": "東京ガーデンシアター", "city": "東京" }
+      ],
+      "slots": [
+        { "templateId": "fc", "name": "KAWAII LAB. FC会員先行", "applyStart": "2026-07-05T18:00:00+09:00", "url": "https://kawaiilab.asobisystem.com/news/detail/83517" },
+        { "templateId": "fc", "name": "FC先行(公式ニュース参照)", "url": "https://candytune.asobisystem.com/news/detail/80541" }
+      ],
+      "sourceUrl": "https://natalie.mu/music/news/675118",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "ss-kurita-bd-2026",
+      "artistIds": ["sweet-steady"],
+      "title": "栗田なつか BIRTHDAY LIVE 2026 〜♡きらきらさまーなつかたいむ♡〜",
+      "venue": "SGCホール有明",
+      "city": "東京",
+      "dates": ["2026-07-21"],
+      "slots": [
+        { "templateId": "fc", "name": "FC会員先行(公式ニュース参照)", "url": "https://sweetsteady.asobisystem.com/news/detail/80987" }
+      ],
+      "sourceUrl": "https://sweetsteady.asobisystem.com/news/detail/80987",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "ss-shiokawa-bd-2026",
+      "artistIds": ["sweet-steady"],
+      "title": "塩川莉世 BIRTHDAY LIVE 2026 〜a continuation of a dream〜",
+      "venue": "SGCホール有明",
+      "city": "東京",
+      "dates": ["2026-07-28"],
+      "slots": [
+        { "templateId": "fc", "name": "FC会員先行(公式ニュース参照)", "url": "https://sweetsteady.asobisystem.com/news/detail/80989" }
+      ],
+      "sourceUrl": "https://sweetsteady.asobisystem.com/news/detail/80989",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "ss-arena-2026-summer",
+      "artistIds": ["sweet-steady"],
+      "title": "SWEET STEADY ARENA LIVE 2026 -SUMMER-",
+      "venue": "ぴあアリーナMM",
+      "city": "神奈川",
+      "price": "指定席 ¥8,500(税込)・1申込2枚まで",
+      "dates": ["2026-08-23"],
+      "slots": [
+        { "templateId": "fc", "name": "FC2次先行", "applyStart": "2026-06-10T17:00:00+09:00", "url": "https://sweetsteady.asobisystem.com/news/detail/81470" },
+        { "templateId": "fc", "name": "FC1次先行(終了)", "applyStart": "2026-05-25T17:00:00+09:00", "url": "https://sweetsteady.asobisystem.com/news/detail/79979" }
+      ],
+      "sourceUrl": "https://sweetsteady.asobisystem.com/news/detail/79979",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "ss-hall-tour-2026",
+      "artistIds": ["sweet-steady"],
+      "title": "SWEET STEADY JAPAN HALL TOUR 2026",
+      "venue": "全国4都市(チケット詳細は後日発表)",
+      "dates": ["2026-11-13", "2026-12-03", "2026-12-06", "2026-12-18"],
+      "datesDetail": [
+        { "date": "2026-11-13", "venue": "厚木市文化会館", "city": "神奈川" },
+        { "date": "2026-12-03", "venue": "フェニーチェ堺 大ホール", "city": "大阪" },
+        { "date": "2026-12-06", "venue": "Niterra日本特殊陶業市民会館 フォレストホール", "city": "愛知" },
+        { "date": "2026-12-18", "venue": "SGCホール有明", "city": "東京" }
+      ],
+      "slots": [
+        { "templateId": "custom", "name": "チケット詳細は後日発表(特設ページ)", "url": "https://sweetsteady.asobisystem.com/feature/sweetsteady_japanhalltour2026" }
+      ],
+      "sourceUrl": "https://sweetsteady.asobisystem.com/feature/sweetsteady_japanhalltour2026",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "cs-2nd-anniversary-budokan",
+      "artistIds": ["cutie-street"],
+      "title": "CUTIE STREET 2nd ANNIVERSARY LIVE 2026 @日本武道館",
+      "venue": "日本武道館",
+      "city": "東京",
+      "price": "指定席 ¥10,000(税込)",
+      "dates": ["2026-08-25", "2026-08-26"],
+      "slots": [
+        { "templateId": "fc", "name": "FC2次先行", "applyStart": "2026-03-07T18:00:00+09:00", "url": "https://cutiestreet.asobisystem.com/news/detail/72703" }
+      ],
+      "sourceUrl": "https://cutiestreet.asobisystem.com/news/detail/69020",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "cs-arena-tour-2026-autumn",
+      "artistIds": ["cutie-street"],
+      "title": "CUTIE STREET JAPAN ARENA TOUR 2026 -AUTUMN-",
+      "venue": "全国7都市13公演",
+      "dates": ["2026-09-23", "2026-09-29", "2026-09-30", "2026-10-03", "2026-10-04", "2026-10-28", "2026-10-29", "2026-10-31", "2026-11-01", "2026-11-14", "2026-11-15", "2026-11-28", "2026-11-29"],
+      "datesDetail": [
+        { "date": "2026-09-23", "venue": "横浜アリーナ", "city": "神奈川" },
+        { "date": "2026-09-29", "venue": "有明アリーナ", "city": "東京" },
+        { "date": "2026-09-30", "venue": "有明アリーナ", "city": "東京" },
+        { "date": "2026-10-03", "venue": "セキスイハイムスーパーアリーナ", "city": "宮城" },
+        { "date": "2026-10-04", "venue": "セキスイハイムスーパーアリーナ", "city": "宮城" },
+        { "date": "2026-10-28", "venue": "マリンメッセ福岡A館", "city": "福岡" },
+        { "date": "2026-10-29", "venue": "マリンメッセ福岡A館", "city": "福岡" },
+        { "date": "2026-10-31", "venue": "神戸ワールド記念ホール", "city": "兵庫" },
+        { "date": "2026-11-01", "venue": "神戸ワールド記念ホール", "city": "兵庫" },
+        { "date": "2026-11-14", "venue": "広島グリーンアリーナ", "city": "広島" },
+        { "date": "2026-11-15", "venue": "広島グリーンアリーナ", "city": "広島" },
+        { "date": "2026-11-28", "venue": "IGアリーナ", "city": "愛知" },
+        { "date": "2026-11-29", "venue": "IGアリーナ", "city": "愛知" }
+      ],
+      "slots": [
+        { "templateId": "fc", "name": "FC会員先行(月会費コース含む)", "applyStart": "2026-06-28T12:00:00+09:00", "url": "https://cutiestreet.asobisystem.com/news/detail/82772" },
+        { "templateId": "fc", "name": "FC年会費コース先行(終了)", "applyStart": "2026-06-01T12:00:00+09:00", "url": "https://cutiestreet.asobisystem.com/news/detail/80640" }
+      ],
+      "sourceUrl": "https://cutiestreet.asobisystem.com/news/detail/80640",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "asobiexpo-2026",
+      "artistIds": ["fruits-zipper", "candy-tune", "sweet-steady", "cutie-street"],
+      "title": "ASOBIEXPO 2026(アソビシステム19周年フェス・4組出演)",
+      "venue": "TOYOTA ARENA TOKYO",
+      "city": "東京",
+      "price": "VIP ¥25,000 / アリーナ ¥15,000 / スタンド ¥10,000",
+      "dates": ["2026-08-18"],
+      "slots": [
+        { "templateId": "official", "name": "オフィシャル先行(公式サイト参照)", "url": "https://asobiexpo.com/" }
+      ],
+      "sourceUrl": "https://asobisystem.com/news/72691/",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    },
+    {
+      "id": "tif-2026",
+      "artistIds": ["candy-tune", "sweet-steady", "cutie-street"],
+      "title": "TOKYO IDOL FESTIVAL 2026(出演・タイムテーブル要確認)",
+      "venue": "お台場・青海エリア",
+      "city": "東京",
+      "dates": ["2026-07-31", "2026-08-01", "2026-08-02"],
+      "slots": [
+        { "templateId": "general", "name": "チケット(フェス公式)", "url": "https://official.idolfes.com/s/tif2026/" }
+      ],
+      "sourceUrl": "https://official.idolfes.com/s/tif2026/page/lineup",
+      "verified": true,
+      "updatedAt": "2026-07-17"
+    }
+  ]
 }

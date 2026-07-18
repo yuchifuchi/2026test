@@ -48,8 +48,20 @@ export default function ApplicationFormScreen() {
     setCatalogEventId(e.id);
     setEventTitle(e.title);
     setVenue(e.venue ?? '');
-    setPerfDate(e.dates.length === 1 ? e.dates[0] : '');
+    if (e.dates.length === 1) {
+      pickDate(e, e.dates[0]);
+    } else {
+      setPerfDate('');
+    }
     if (e.slots.length > 0) pickSlot(e.slots[0]);
+  };
+
+  // 日程選択: ツアーの場合は日程ごとの会場も自動セット
+  const pickDate = (e: CatalogEvent, d: string) => {
+    setPerfDate(d);
+    const detail = e.datesDetail?.find((x) => x.date === d);
+    if (detail?.venue) setVenue(detail.venue);
+    else if (e.venue) setVenue(e.venue);
   };
 
   const pickSlot = (s: CatalogSlot) => {
@@ -163,15 +175,21 @@ export default function ApplicationFormScreen() {
         <>
           <Text style={styles.label}>公演日を選ぶ *</Text>
           <View style={styles.chipRow}>
-            {catalogEvent.dates.map((d) => (
-              <Chip
-                key={d}
-                label={fmtDate(new Date(`${d}T00:00:00`))}
-                color={selectedOshi?.color1}
-                selected={perfDate === d}
-                onPress={() => setPerfDate(d)}
-              />
-            ))}
+            {catalogEvent.dates.map((d) => {
+              const detail = catalogEvent.datesDetail?.find((x) => x.date === d);
+              const label = detail?.city
+                ? `${fmtDate(new Date(`${d}T00:00:00`))} ${detail.city}`
+                : fmtDate(new Date(`${d}T00:00:00`));
+              return (
+                <Chip
+                  key={d}
+                  label={label}
+                  color={selectedOshi?.color1}
+                  selected={perfDate === d}
+                  onPress={() => pickDate(catalogEvent, d)}
+                />
+              );
+            })}
           </View>
         </>
       ) : null}
