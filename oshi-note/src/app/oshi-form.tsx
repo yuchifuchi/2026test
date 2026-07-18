@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Field } from '../components/ui';
+import { listCatalogArtists } from '../catalog';
+import { Button, Chip, Field } from '../components/ui';
 import { OSHI_COLORS } from '../domain/types';
 import { useAppStore } from '../state/store';
 
@@ -12,6 +13,23 @@ export default function OshiFormScreen() {
   const [genre, setGenre] = useState('');
   const [icon, setIcon] = useState('');
   const [color, setColor] = useState(OSHI_COLORS[0]);
+  const [catalogArtistId, setCatalogArtistId] = useState<string | undefined>(undefined);
+
+  const catalogArtists = listCatalogArtists();
+
+  const pickCatalog = (id: string) => {
+    if (catalogArtistId === id) {
+      setCatalogArtistId(undefined);
+      return;
+    }
+    const a = catalogArtists.find((x) => x.id === id);
+    if (!a) return;
+    setCatalogArtistId(a.id);
+    setName(a.name);
+    setGenre(a.genre);
+    if (a.icon) setIcon(a.icon);
+    setColor(a.color);
+  };
 
   const save = () => {
     if (!name.trim()) {
@@ -23,12 +41,29 @@ export default function OshiFormScreen() {
       color1: color,
       genre: genre.trim() || undefined,
       icon: icon.trim() || undefined,
+      catalogArtistId,
     });
     router.back();
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+      <Text style={styles.label}>カタログから選ぶ(公演情報が自動で表示されます)</Text>
+      <View style={styles.chipRow}>
+        {catalogArtists.map((a) => (
+          <Chip
+            key={a.id}
+            label={`${a.icon ?? ''}${a.name}`}
+            color={a.color}
+            selected={catalogArtistId === a.id}
+            onPress={() => pickCatalog(a.id)}
+          />
+        ))}
+      </View>
+      <Text style={styles.hint}>
+        カタログに無い推しは下に直接入力してください(公演は手入力になります)。対象アーティストは順次拡大予定です
+      </Text>
+
       <Field label="推しの名前 *" value={name} onChangeText={setName} placeholder="例: 山田太郎 / ◯◯(グループ名)" />
       <Field label="ジャンル" value={genre} onChangeText={setGenre} placeholder="例: アイドル / K-POP / 2.5次元 / VTuber" />
       <Field label="アイコン絵文字" value={icon} onChangeText={setIcon} placeholder="例: 🎤(未入力なら💖)" maxLength={2} />
@@ -53,6 +88,8 @@ export default function OshiFormScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F6F6F8' },
   label: { fontSize: 12, color: '#6B6B70', marginBottom: 8, fontWeight: '600' },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 },
+  hint: { fontSize: 11.5, color: '#9A9AA0', lineHeight: 17, marginBottom: 14 },
   palette: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   swatch: { width: 40, height: 40, borderRadius: 20 },
   swatchSelected: { borderWidth: 3, borderColor: '#1C1C1E' },

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-17T00:00:00+09:00",
+  "artists": [
+    {
+      "id": "fruits-zipper",
+      "name": "FRUITS ZIPPER",
+      "kana": "フルーツジッパー",
+      "genre": "アイドル(KAWAII LAB.)",
+      "color": "#FF6FA5",
+      "icon": "🍑"
+    },
+    {
+      "id": "candy-tune",
+      "name": "CANDY TUNE",
+      "kana": "キャンディーチューン",
+      "genre": "アイドル(KAWAII LAB.)",
+      "color": "#F2545B",
+      "icon": "🍬"
+    },
+    {
+      "id": "sweet-steady",
+      "name": "SWEET STEADY",
+      "kana": "スイートステディ",
+      "genre": "アイドル(KAWAII LAB.)",
+      "color": "#5AC8FA",
+      "icon": "🎀"
+    },
+    {
+      "id": "cutie-street",
+      "name": "CUTIE STREET",
+      "kana": "キューティーストリート",
+      "genre": "アイドル(KAWAII LAB.)",
+      "color": "#C969E6",
+      "icon": "🛍️"
+    }
+  ],
+  "events": []
+}

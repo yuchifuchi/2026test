@@ -40,7 +40,13 @@ interface AppState {
   applications: ApplicationView[];
   loaded: boolean;
   refresh: () => void;
-  addOshi: (input: { name: string; color1: string; icon?: string; genre?: string }) => void;
+  addOshi: (input: {
+    name: string;
+    color1: string;
+    icon?: string;
+    genre?: string;
+    catalogArtistId?: string;
+  }) => void;
   removeOshi: (id: string) => void;
   addApplication: (input: NewApplicationInput) => void;
   patchApplication: (

@@ -1,7 +1,7 @@
 import { addDays } from 'date-fns';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Field } from '../../components/ui';
 import { nextStatuses } from '../../domain/statusMachine';
 import { ApplicationStatus, BUILTIN_TEMPLATES, STATUS_COLOR, STATUS_LABEL } from '../../domain/types';
@@ -107,6 +107,11 @@ export default function ApplicationDetailScreen() {
         <Text style={[styles.line, status === 'won' && { fontWeight: '700', color: '#F2545B' }]}>
           入金締切: {fmtDateTime(app.paymentDeadline ? new Date(app.paymentDeadline) : null)}
         </Text>
+        {app.url ? (
+          <View style={{ marginTop: 8 }}>
+            <Button title="申込ページを開く ↗" variant="outline" onPress={() => void Linking.openURL(app.url as string)} />
+          </View>
+        ) : null}
       </View>
 
       {status === 'won' ? (

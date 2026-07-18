@@ -50,6 +50,7 @@ export interface TemplateDef {
 
 export const BUILTIN_TEMPLATES: TemplateDef[] = [
   { id: 'fc', name: 'FC先行', announceOffsetDays: 7, paymentWindowDays: 3 },
+  { id: 'official', name: 'オフィシャル先行', announceOffsetDays: 5, paymentWindowDays: 3 },
   { id: 'pia', name: 'ぴあ先行', announceOffsetDays: 5, paymentWindowDays: 3 },
   { id: 'lawson', name: 'ローチケ先行', announceOffsetDays: 5, paymentWindowDays: 3 },
   { id: 'eplus', name: 'イープラス先行', announceOffsetDays: 5, paymentWindowDays: 3 },

@@ -12,11 +12,18 @@ export function listOshi(): OshiRow[] {
   return db.select().from(oshi).all().sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function createOshi(input: { name: string; color1: string; icon?: string; genre?: string }): OshiRow {
+export function createOshi(input: {
+  name: string;
+  color1: string;
+  icon?: string;
+  genre?: string;
+  catalogArtistId?: string;
+}): OshiRow {
   const row: OshiRow = {
     id: newId(),
     name: input.name,
     genre: input.genre ?? null,
+    catalogArtistId: input.catalogArtistId ?? null,
     color1: input.color1,
     color2: null,
     icon: input.icon ?? null,

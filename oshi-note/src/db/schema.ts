@@ -6,6 +6,7 @@ export const oshi = sqliteTable('oshi', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   genre: text('genre'),
+  catalogArtistId: text('catalog_artist_id'), // 公演カタログとの紐付け(任意)
   color1: text('color1').notNull(),
   color2: text('color2'),
   icon: text('icon'), // 絵文字

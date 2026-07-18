@@ -53,6 +53,8 @@ const MIGRATIONS: string[] = [
   CREATE INDEX IF NOT EXISTS idx_performance_event ON performance(event_id);
   CREATE INDEX IF NOT EXISTS idx_expense_date ON expense(date);
   `,
+  // v2: 公演カタログとの紐付け
+  `ALTER TABLE oshi ADD COLUMN catalog_artist_id TEXT;`,
 ];
 
 export function migrate(): void {

@@ -1,17 +1,20 @@
 import { addDays } from 'date-fns';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { eventsForArtist } from '../catalog';
+import { CatalogEvent, CatalogSlot } from '../catalog/types';
 import { Button, Chip, Field } from '../components/ui';
 import { BUILTIN_TEMPLATES } from '../domain/types';
 import { useAppStore } from '../state/store';
-import { parseDateInput, toInputDate } from '../utils/dates';
+import { fmtDate, parseDateInput, toInputDate, toInputTime } from '../utils/dates';
 
 export default function ApplicationFormScreen() {
   const router = useRouter();
   const { oshis, addApplication } = useAppStore();
 
   const [oshiId, setOshiId] = useState(oshis[0]?.id ?? '');
+  const [catalogEventId, setCatalogEventId] = useState<string | undefined>(undefined);
   const [eventTitle, setEventTitle] = useState('');
   const [perfDate, setPerfDate] = useState('');
   const [venue, setVenue] = useState('');
@@ -24,9 +27,47 @@ export default function ApplicationFormScreen() {
   const [announceTime, setAnnounceTime] = useState('13:00');
   const [url, setUrl] = useState('');
 
+  const selectedOshi = oshis.find((o) => o.id === oshiId);
+  const catalogEvents = useMemo(
+    () => (selectedOshi?.catalogArtistId ? eventsForArtist(selectedOshi.catalogArtistId) : []),
+    [selectedOshi?.catalogArtistId],
+  );
+  const catalogEvent: CatalogEvent | undefined = catalogEvents.find((e) => e.id === catalogEventId);
   const template = BUILTIN_TEMPLATES.find((t) => t.id === templateId) ?? BUILTIN_TEMPLATES[0];
 
-  // 申込締切を入れたら、発表日の初期値をテンプレから提案
+  const pickOshi = (id: string) => {
+    setOshiId(id);
+    setCatalogEventId(undefined);
+  };
+
+  const pickCatalogEvent = (e: CatalogEvent) => {
+    if (catalogEventId === e.id) {
+      setCatalogEventId(undefined);
+      return;
+    }
+    setCatalogEventId(e.id);
+    setEventTitle(e.title);
+    setVenue(e.venue ?? '');
+    setPerfDate(e.dates.length === 1 ? e.dates[0] : '');
+    if (e.slots.length > 0) pickSlot(e.slots[0]);
+  };
+
+  const pickSlot = (s: CatalogSlot) => {
+    setTemplateId(s.templateId);
+    if (s.applyEnd) {
+      const d = new Date(s.applyEnd);
+      setCloseDate(toInputDate(d));
+      setCloseTime(toInputTime(d));
+    }
+    if (s.announceAt) {
+      const d = new Date(s.announceAt);
+      setAnnounceDate(toInputDate(d));
+      setAnnounceTime(toInputTime(d));
+    }
+    if (s.url) setUrl(s.url);
+  };
+
+  // 手入力時: 申込締切を入れたら発表日の初期値をテンプレから提案
   const onCloseDateChange = (v: string) => {
     setCloseDate(v);
     if (!announceDate) {
@@ -46,17 +87,13 @@ export default function ApplicationFormScreen() {
     }
     const performanceDate = parseDateInput(perfDate);
     if (!performanceDate) {
-      Alert.alert('入力エラー', '公演日を YYYY-MM-DD 形式で入力してください(例: 2026-09-20)');
+      Alert.alert('入力エラー', '公演日を選択するか、YYYY-MM-DD 形式で入力してください');
       return;
     }
     const closeAt = closeDate ? parseDateInput(closeDate, closeTime) : null;
-    if (closeDate && !closeAt) {
-      Alert.alert('入力エラー', '申込締切の日付形式が正しくありません');
-      return;
-    }
     const announceAt = announceDate ? parseDateInput(announceDate, announceTime) : null;
-    if (announceDate && !announceAt) {
-      Alert.alert('入力エラー', '当落発表の日付形式が正しくありません');
+    if ((closeDate && !closeAt) || (announceDate && !announceAt)) {
+      Alert.alert('入力エラー', '締切/発表日の日付形式が正しくありません');
       return;
     }
     addApplication({
@@ -72,7 +109,21 @@ export default function ApplicationFormScreen() {
       announceAt,
       url: url.trim() || undefined,
     });
-    router.back();
+    const openUrl = url.trim();
+    if (openUrl) {
+      Alert.alert('登録しました', '通知を自動セットしました。このまま申込ページを開きますか?', [
+        { text: 'あとで', style: 'cancel', onPress: () => router.back() },
+        {
+          text: '申込ページを開く',
+          onPress: () => {
+            void Linking.openURL(openUrl);
+            router.back();
+          },
+        },
+      ]);
+    } else {
+      router.back();
+    }
   };
 
   return (
@@ -80,13 +131,72 @@ export default function ApplicationFormScreen() {
       <Text style={styles.label}>推し *</Text>
       <View style={styles.chipRow}>
         {oshis.map((o) => (
-          <Chip key={o.id} label={o.name} color={o.color1} selected={oshiId === o.id} onPress={() => setOshiId(o.id)} />
+          <Chip key={o.id} label={o.name} color={o.color1} selected={oshiId === o.id} onPress={() => pickOshi(o.id)} />
         ))}
         {oshis.length === 0 ? <Text style={styles.hint}>「推し」タブから先に推しを登録してください</Text> : null}
       </View>
 
+      {catalogEvents.length > 0 ? (
+        <>
+          <Text style={styles.label}>公演を選ぶ(カタログから自動表示)</Text>
+          {catalogEvents.map((e) => (
+            <Pressable
+              key={e.id}
+              onPress={() => pickCatalogEvent(e)}
+              style={[styles.eventCard, catalogEventId === e.id && { borderColor: selectedOshi?.color1 ?? '#F2545B' }]}
+            >
+              <Text style={styles.eventTitle}>{e.title}</Text>
+              <Text style={styles.eventSub}>
+                {e.venue ?? ''}{e.city ? `(${e.city})` : ''} ・ {e.dates.length}日程
+              </Text>
+            </Pressable>
+          ))}
+          <Text style={styles.hint}>
+            情報は自動収集+検品済みですが、申込前に必ず公式ページでご確認ください。カタログに無い公演は下に手入力できます
+          </Text>
+        </>
+      ) : selectedOshi?.catalogArtistId ? (
+        <Text style={styles.hint}>この推しの今後の公演はまだカタログにありません(手入力できます)</Text>
+      ) : null}
+
+      {catalogEvent && catalogEvent.dates.length > 1 ? (
+        <>
+          <Text style={styles.label}>公演日を選ぶ *</Text>
+          <View style={styles.chipRow}>
+            {catalogEvent.dates.map((d) => (
+              <Chip
+                key={d}
+                label={fmtDate(new Date(`${d}T00:00:00`))}
+                color={selectedOshi?.color1}
+                selected={perfDate === d}
+                onPress={() => setPerfDate(d)}
+              />
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {catalogEvent && catalogEvent.slots.length > 0 ? (
+        <>
+          <Text style={styles.label}>申込枠を選ぶ(締切・発表日を自動入力)</Text>
+          <View style={styles.chipRow}>
+            {catalogEvent.slots.map((s, i) => (
+              <Chip
+                key={`${s.templateId}-${i}`}
+                label={s.name}
+                color={selectedOshi?.color1}
+                selected={templateId === s.templateId}
+                onPress={() => pickSlot(s)}
+              />
+            ))}
+          </View>
+        </>
+      ) : null}
+
       <Field label="公演名 *" value={eventTitle} onChangeText={setEventTitle} placeholder="例: ◯◯ LIVE TOUR 2026 東京" />
-      <Field label="公演日 * (YYYY-MM-DD)" value={perfDate} onChangeText={setPerfDate} placeholder="2026-09-20" keyboardType="numbers-and-punctuation" />
+      {!catalogEvent || catalogEvent.dates.length <= 1 ? (
+        <Field label="公演日 * (YYYY-MM-DD)" value={perfDate} onChangeText={setPerfDate} placeholder="2026-09-20" keyboardType="numbers-and-punctuation" />
+      ) : null}
       <Field label="会場" value={venue} onChangeText={setVenue} placeholder="例: 東京ドーム" />
 
       <Text style={styles.label}>申込枠(先行種別)</Text>
@@ -116,9 +226,6 @@ export default function ApplicationFormScreen() {
           <Field label="時刻" value={announceTime} onChangeText={setAnnounceTime} placeholder="13:00" keyboardType="numbers-and-punctuation" />
         </View>
       </View>
-      <Text style={styles.hint}>
-        締切を入れると発表日の目安を自動入力します({template.name}: 締切+{template.announceOffsetDays}日)。実際の発表日に合わせて修正してください
-      </Text>
 
       <Field label="申込ページURL" value={url} onChangeText={setUrl} placeholder="https://..." autoCapitalize="none" />
 
@@ -134,4 +241,10 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
   row: { flexDirection: 'row' },
   hint: { fontSize: 12, color: '#9A9AA0', marginBottom: 12, lineHeight: 18 },
+  eventCard: {
+    backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8,
+    borderWidth: 1.5, borderColor: 'transparent',
+  },
+  eventTitle: { fontSize: 14, fontWeight: '700', color: '#1C1C1E' },
+  eventSub: { fontSize: 12, color: '#8E8E93', marginTop: 3 },
 });
