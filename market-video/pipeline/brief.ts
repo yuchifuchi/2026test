@@ -8,9 +8,10 @@ import { fetchAll, SeriesData, SymbolDef } from './fetch';
 
 const SYMBOLS: SymbolDef[] = [
   { symbol: '^GSPC', stooq: '^spx', label: 'S&P500' },
-  { symbol: '^SOX', stooq: '^sox', label: 'SOX半導体指数' },
+  { symbol: '^IXIC', stooq: '^ndq', label: 'NASDAQ' },
   { symbol: 'USDJPY=X', stooq: 'usdjpy', label: 'ドル円' },
-  { symbol: '^N225', stooq: '^nkx', label: '日経平均(前日)' },
+  { symbol: 'NKD=F', stooq: 'nkd.f', label: '日経平均先物' },
+  { symbol: '^N225', stooq: '^nkx', label: '日経平均(前日終値)' },
 ];
 
 export interface PanelData {

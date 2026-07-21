@@ -34,13 +34,13 @@ export const Short: React.FC = () => {
         <div style={{ color: MUTED, fontSize: 40, fontWeight: 700, letterSpacing: 2 }}>
           {brief.dateLabel} 今朝の海外→日本株
         </div>
-        <div style={{ color: INK, fontSize: 64, fontWeight: 800, marginTop: 18, lineHeight: 1.25 }}>
+        <div style={{ color: INK, fontSize: 58, fontWeight: 800, marginTop: 18, lineHeight: 1.25 }}>
           {brief.headline}
         </div>
       </div>
 
       {/* 4パネル */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 34, marginTop: 60 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22, marginTop: 44 }}>
         {brief.panels.map((p, i) => {
           const appear = spring({ frame: frame - 20 - i * 12, fps, config: { damping: 200 } });
           const positive = p.changePct >= 0;
@@ -52,7 +52,7 @@ export const Short: React.FC = () => {
               style={{
                 backgroundColor: CARD,
                 borderRadius: 28,
-                padding: '36px 44px',
+                padding: '26px 40px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -62,7 +62,7 @@ export const Short: React.FC = () => {
             >
               <div>
                 <div style={{ color: MUTED, fontSize: 38, fontWeight: 700 }}>{p.label}</div>
-                <div style={{ color: INK, fontSize: 66, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ color: INK, fontSize: 58, fontWeight: 800, marginTop: 6, fontVariantNumeric: 'tabular-nums' }}>
                   {p.latest.toLocaleString('ja-JP', { maximumFractionDigits: 2 })}
                 </div>
               </div>
