@@ -104,8 +104,15 @@ export const Long: React.FC = () => {
             ))}
           </div>
           {frame >= SEC.conclusion * fps ? (
-            <div style={{ backgroundColor: '#22304C', borderRadius: 20, padding: '30px 36px', marginTop: 30, fontSize: 34, lineHeight: 1.6 }}>
-              まとめ: この10回では「CPIが予想を上回った日の翌日」に限って全て下落。ただし過去の傾向であり、将来を保証するものではありません。
+            <div style={{ backgroundColor: '#22304C', borderRadius: 20, padding: '28px 36px', marginTop: 26, fontSize: 31, lineHeight: 1.55 }}>
+              {(data as any).insight?.text}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 16 }}>
+                {((data as any).insight?.evidence ?? []).map((ev: any) => (
+                  <div key={ev.label} style={{ backgroundColor: CARD, borderRadius: 10, padding: '8px 14px', fontSize: 21, color: MUTED }}>
+                    📄 {ev.label}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
         </Section>
