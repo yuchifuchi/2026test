@@ -95,8 +95,8 @@
   },
   {
    "label": "日経平均先物",
-   "latest": 42540.0,
-   "prev": 42310.0,
+   "latest": 42540,
+   "prev": 42310,
    "changePct": 0.54,
    "latestDate": "2026-07-21",
    "spark": [
@@ -175,5 +175,7 @@
    "jpNote": "銀行・保険"
   }
  ],
- "sectorNote": "昨夜の米国は一般消費財が最強(+1.42%)。東京は小売・自動車の動きに注目"
+ "sectorNote": "昨夜の米国は一般消費財が最強(+1.42%)。東京は小売・自動車の動きに注目",
+ "narrationFile": "narration.wav",
+ "narrationDuration": 31.5
 }

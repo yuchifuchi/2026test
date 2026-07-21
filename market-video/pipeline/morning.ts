@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { buildBrief } from './brief';
+import { generateNarration } from './narration';
 
 (async () => {
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -15,6 +16,9 @@ import { buildBrief } from './brief';
   console.log('== 1/3 データ取得・集計 ==');
   const brief = await buildBrief();
   console.log('見出し:', brief.headline);
+
+  console.log('== 1.5/3 ナレーション生成 ==');
+  await generateNarration();
 
   console.log('== 2/3 動画レンダリング ==');
   const mp4 = path.join(outDir, `short-${stamp}.mp4`);

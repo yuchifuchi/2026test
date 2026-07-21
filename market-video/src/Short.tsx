@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Audio, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import brief from '../data/brief.json';
 
 const UP = '#3DDC84';
@@ -29,6 +29,7 @@ export const Short: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: BG, fontFamily: 'sans-serif', padding: 60 }}>
+      {(brief as any).narrationFile ? <Audio src={staticFile((brief as any).narrationFile)} /> : null}
       {/* ヘッダー */}
       <div style={{ opacity: interpolate(frame, [0, 15], [0, 1]) }}>
         <div style={{ color: MUTED, fontSize: 40, fontWeight: 700, letterSpacing: 2 }}>
