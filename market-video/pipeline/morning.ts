@@ -24,6 +24,14 @@ import { generateNarration } from './narration';
   const mp4 = path.join(outDir, `short-${stamp}.mp4`);
   execSync(`npx remotion render src/index.ts Short "${mp4}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
 
+  console.log('== 2.5/3 編集用パッケージ出力 ==');
+  const visual = path.join(outDir, `short-${stamp}-visual.mp4`);
+  execSync(`npx remotion render src/index.ts Short "${visual}" --muted`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+  for (const f of ['narration.mp3', 'narration.wav', 'narration.txt']) {
+    const src = path.join(__dirname, '..', 'public', f);
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(outDir, `short-${stamp}-${f}`));
+  }
+
   console.log('== 3/3 サムネイル生成 ==');
   const png = path.join(outDir, `thumb-${stamp}.png`);
   execSync(`npx remotion still src/index.ts Short "${png}" --frame=150`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });

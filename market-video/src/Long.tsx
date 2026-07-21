@@ -33,7 +33,7 @@ export const Long: React.FC = () => {
   const isSample = (data as any).dataMode === 'sample';
 
   return (
-    <AbsoluteFill style={{ backgroundColor: BG, fontFamily: 'sans-serif', padding: '50px 90px', color: INK }}>
+    <AbsoluteFill style={{ backgroundColor: BG, fontFamily: "'Noto Sans JP','Noto Sans CJK JP','Hiragino Sans','Yu Gothic Medium','Meiryo',sans-serif", padding: '50px 90px', color: INK }}>
       {(data as any).narrationFile ? <Audio src={staticFile((data as any).narrationFile)} /> : null}
 
       {/* タイトル(常時ヘッダー化) */}

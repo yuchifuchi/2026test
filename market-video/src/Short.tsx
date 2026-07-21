@@ -28,7 +28,7 @@ export const Short: React.FC = () => {
   const isSample = (brief as any).dataMode === 'sample';
 
   return (
-    <AbsoluteFill style={{ backgroundColor: BG, fontFamily: 'sans-serif', padding: 60 }}>
+    <AbsoluteFill style={{ backgroundColor: BG, fontFamily: "'Noto Sans JP','Noto Sans CJK JP','Hiragino Sans','Yu Gothic Medium','Meiryo',sans-serif", padding: 60 }}>
       {(brief as any).narrationFile ? <Audio src={staticFile((brief as any).narrationFile)} /> : null}
       {/* ヘッダー */}
       <div style={{ opacity: interpolate(frame, [0, 15], [0, 1]) }}>
