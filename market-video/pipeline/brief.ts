@@ -14,6 +14,33 @@ const SYMBOLS: SymbolDef[] = [
   { symbol: '^N225', stooq: '^nkx', label: '日経平均(前日終値)' },
 ];
 
+const SECTOR_SYMBOLS: SymbolDef[] = [
+  { symbol: 'XLK', stooq: 'xlk.us', label: 'ハイテク' },
+  { symbol: 'XLY', stooq: 'xly.us', label: '一般消費財' },
+  { symbol: 'XLP', stooq: 'xlp.us', label: '生活必需品' },
+  { symbol: 'XLF', stooq: 'xlf.us', label: '金融' },
+  { symbol: 'XLE', stooq: 'xle.us', label: 'エネルギー' },
+  { symbol: 'XLV', stooq: 'xlv.us', label: 'ヘルスケア' },
+  { symbol: 'XLI', stooq: 'xli.us', label: '資本財' },
+];
+
+// 米セクター→東京の関連業種(表示用の対応表)
+const SECTOR_TO_JP: Record<string, string> = {
+  'ハイテク': '半導体・電子部品',
+  '一般消費財': '小売・自動車',
+  '生活必需品': '食品・日用品',
+  '金融': '銀行・保険',
+  'エネルギー': '石油・商社',
+  'ヘルスケア': '医薬品',
+  '資本財': '機械・重工',
+};
+
+export interface SectorRank {
+  label: string;
+  changePct: number;
+  jpNote: string;
+}
+
 export interface PanelData {
   label: string;
   latest: number;
@@ -29,6 +56,8 @@ export interface Brief {
   dateLabel: string;
   panels: PanelData[];
   headline: string;
+  sectors: SectorRank[];
+  sectorNote: string;
   sources: string[];
 }
 
@@ -64,11 +93,22 @@ export async function buildBrief(): Promise<Brief> {
   const series = await fetchAll(SYMBOLS);
   if (series.length < 3) throw new Error('データ取得が不十分です(3系列未満)');
   const panels = series.map(toPanel);
+  const sectorSeries = await fetchAll(SECTOR_SYMBOLS);
+  const sectors: SectorRank[] = sectorSeries
+    .map(toPanel)
+    .map((p) => ({ label: p.label, changePct: p.changePct, jpNote: SECTOR_TO_JP[p.label] ?? '' }))
+    .sort((a, b) => b.changePct - a.changePct);
+  const top = sectors[0];
+  const sectorNote = top
+    ? `昨夜の米国は${top.label}が最強(${top.changePct >= 0 ? '+' : ''}${top.changePct.toFixed(2)}%)。東京は${top.jpNote}の動きに注目`
+    : '';
   const brief: Brief = {
     generatedAt: new Date().toISOString(),
     dateLabel: new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }),
     panels,
     headline: headline(panels),
+    sectors: sectors.slice(0, 3),
+    sectorNote,
     sources: [...new Set(panels.map((p) => p.source))],
   };
   const out = path.join(__dirname, '..', 'data', 'brief.json');

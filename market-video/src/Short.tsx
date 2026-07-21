@@ -40,7 +40,7 @@ export const Short: React.FC = () => {
       </div>
 
       {/* 4パネル */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22, marginTop: 44 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 34 }}>
         {brief.panels.map((p, i) => {
           const appear = spring({ frame: frame - 20 - i * 12, fps, config: { damping: 200 } });
           const positive = p.changePct >= 0;
@@ -52,7 +52,7 @@ export const Short: React.FC = () => {
               style={{
                 backgroundColor: CARD,
                 borderRadius: 28,
-                padding: '26px 40px',
+                padding: '20px 36px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -90,8 +90,33 @@ export const Short: React.FC = () => {
         })}
       </div>
 
+      {/* セクター注目カード */}
+      {(brief as any).sectors ? (
+        <div
+          style={{
+            backgroundColor: '#22304C', borderRadius: 24, padding: '24px 36px', marginTop: 22,
+            opacity: interpolate(frame, [95, 115], [0, 1]),
+          }}
+        >
+          <div style={{ color: '#F5C518', fontSize: 32, fontWeight: 800 }}>昨夜の米セクター TOP3(事実)</div>
+          <div style={{ display: 'flex', gap: 18, marginTop: 14 }}>
+            {(brief as any).sectors.map((sct: any, j: number) => (
+              <div key={sct.label} style={{ flex: 1, backgroundColor: CARD, borderRadius: 16, padding: '14px 16px', textAlign: 'center' }}>
+                <div style={{ color: MUTED, fontSize: 26, fontWeight: 700 }}>{j + 1}位 {sct.label}</div>
+                <div style={{ color: sct.changePct >= 0 ? UP : DOWN, fontSize: 36, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+                  {sct.changePct >= 0 ? '+' : ''}{sct.changePct.toFixed(2)}%
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ color: INK, fontSize: 30, fontWeight: 700, marginTop: 14, lineHeight: 1.4 }}>
+            {(brief as any).sectorNote}
+          </div>
+        </div>
+      ) : null}
+
       {/* フッター: 出典+免責 */}
-      <div style={{ position: 'absolute', bottom: 50, left: 60, right: 60, opacity: interpolate(frame, [80, 100], [0, 1]) }}>
+      <div style={{ position: 'absolute', bottom: 36, left: 60, right: 60, opacity: interpolate(frame, [80, 100], [0, 1]) }}>
         <div style={{ color: MUTED, fontSize: 30 }}>
           出典: {brief.sources.join(' / ')} ・ {brief.generatedAt.slice(0, 10)}取得
         </div>
