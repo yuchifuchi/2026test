@@ -1,0 +1,88 @@
+{
+ "dataMode": "sample",
+ "title": "米CPIの翌日、日経平均は過去10回どう動いたか",
+ "events": [
+  {
+   "date": "2025-09-11",
+   "cpiYoY": 2.9,
+   "surprise": "予想上振れ",
+   "nikkeiNextDayPct": -1.42
+  },
+  {
+   "date": "2025-10-15",
+   "cpiYoY": 2.8,
+   "surprise": "予想通り",
+   "nikkeiNextDayPct": 0.31
+  },
+  {
+   "date": "2025-11-13",
+   "cpiYoY": 2.6,
+   "surprise": "予想下振れ",
+   "nikkeiNextDayPct": 1.85
+  },
+  {
+   "date": "2025-12-10",
+   "cpiYoY": 2.7,
+   "surprise": "予想上振れ",
+   "nikkeiNextDayPct": -0.88
+  },
+  {
+   "date": "2026-01-13",
+   "cpiYoY": 2.9,
+   "surprise": "予想上振れ",
+   "nikkeiNextDayPct": -2.1
+  },
+  {
+   "date": "2026-02-11",
+   "cpiYoY": 2.8,
+   "surprise": "予想通り",
+   "nikkeiNextDayPct": 0.12
+  },
+  {
+   "date": "2026-03-11",
+   "cpiYoY": 2.5,
+   "surprise": "予想下振れ",
+   "nikkeiNextDayPct": 2.24
+  },
+  {
+   "date": "2026-04-10",
+   "cpiYoY": 2.4,
+   "surprise": "予想下振れ",
+   "nikkeiNextDayPct": 0.95
+  },
+  {
+   "date": "2026-05-12",
+   "cpiYoY": 2.6,
+   "surprise": "予想上振れ",
+   "nikkeiNextDayPct": -1.15
+  },
+  {
+   "date": "2026-06-10",
+   "cpiYoY": 2.5,
+   "surprise": "予想通り",
+   "nikkeiNextDayPct": 0.44
+  }
+ ],
+ "sources": [
+  "SAMPLE(検証用の仮データ)"
+ ],
+ "narrationFile": "narration-long.wav",
+ "narrationDuration": 71.0,
+ "insight": {
+  "text": "この10回で効いたのはCPIの水準ではなく「予想との差」でした。上振れ4回のみ全て下落し、水準が同じ2.9%でも予想通りなら上昇しています。市場が織り込むのはインフレ率そのものではなく金利パスの修正、というFOMC声明の記述と整合する動きです。",
+  "evidence": [
+   {
+    "label": "米労働統計局(BLS) CPI公表ページ",
+    "url": "https://www.bls.gov/cpi/"
+   },
+   {
+    "label": "FOMC声明・経済見通し(FRB)",
+    "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+   },
+   {
+    "label": "本検証の集計コードとデータ(GitHub)",
+    "url": "https://github.com/yuchifuchi/kabubunseki7"
+   }
+  ]
+ }
+}

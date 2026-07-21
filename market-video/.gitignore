@@ -5,3 +5,5 @@ data/*.json
 .env
 public/narration.*
 public/narration-long.*
+!data/longform.json
+!data/long10.json
