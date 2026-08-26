@@ -122,18 +122,46 @@
     if (keep && sel.querySelector('option[value="' + keep + '"]')) sel.value = keep;
     else if (sel.options.length) S.op = +sel.value;
   }
-  (function fillStatic() {
-    var kb = $("e-kb");
-    D.kubun.forEach(function (k) {
+  // マスタを足したり無効にしたりしたら呼び直す。
+  // 現行 Excel のように「全員にファイルを配り直す」必要が無いことの実演。
+  function fillMasterSelects() {
+    var kb = $("e-kb"), keepK = kb.value;
+    kb.innerHTML = "";
+    D.kubun.filter(function (k) { return !k.off; }).forEach(function (k) {
       var o = el("option", null, D.blocks[k.b] + " / " + k.n);
       o.value = k.id;
       kb.appendChild(o);
     });
-    var pr = $("e-pr");
-    D.prods.forEach(function (p) {
+    if (keepK && kb.querySelector('option[value="' + keepK + '"]')) kb.value = keepK;
+
+    var pr = $("e-pr"), keepP = pr.value;
+    pr.innerHTML = "";
+    D.prods.filter(function (p) { return !p.off; }).forEach(function (p) {
       var o = el("option", null, p.id === 0 ? p.n : D.blocks[p.b] + " / " + p.n);
       o.value = p.id;
       pr.appendChild(o);
+    });
+    if (keepP && pr.querySelector('option[value="' + keepP + '"]')) pr.value = keepP;
+  }
+
+  // マスタ保守画面の選択肢
+  (function fillMasterForms() {
+    [["mp-block", true], ["mk-block", false]].forEach(function (pair) {
+      var sel = $(pair[0]);
+      Object.keys(D.blocks).forEach(function (id) {
+        if (+id === 0) return;
+        if (pair[1] && +id > 2) return;          // 製品を持つのは上 2 ブロックだけ
+        var o = el("option", null, D.blocks[id]);
+        o.value = id;
+        sel.appendChild(o);
+      });
+    });
+    var col = $("mk-col");
+    Object.keys(D.cols).forEach(function (c) {
+      var o = el("option", null, c + ": " + D.cols[c]);
+      o.value = c;
+      if (c === "7") o.selected = true;
+      col.appendChild(o);
     });
   })();
 
@@ -432,7 +460,139 @@
     }
   }
 
+  function usage(kind, id) {
+    return S.juden.reduce(function (a, r) {
+      if (kind === "kubun" && r.k === id) return a + 1;
+      if (kind === "prod" && r.p === id) return a + 1;
+      if (kind === "op" && r.o === id) return a + 1;
+      return a;
+    }, 0);
+  }
+
+  // 実績で使われているマスタは消させない。過去の帳票からその名前が失われるため。
+  function guardDelete(kind, id, what) {
+    var n = usage(kind, id);
+    if (n > 0) {
+      alert("この" + what + "は実績 " + n + " 件で使われているため削除できません。\n\n" +
+            "代わりに「有効」のチェックを外してください。\n" +
+            "入力候補から消えますが、過去の日報・集計表はそのまま残ります。");
+      return false;
+    }
+    return confirm("この" + what + "を削除します。よろしいですか？");
+  }
+
+  function delBtn(onOk) {
+    var b = el("button", "btn x sm", "削除");
+    b.type = "button";
+    b.addEventListener("click", onOk);
+    return b;
+  }
+  function chkCell(obj, after) {
+    var td = el("td");
+    var c = el("input");
+    c.type = "checkbox";
+    c.checked = !obj.off;
+    c.addEventListener("change", function () {
+      obj.off = !c.checked;
+      fillMasterSelects();
+      if (after) after();
+    });
+    td.appendChild(c);
+    return td;
+  }
+
+  function renderMasterProd() {
+    var b = $("mp-rows");
+    b.innerHTML = "";
+    D.prods.forEach(function (p) {
+      if (p.id === 0) return;
+      var n = usage("prod", p.id), tr = el("tr");
+      tr.appendChild(el("td", null, p.id));
+      tr.appendChild(el("td", null, D.blocks[p.b]));
+      tr.appendChild(el("td", null, p.n));
+      tr.appendChild(chkCell(p, renderMasterProd));
+      var tdn = el("td", "n", n || "―");
+      if (n) tdn.style.color = "var(--muted)";
+      tr.appendChild(tdn);
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("prod", p.id, "製品")) return;
+        D.prods.splice(D.prods.indexOf(p), 1);
+        fillMasterSelects();
+        renderMasterProd();
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
+  function renderMasterKubun() {
+    var b = $("mk-rows");
+    b.innerHTML = "";
+    D.kubun.forEach(function (k) {
+      var n = usage("kubun", k.id), tr = el("tr");
+      tr.appendChild(el("td", null, k.id));
+      tr.appendChild(el("td", null, D.blocks[k.b]));
+      tr.appendChild(el("td", null, k.n));
+
+      var tdc = el("td");
+      var sel = el("select");
+      sel.style.maxWidth = "140px";
+      Object.keys(D.cols).forEach(function (c) {
+        var o = el("option", null, c + ": " + D.cols[c]);
+        o.value = c;
+        if (+c === k.c) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () { k.c = +sel.value; render(); });
+      tdc.appendChild(sel);
+      tr.appendChild(tdc);
+
+      tr.appendChild(chkCell(k, renderMasterKubun));
+      var tdn = el("td", "n", n || "―");
+      if (n) tdn.style.color = "var(--muted)";
+      tr.appendChild(tdn);
+      var tdo = el("td", null, k.old || "―");
+      tdo.style.cssText = "font-size:12px;color:var(--muted)";
+      tr.appendChild(tdo);
+
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("kubun", k.id, "区分")) return;
+        D.kubun.splice(D.kubun.indexOf(k), 1);
+        fillMasterSelects();
+        renderMasterKubun();
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
+  function renderMasterTask() {
+    var b = $("tk-rows");
+    b.innerHTML = "";
+    D.tasks.forEach(function (t) {
+      var tr = el("tr");
+      tr.appendChild(el("td", null, t.id));
+      tr.appendChild(el("td", null, t.no || "―"));
+      tr.appendChild(el("td", null, t.n));
+      tr.appendChild(chkCell(t, renderMasterTask));
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!confirm("この業務項目を削除します。よろしいですか？")) return;
+        D.tasks.splice(D.tasks.indexOf(t), 1);
+        renderMasterTask();
+        renderPaper($("p-date").value || S.date);
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
   function renderMaster() {
+    renderMasterProd();
+    renderMasterKubun();
+    renderMasterTask();
     var b = $("ms-rows"), today = S.date;
     b.innerHTML = "";
     D.ops.forEach(function (o) {
@@ -452,7 +612,6 @@
       }
       tr.appendChild(tdn);
       tr.appendChild(el("td", null, o.kbn));
-      tr.appendChild(el("td", null, "―"));
 
       var tde = el("td");
       var inp = el("input");
@@ -469,7 +628,20 @@
       var tds = el("td");
       tds.appendChild(el("span", "pill " + (zai ? "ok" : "off"), zai ? "在籍" : "退職"));
       tr.appendChild(tds);
-      tr.appendChild(el("td", "n", cnt || "―"));
+
+      var used = usage("op", o.id);
+      var tdu = el("td", "n", used || "―");
+      if (used) tdu.style.color = "var(--muted)";
+      tr.appendChild(tdu);
+
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("op", o.id, "担当者")) return;
+        D.ops.splice(D.ops.indexOf(o), 1);
+        fillOps($("e-op"), S.date, S.op);
+        render();
+      }));
+      tr.appendChild(tdx);
       b.appendChild(tr);
     });
   }
@@ -532,10 +704,64 @@
     $("q-d1").value = "2026-08-17"; $("q-d2").value = "2026-08-21"; renderSum();
   });
 
+  // ---- マスタ保守のタブと追加ボタン ----------------------------------------
+  $("ms-tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-mt]");
+    if (!b) return;
+    Array.prototype.forEach.call($("ms-tabs").children, function (x) {
+      x.className = "btn" + (x === b ? "" : " q");
+    });
+    ["op", "pr", "kb", "tk"].forEach(function (k) {
+      $("mt-" + k).hidden = k !== b.dataset.mt;
+    });
+  });
+
+  $("mp-add").addEventListener("click", function () {
+    var nm = $("mp-name").value.trim();
+    if (!nm) { alert("製品名を入力してください。"); return; }
+    var b = +$("mp-block").value;
+    if (D.prods.some(function (p) { return p.n === nm && p.b === b; })) {
+      alert("同じブロックに同名の製品が既にあります。"); return;
+    }
+    var id = Math.max.apply(null, D.prods.map(function (p) { return p.id; })) + 1;
+    D.prods.push({ id: id, b: b, n: nm, ord: +$("mp-ord").value });
+    $("mp-name").value = "";
+    fillMasterSelects();
+    renderMasterProd();
+    alert("製品「" + nm + "」を追加しました。受付入力の選択肢にもう出ています。");
+  });
+
+  $("mk-add").addEventListener("click", function () {
+    var nm = $("mk-name").value.trim();
+    if (!nm) { alert("区分名を入力してください。"); return; }
+    var id = Math.max.apply(null, D.kubun.map(function (k) { return k.id; })) + 1;
+    var c = +$("mk-col").value;
+    D.kubun.push({ id: id, b: +$("mk-block").value, n: nm, c: c, old: "" });
+    kbById[id] = D.kubun[D.kubun.length - 1];
+    $("mk-name").value = "";
+    fillMasterSelects();
+    renderMasterKubun();
+    alert("区分「" + nm + "」を追加しました。\n" +
+          "集計表の「" + D.cols[c] + "」列に積まれます。\n" +
+          "受付入力の選択肢にもう出ています。");
+  });
+
+  $("tk-add").addEventListener("click", function () {
+    var nm = $("tk-name").value.trim();
+    if (!nm) { alert("帳票表示名を入力してください。"); return; }
+    var id = Math.max.apply(null, D.tasks.map(function (t) { return t.id; })) + 1;
+    D.tasks.push({ id: id, no: $("tk-no").value.trim(), n: nm });
+    $("tk-name").value = ""; $("tk-no").value = "";
+    renderMasterTask();
+    renderPaper($("p-date").value || S.date);
+    alert("業務項目を追加しました。帳票の欄にも出ています。");
+  });
+
   // ---- 起動 ---------------------------------------------------------------
   ["e-date", "d-date", "p-date", "c-date"].forEach(function (i) { $(i).value = S.date; });
   $("q-d1").value = "2026-08-24";
   $("q-d2").value = "2026-08-28";
   fillOps($("e-op"), S.date, S.op);
+  fillMasterSelects();
   render();
 })();

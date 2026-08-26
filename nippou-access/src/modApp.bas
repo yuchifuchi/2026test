@@ -326,6 +326,67 @@ End Sub
 '------------------------------------------------------------------------------
 ' 小物
 '------------------------------------------------------------------------------
+' -----------------------------------------------------------------------------
+'  マスタの使用件数と、安全な削除
+'
+'  実績から参照されているマスタを消すと、過去の日報・集計表からその名前が
+'  失われる。参照整合性でも止まるが、Access の既定メッセージは何が悪いのか
+'  分かりにくいので、削除前に自分で止めて理由を出す。
+' -----------------------------------------------------------------------------
+Public Function MasterUsage(ByVal kind As String, ByVal id As Variant) As Long
+    On Error GoTo Zero
+    If IsNull(id) Then Exit Function
+    Select Case kind
+        Case "区分"
+            MasterUsage = DCount("*", "T_受電", "[区分ID]=" & CLng(id))
+        Case "製品"
+            MasterUsage = DCount("*", "T_受電", "[製品ID]=" & CLng(id))
+        Case "業務項目"
+            MasterUsage = DCount("*", "T_業務実績", "[業務項目ID]=" & CLng(id))
+        Case "担当者"
+            MasterUsage = DCount("*", "T_受電", "[担当者ID]=" & CLng(id)) _
+                        + DCount("*", "T_出勤", "[担当者ID]=" & CLng(id)) _
+                        + DCount("*", "T_業務実績", "[担当者ID]=" & CLng(id))
+    End Select
+    Exit Function
+Zero:
+    MasterUsage = 0
+End Function
+
+' 各マスタ画面の「削除時」イベントから呼ぶ。使用実績があれば False を返して止める。
+' 万一この取り消しが効かなくても、テーブル間の参照整合性が最後の砦になる。
+Public Function App_Delete(ByVal kind As String) As Boolean
+    Dim f As Access.Form, id As Variant, n As Long
+    App_Delete = True
+    On Error GoTo Fail
+
+    Set f = Screen.ActiveForm
+    id = f.Controls(kind & "ID").Value
+    n = MasterUsage(kind, id)
+
+    If kind = "製品" Then
+        If Nz(id, -1) = 0 Then
+            MsgBox "「（製品指定なし）」は仕組み上必要なので削除できません。", _
+                   vbExclamation, APP_NAME
+            App_Delete = False
+            Exit Function
+        End If
+    End If
+
+    If n > 0 Then
+        MsgBox "この" & kind & "は実績 " & n & " 件で使われているため削除できません。" & vbCrLf & vbCrLf & _
+               "代わりに「有効」のチェックを外してください。" & vbCrLf & _
+               "入力候補から消えますが、過去の日報・集計表はそのまま残ります。", _
+               vbExclamation, APP_NAME
+        App_Delete = False
+    End If
+    Exit Function
+
+Fail:
+    Err.Clear
+    App_Delete = True
+End Function
+
 Public Function NextId(ByVal tbl As String, ByVal fld As String) As Long
     NextId = Nz(DMax("[" & fld & "]", tbl), 0) + 1
 End Function

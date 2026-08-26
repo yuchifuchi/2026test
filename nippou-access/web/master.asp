@@ -11,13 +11,53 @@
 '  過去の日報・集計表はその担当者のまま残る。職員の入れ替わりが多くても
 '  過去の数字が壊れないのがこの作りの狙い。
 ' -----------------------------------------------------------------------------
-Dim tab_, act, msg, msgKind, rs, id, today
+Dim tab_, act, msg, msgKind, rs, id, today, used
 
 today = Date()
 tab_ = ParamText("tab")
 If Len(tab_) = 0 Then tab_ = "operator"
 act = ParamText("act")
 msg = "" : msgKind = "ok"
+
+' -----------------------------------------------------------------------------
+'  マスタの削除は「使われていないものだけ」に限る。
+'
+'  実績から参照されているマスタを消すと、過去の日報・集計表からその名前が
+'  失われる (Access 側は参照整合性エラーになる)。なので、使用実績があるものは
+'  削除させず「無効にする」へ誘導する。無効にすれば入力候補から消えるが、
+'  過去の帳票はそのまま残る。
+' -----------------------------------------------------------------------------
+Function UsageCount(kind, targetId)
+    Select Case kind
+    Case "kubun"
+        UsageCount = DbScalar("SELECT Count(*) FROM [T_受電] WHERE [区分ID]=?", Array(targetId), 0)
+    Case "product"
+        UsageCount = DbScalar("SELECT Count(*) FROM [T_受電] WHERE [製品ID]=?", Array(targetId), 0)
+    Case "task"
+        UsageCount = DbScalar("SELECT Count(*) FROM [T_業務実績] WHERE [業務項目ID]=?", _
+                              Array(targetId), 0)
+    Case "operator"
+        UsageCount = DbScalar("SELECT Count(*) FROM [T_受電] WHERE [担当者ID]=?", Array(targetId), 0) _
+                   + DbScalar("SELECT Count(*) FROM [T_出勤] WHERE [担当者ID]=?", Array(targetId), 0) _
+                   + DbScalar("SELECT Count(*) FROM [T_業務実績] WHERE [担当者ID]=?", Array(targetId), 0)
+    Case Else
+        UsageCount = 0
+    End Select
+End Function
+
+' 削除して良ければ True。駄目なら msg / msgKind に理由を入れて False。
+Function CanDelete(kind, targetId, what, howToHide)
+    used = UsageCount(kind, targetId)
+    If used > 0 Then
+        msg = what & " は実績 " & used & " 件で使われているため削除できません。" & _
+              howToHide & "してください。入力候補から消えますが、" & _
+              "過去の日報・集計表はそのまま残ります。"
+        msgKind = "err"
+        CanDelete = False
+    Else
+        CanDelete = True
+    End If
+End Function
 
 If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
     Select Case act
@@ -61,6 +101,15 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
                   "過去のデータはそのまま残ります。"
         End If
 
+    Case "op_del"
+        id = ParamLong("id", 0)
+        If id > 0 Then
+            If CanDelete("operator", id, "この担当者", "退職日を入れるか「有効」を外") Then
+                DbExec "DELETE FROM [M_担当者] WHERE [担当者ID]=?", Array(id)
+                msg = "担当者を削除しました。"
+            End If
+        End If
+
     Case "op_return"
         id = ParamLong("id", 0)
         If id > 0 Then
@@ -70,12 +119,31 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
 
     '--- 製品 ---
     Case "pr_add"
-        id = DbScalar("SELECT Max([製品ID]) FROM [M_製品]", Empty, 0) + 1
-        DbExec "INSERT INTO [M_製品] ([製品ID],[ブロックID],[製品名],[適用開始日],[表示順],[有効]) " & _
-               "VALUES (?,?,?,?,?,True)", _
-               Array(id, ParamLong("block", 1), ParamText("name"), ParamDate("start", today), _
-                     ParamLong("ord", 99))
-        msg = "製品を追加しました。"
+        If Len(ParamText("name")) = 0 Then
+            msg = "製品名を入力してください。" : msgKind = "err"
+        ElseIf DbScalar("SELECT Count(*) FROM [M_製品] WHERE [製品名]=? AND [ブロックID]=?", _
+                        Array(ParamText("name"), ParamLong("block", 1)), 0) > 0 Then
+            msg = "同じブロックに同名の製品が既にあります。" : msgKind = "err"
+        Else
+            id = DbScalar("SELECT Max([製品ID]) FROM [M_製品]", Empty, 0) + 1
+            DbExec "INSERT INTO [M_製品] " & _
+                   "([製品ID],[ブロックID],[製品名],[適用開始日],[表示順],[有効]) " & _
+                   "VALUES (?,?,?,?,?,True)", _
+                   Array(id, ParamLong("block", 1), ParamText("name"), _
+                         ParamDate("start", today), ParamLong("ord", 99))
+            msg = "製品「" & ParamText("name") & "」を追加しました。"
+        End If
+
+    Case "pr_del"
+        id = ParamLong("id", 0)
+        If id = 0 Then
+            msg = "「（製品指定なし）」は仕組み上必要なので削除できません。" : msgKind = "err"
+        ElseIf id > 0 Then
+            If CanDelete("product", id, "この製品", "「有効」のチェックを外すか終了日を入力") Then
+                DbExec "DELETE FROM [M_製品] WHERE [製品ID]=?", Array(id)
+                msg = "製品を削除しました。"
+            End If
+        End If
 
     Case "pr_upd"
         id = ParamLong("id", 0)
@@ -88,6 +156,33 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
         End If
 
     '--- 区分 ---
+    Case "kb_add"
+        If Len(ParamText("name")) = 0 Then
+            msg = "区分名を入力してください。" : msgKind = "err"
+        ElseIf ParamLong("col", 0) < 3 Or ParamLong("col", 0) > 8 Then
+            msg = "集計列を選んでください。" : msgKind = "err"
+        Else
+            id = DbScalar("SELECT Max([区分ID]) FROM [M_区分]", Empty, 0) + 1
+            DbExec "INSERT INTO [M_区分] " & _
+                   "([区分ID],[ブロックID],[区分名],[集計列ID],[内訳区分],[表示順],[有効]) " & _
+                   "VALUES (?,?,?,?,?,?,True)", _
+                   Array(id, ParamLong("block", 1), ParamText("name"), ParamLong("col", 7), _
+                         ParamText("uchi"), ParamLong("ord", 99))
+            msg = "区分「" & ParamText("name") & "」を追加しました。" & _
+                  "集計表の「" & _
+                  DbScalar("SELECT [集計列名] FROM [M_集計列] WHERE [集計列ID]=?", _
+                           Array(ParamLong("col", 7)), "") & "」列に積まれます。"
+        End If
+
+    Case "kb_del"
+        id = ParamLong("id", 0)
+        If id > 0 Then
+            If CanDelete("kubun", id, "この区分", "「有効」のチェックを外") Then
+                DbExec "DELETE FROM [M_区分] WHERE [区分ID]=?", Array(id)
+                msg = "区分を削除しました。"
+            End If
+        End If
+
     Case "kb_upd"
         id = ParamLong("id", 0)
         If id > 0 Then
@@ -99,6 +194,30 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
         End If
 
     '--- 業務項目 ---
+    Case "tk_add"
+        If Len(ParamText("rname")) = 0 Then
+            msg = "帳票表示名を入力してください。" : msgKind = "err"
+        Else
+            id = DbScalar("SELECT Max([業務項目ID]) FROM [M_業務項目]", Empty, 0) + 1
+            DbExec "INSERT INTO [M_業務項目] " & _
+                   "([業務項目ID],[番号],[項目名],[帳票表示名],[表示順],[有効]) " & _
+                   "VALUES (?,?,?,?,?,True)", _
+                   Array(id, ParamText("no"), _
+                         IIfS(Len(ParamText("name")) = 0, ParamText("rname"), ParamText("name")), _
+                         ParamText("rname"), _
+                         DbScalar("SELECT Max([表示順]) FROM [M_業務項目]", Empty, 0) + 1)
+            msg = "業務項目を追加しました。帳票の欄は左 8 件 / 右 5 件の順に並びます。"
+        End If
+
+    Case "tk_del"
+        id = ParamLong("id", 0)
+        If id > 0 Then
+            If CanDelete("task", id, "この業務項目", "「有効」のチェックを外") Then
+                DbExec "DELETE FROM [M_業務項目] WHERE [業務項目ID]=?", Array(id)
+                msg = "業務項目を削除しました。"
+            End If
+        End If
+
     Case "tk_upd"
         id = ParamLong("id", 0)
         If id > 0 Then
@@ -156,7 +275,8 @@ PageHead "マスタ保守", "master.asp"
 <table>
   <thead><tr>
     <th>コード</th><th>姓</th><th>名</th><th>カナ</th><th>区分</th>
-    <th>在籍開始</th><th>退職日</th><th class="num">順</th><th>有効</th><th>状態</th><th></th>
+    <th>在籍開始</th><th>退職日</th><th class="num">順</th><th>有効</th><th>状態</th>
+    <th>保存</th><th>削除</th>
   </tr></thead>
   <tbody>
 <%
@@ -188,11 +308,20 @@ Do While Not rs.EOF
           <button class="btn ghost" type="submit">保存</button>
         </form>
       </td>
+      <td>
+        <form id="opd<%= rs("担当者ID") %>" method="post" action="master.asp"
+              onsubmit="return confirm('この担当者を完全に削除します。実績がある場合は削除できません。よろしいですか？')">
+          <input type="hidden" name="tab" value="operator">
+          <input type="hidden" name="act" value="op_del">
+          <input type="hidden" name="id" value="<%= rs("担当者ID") %>">
+          <button class="btn danger" type="submit">削除</button>
+        </form>
+      </td>
     </tr>
 <%
   If Len("" & rs("備考")) > 0 Then
 %>
-    <tr><td colspan="11" style="background:#fdf3e0; font-size:13px">
+    <tr><td colspan="12" style="background:#fdf3e0; font-size:13px">
       <b>移行メモ：</b><%= H(rs("備考")) %></td></tr>
 <%
   End If
@@ -238,7 +367,7 @@ rs.Close
 <div class="table-wrap">
 <table>
   <thead><tr><th>ID</th><th>ブロック</th><th>製品名</th><th>開始</th><th>終了</th>
-    <th class="num">順</th><th>有効</th><th></th></tr></thead>
+    <th class="num">順</th><th>有効</th><th>保存</th><th>削除</th></tr></thead>
   <tbody>
 <%
 Set rs = DbQuery( _
@@ -264,6 +393,15 @@ Do While Not rs.EOF
           <button class="btn ghost" type="submit">保存</button>
         </form>
       </td>
+      <td>
+        <form id="prd<%= rs("製品ID") %>" method="post" action="master.asp"
+              onsubmit="return confirm('この製品を完全に削除します。実績がある場合は削除できません。よろしいですか？')">
+          <input type="hidden" name="tab" value="product">
+          <input type="hidden" name="act" value="pr_del">
+          <input type="hidden" name="id" value="<%= rs("製品ID") %>">
+          <button class="btn danger" type="submit">削除</button>
+        </form>
+      </td>
     </tr>
 <%
     rs.MoveNext
@@ -275,6 +413,52 @@ rs.Close
 </div>
 
 <% ElseIf tab_ = "kubun" Then %>
+<div class="panel">
+  <h2 style="margin-top:0">区分を追加する</h2>
+  <form method="post" action="master.asp">
+    <input type="hidden" name="tab" value="kubun">
+    <input type="hidden" name="act" value="kb_add">
+    <div class="row">
+      <div class="field"><label>ブロック</label>
+        <select name="block">
+<%
+Set rs = DbQuery("SELECT [ブロックID],[ブロック名] FROM [M_ブロック] " & _
+                 "WHERE [ブロックID]>0 ORDER BY [表示順]", Empty)
+Do While Not rs.EOF
+    Response.Write "<option value=""" & rs("ブロックID") & """>" & H(rs("ブロック名")) & "</option>"
+    rs.MoveNext
+Loop
+rs.Close
+%>
+        </select></div>
+      <div class="field" style="flex:1 1 280px"><label>区分名</label>
+        <input type="text" name="name" required style="width:100%"></div>
+      <div class="field"><label>集計列（集計表のどの列に積むか）</label>
+        <select name="col">
+<%
+Set rs = DbQuery("SELECT [集計列ID],[集計列名] FROM [M_集計列] ORDER BY [表示順]", Empty)
+Do While Not rs.EOF
+    Response.Write "<option value=""" & rs("集計列ID") & """" & _
+        IIfS(CLng(rs("集計列ID")) = 7, " selected", "") & ">" & _
+        rs("集計列ID") & ": " & H(rs("集計列名")) & "</option>"
+    rs.MoveNext
+Loop
+rs.Close
+%>
+        </select></div>
+      <div class="field"><label>内訳（任意）</label>
+        <input type="text" name="uchi" size="6" placeholder="返金 など"></div>
+      <div class="field"><label>表示順</label>
+        <input type="number" name="ord" value="99" style="width:5em"></div>
+      <div><button class="btn" type="submit">追加</button></div>
+    </div>
+    <p style="font-size:13px; color:#5b6b7c; margin:10px 0 0">
+      追加した区分は、その日のうちに受付入力の選択肢に出ます。
+      Excel を配り直す必要はありません。
+    </p>
+  </form>
+</div>
+
 <h2>区分一覧</h2>
 <p class="lead">
   <b>集計列</b>が、その区分を集計表のどの列に積むかを決めます
@@ -285,7 +469,8 @@ rs.Close
 <div class="table-wrap">
 <table>
   <thead><tr><th>ID</th><th>ブロック</th><th>区分名</th><th>集計列</th><th>内訳</th>
-    <th class="num">順</th><th>有効</th><th>旧転記名</th><th></th></tr></thead>
+    <th class="num">順</th><th>有効</th><th>旧転記名</th>
+    <th>保存</th><th>削除</th></tr></thead>
   <tbody>
 <%
 Set rs = DbQuery( _
@@ -322,6 +507,15 @@ Do While Not rs.EOF
           <button class="btn ghost" type="submit">保存</button>
         </form>
       </td>
+      <td>
+        <form id="kbd<%= rs("区分ID") %>" method="post" action="master.asp"
+              onsubmit="return confirm('この区分を完全に削除します。実績がある場合は削除できません。よろしいですか？')">
+          <input type="hidden" name="tab" value="kubun">
+          <input type="hidden" name="act" value="kb_del">
+          <input type="hidden" name="id" value="<%= rs("区分ID") %>">
+          <button class="btn danger" type="submit">削除</button>
+        </form>
+      </td>
     </tr>
 <%
     rs.MoveNext
@@ -335,10 +529,25 @@ rs.Close
 <% Else %>
 <h2>業務項目（電話応対以外の業務）</h2>
 <p class="lead">帳票の ①〜⑬ の欄です。「帳票表示名」がそのまま印刷されます。</p>
+<div class="panel">
+  <form method="post" action="master.asp">
+    <input type="hidden" name="tab" value="task">
+    <input type="hidden" name="act" value="tk_add">
+    <div class="row">
+      <div class="field"><label>番号</label>
+        <input type="text" name="no" size="3" placeholder="⑭"></div>
+      <div class="field" style="flex:1 1 220px"><label>項目名（画面用）</label>
+        <input type="text" name="name" style="width:100%"></div>
+      <div class="field" style="flex:1 1 260px"><label>帳票表示名（印刷される文言）</label>
+        <input type="text" name="rname" required style="width:100%"></div>
+      <div><button class="btn" type="submit">追加</button></div>
+    </div>
+  </form>
+</div>
 <div class="table-wrap">
 <table>
   <thead><tr><th>ID</th><th>番号</th><th>項目名</th><th>帳票表示名</th>
-    <th class="num">順</th><th>有効</th><th></th></tr></thead>
+    <th class="num">順</th><th>有効</th><th>保存</th><th>削除</th></tr></thead>
   <tbody>
 <%
 Set rs = DbQuery("SELECT * FROM [M_業務項目] ORDER BY [表示順]", Empty)
@@ -358,6 +567,15 @@ Do While Not rs.EOF
           <input type="hidden" name="act" value="tk_upd">
           <input type="hidden" name="id" value="<%= rs("業務項目ID") %>">
           <button class="btn ghost" type="submit">保存</button>
+        </form>
+      </td>
+      <td>
+        <form id="tkd<%= rs("業務項目ID") %>" method="post" action="master.asp"
+              onsubmit="return confirm('この業務項目を完全に削除します。実績がある場合は削除できません。よろしいですか？')">
+          <input type="hidden" name="tab" value="task">
+          <input type="hidden" name="act" value="tk_del">
+          <input type="hidden" name="id" value="<%= rs("業務項目ID") %>">
+          <button class="btn danger" type="submit">削除</button>
         </form>
       </td>
     </tr>

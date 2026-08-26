@@ -485,34 +485,120 @@ footer a{color:var(--accent)}
 
     <div class="note">
       <b>試してみてください。</b>
-      下の表で誰かの「退職日」に 2026-08-01 を入れると、
-      受付入力の担当者リストからその方が消えます。集計表の過去データは変わりません。
+      「区分」タブで区分を 1 つ足すと、受付入力の選択肢にすぐ出ます。
+      担当者に退職日を入れると入力候補から消えます。
+      どちらも過去のデータは変わりません。
     </div>
 
-    <div class="tw"><table>
-      <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th>在籍開始</th>
-        <th>退職日</th><th>状態</th><th class="n">取込済</th></tr></thead>
-      <tbody id="ms-rows"></tbody>
-    </table></div>
+    <div class="row" id="ms-tabs" style="margin-bottom:18px">
+      <button class="btn" data-mt="op" type="button">担当者</button>
+      <button class="btn q" data-mt="pr" type="button">製品</button>
+      <button class="btn q" data-mt="kb" type="button">区分</button>
+      <button class="btn q" data-mt="tk" type="button">業務項目</button>
+    </div>
 
-    <h2>移行時に手当てが必要なもの</h2>
-    <div class="tw"><table>
-      <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
-      <tbody>
-        <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
-          <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
-              5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
-        <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
-          <td>現行データの担当者欄は「鈴木」という姓だけで、
-              015鈴木さんと 018鈴木智さんの区別が付きません。
-              015 の <code>B1</code> が「顧客G」だったことから、
-              この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
-        <tr><td>005 三宅</td><td class="n">0 行</td>
-          <td>記入用フォームの実体がフォルダにありません。
-              印刷用フォームは <code>externalLink9</code> で参照しているのに、
-              ファイルが無いため永久に集計されていませんでした</td></tr>
-      </tbody>
-    </table></div>
+    <!-- 担当者 -->
+    <div id="mt-op">
+      <div class="tw"><table>
+        <thead><tr><th>コード</th><th>氏名</th><th>区分</th>
+          <th>退職日</th><th>状態</th><th class="n">使用件数</th><th>削除</th></tr></thead>
+        <tbody id="ms-rows"></tbody>
+      </table></div>
+
+      <h2>移行時に手当てが必要なもの</h2>
+      <div class="tw"><table>
+        <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
+            <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
+                5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
+          <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
+            <td>現行データの担当者欄は「鈴木」という姓だけで、
+                015鈴木さんと 018鈴木智さんの区別が付きません。
+                015 の <code>B1</code> が「顧客G」だったことから、
+                この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
+          <tr><td>005 三宅</td><td class="n">0 行</td>
+            <td>記入用フォームの実体がフォルダにありません。
+                印刷用フォームは <code>externalLink9</code> で参照しているのに、
+                ファイルが無いため永久に集計されていませんでした</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- 製品 -->
+    <div id="mt-pr" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">製品を追加する</h2>
+        <div class="row">
+          <div class="f-md"><label for="mp-block">ブロック</label>
+            <select id="mp-block"></select></div>
+          <div style="flex:1 1 300px"><label for="mp-name">製品名</label>
+            <input type="text" id="mp-name" placeholder="例: 大阪・関西万博記念貨幣セット"></div>
+          <div class="f-num"><label for="mp-ord">表示順</label>
+            <input type="number" id="mp-ord" value="99"></div>
+          <button class="btn" id="mp-add" type="button">追加</button>
+        </div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>ブロック</th><th>製品名</th>
+          <th>有効</th><th class="n">使用件数</th><th>削除</th></tr></thead>
+        <tbody id="mp-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- 区分 -->
+    <div id="mt-kb" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">区分を追加する</h2>
+        <div class="row">
+          <div class="f-md"><label for="mk-block">ブロック</label>
+            <select id="mk-block"></select></div>
+          <div style="flex:1 1 260px"><label for="mk-name">区分名</label>
+            <input type="text" id="mk-name" placeholder="例: 万博記念貨の抽選方法"></div>
+          <div class="f-md"><label for="mk-col">集計列（集計表のどの列に積むか）</label>
+            <select id="mk-col"></select></div>
+          <div class="f-num"><label for="mk-ord">表示順</label>
+            <input type="number" id="mk-ord" value="99"></div>
+          <button class="btn" id="mk-add" type="button">追加</button>
+        </div>
+        <p class="legend">
+          現行 Excel では、この「どの列に積むか」が Sheet2 の 2 行目のセルに埋まっていて、
+          誰も触れませんでした。ここで見えるようにしています。
+        </p>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>ブロック</th><th>区分名</th><th>集計列</th>
+          <th>有効</th><th class="n">使用件数</th><th>旧転記名</th><th>削除</th></tr></thead>
+        <tbody id="mk-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- 業務項目 -->
+    <div id="mt-tk" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">業務項目を追加する</h2>
+        <div class="row">
+          <div class="f-num"><label for="tk-no">番号</label>
+            <input type="text" id="tk-no" placeholder="⑭"></div>
+          <div style="flex:1 1 320px"><label for="tk-name">帳票表示名（印刷される文言）</label>
+            <input type="text" id="tk-name" placeholder="⑭　返品処理"></div>
+          <button class="btn" id="tk-add" type="button">追加</button>
+        </div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>番号</th><th>帳票表示名</th>
+          <th>有効</th><th>削除</th></tr></thead>
+        <tbody id="tk-rows"></tbody>
+      </table></div>
+    </div>
+
+    <div class="note warn">
+      <b>削除には安全弁があります。</b>
+      実績で使われているマスタは削除できません。過去の日報・集計表から
+      その名前が失われてしまうためです。代わりに「有効」を外すと、
+      入力候補からは消えて過去のデータは残ります。
+      使われていないものはそのまま削除できます。
+    </div>
   </section>
 </main>
 
@@ -651,18 +737,46 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     if (keep && sel.querySelector('option[value="' + keep + '"]')) sel.value = keep;
     else if (sel.options.length) S.op = +sel.value;
   }
-  (function fillStatic() {
-    var kb = $("e-kb");
-    D.kubun.forEach(function (k) {
+  // マスタを足したり無効にしたりしたら呼び直す。
+  // 現行 Excel のように「全員にファイルを配り直す」必要が無いことの実演。
+  function fillMasterSelects() {
+    var kb = $("e-kb"), keepK = kb.value;
+    kb.innerHTML = "";
+    D.kubun.filter(function (k) { return !k.off; }).forEach(function (k) {
       var o = el("option", null, D.blocks[k.b] + " / " + k.n);
       o.value = k.id;
       kb.appendChild(o);
     });
-    var pr = $("e-pr");
-    D.prods.forEach(function (p) {
+    if (keepK && kb.querySelector('option[value="' + keepK + '"]')) kb.value = keepK;
+
+    var pr = $("e-pr"), keepP = pr.value;
+    pr.innerHTML = "";
+    D.prods.filter(function (p) { return !p.off; }).forEach(function (p) {
       var o = el("option", null, p.id === 0 ? p.n : D.blocks[p.b] + " / " + p.n);
       o.value = p.id;
       pr.appendChild(o);
+    });
+    if (keepP && pr.querySelector('option[value="' + keepP + '"]')) pr.value = keepP;
+  }
+
+  // マスタ保守画面の選択肢
+  (function fillMasterForms() {
+    [["mp-block", true], ["mk-block", false]].forEach(function (pair) {
+      var sel = $(pair[0]);
+      Object.keys(D.blocks).forEach(function (id) {
+        if (+id === 0) return;
+        if (pair[1] && +id > 2) return;          // 製品を持つのは上 2 ブロックだけ
+        var o = el("option", null, D.blocks[id]);
+        o.value = id;
+        sel.appendChild(o);
+      });
+    });
+    var col = $("mk-col");
+    Object.keys(D.cols).forEach(function (c) {
+      var o = el("option", null, c + ": " + D.cols[c]);
+      o.value = c;
+      if (c === "7") o.selected = true;
+      col.appendChild(o);
     });
   })();
 
@@ -961,7 +1075,139 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     }
   }
 
+  function usage(kind, id) {
+    return S.juden.reduce(function (a, r) {
+      if (kind === "kubun" && r.k === id) return a + 1;
+      if (kind === "prod" && r.p === id) return a + 1;
+      if (kind === "op" && r.o === id) return a + 1;
+      return a;
+    }, 0);
+  }
+
+  // 実績で使われているマスタは消させない。過去の帳票からその名前が失われるため。
+  function guardDelete(kind, id, what) {
+    var n = usage(kind, id);
+    if (n > 0) {
+      alert("この" + what + "は実績 " + n + " 件で使われているため削除できません。\n\n" +
+            "代わりに「有効」のチェックを外してください。\n" +
+            "入力候補から消えますが、過去の日報・集計表はそのまま残ります。");
+      return false;
+    }
+    return confirm("この" + what + "を削除します。よろしいですか？");
+  }
+
+  function delBtn(onOk) {
+    var b = el("button", "btn x sm", "削除");
+    b.type = "button";
+    b.addEventListener("click", onOk);
+    return b;
+  }
+  function chkCell(obj, after) {
+    var td = el("td");
+    var c = el("input");
+    c.type = "checkbox";
+    c.checked = !obj.off;
+    c.addEventListener("change", function () {
+      obj.off = !c.checked;
+      fillMasterSelects();
+      if (after) after();
+    });
+    td.appendChild(c);
+    return td;
+  }
+
+  function renderMasterProd() {
+    var b = $("mp-rows");
+    b.innerHTML = "";
+    D.prods.forEach(function (p) {
+      if (p.id === 0) return;
+      var n = usage("prod", p.id), tr = el("tr");
+      tr.appendChild(el("td", null, p.id));
+      tr.appendChild(el("td", null, D.blocks[p.b]));
+      tr.appendChild(el("td", null, p.n));
+      tr.appendChild(chkCell(p, renderMasterProd));
+      var tdn = el("td", "n", n || "―");
+      if (n) tdn.style.color = "var(--muted)";
+      tr.appendChild(tdn);
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("prod", p.id, "製品")) return;
+        D.prods.splice(D.prods.indexOf(p), 1);
+        fillMasterSelects();
+        renderMasterProd();
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
+  function renderMasterKubun() {
+    var b = $("mk-rows");
+    b.innerHTML = "";
+    D.kubun.forEach(function (k) {
+      var n = usage("kubun", k.id), tr = el("tr");
+      tr.appendChild(el("td", null, k.id));
+      tr.appendChild(el("td", null, D.blocks[k.b]));
+      tr.appendChild(el("td", null, k.n));
+
+      var tdc = el("td");
+      var sel = el("select");
+      sel.style.maxWidth = "140px";
+      Object.keys(D.cols).forEach(function (c) {
+        var o = el("option", null, c + ": " + D.cols[c]);
+        o.value = c;
+        if (+c === k.c) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener("change", function () { k.c = +sel.value; render(); });
+      tdc.appendChild(sel);
+      tr.appendChild(tdc);
+
+      tr.appendChild(chkCell(k, renderMasterKubun));
+      var tdn = el("td", "n", n || "―");
+      if (n) tdn.style.color = "var(--muted)";
+      tr.appendChild(tdn);
+      var tdo = el("td", null, k.old || "―");
+      tdo.style.cssText = "font-size:12px;color:var(--muted)";
+      tr.appendChild(tdo);
+
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("kubun", k.id, "区分")) return;
+        D.kubun.splice(D.kubun.indexOf(k), 1);
+        fillMasterSelects();
+        renderMasterKubun();
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
+  function renderMasterTask() {
+    var b = $("tk-rows");
+    b.innerHTML = "";
+    D.tasks.forEach(function (t) {
+      var tr = el("tr");
+      tr.appendChild(el("td", null, t.id));
+      tr.appendChild(el("td", null, t.no || "―"));
+      tr.appendChild(el("td", null, t.n));
+      tr.appendChild(chkCell(t, renderMasterTask));
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!confirm("この業務項目を削除します。よろしいですか？")) return;
+        D.tasks.splice(D.tasks.indexOf(t), 1);
+        renderMasterTask();
+        renderPaper($("p-date").value || S.date);
+      }));
+      tr.appendChild(tdx);
+      b.appendChild(tr);
+    });
+  }
+
   function renderMaster() {
+    renderMasterProd();
+    renderMasterKubun();
+    renderMasterTask();
     var b = $("ms-rows"), today = S.date;
     b.innerHTML = "";
     D.ops.forEach(function (o) {
@@ -981,7 +1227,6 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
       }
       tr.appendChild(tdn);
       tr.appendChild(el("td", null, o.kbn));
-      tr.appendChild(el("td", null, "―"));
 
       var tde = el("td");
       var inp = el("input");
@@ -998,7 +1243,20 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
       var tds = el("td");
       tds.appendChild(el("span", "pill " + (zai ? "ok" : "off"), zai ? "在籍" : "退職"));
       tr.appendChild(tds);
-      tr.appendChild(el("td", "n", cnt || "―"));
+
+      var used = usage("op", o.id);
+      var tdu = el("td", "n", used || "―");
+      if (used) tdu.style.color = "var(--muted)";
+      tr.appendChild(tdu);
+
+      var tdx = el("td");
+      tdx.appendChild(delBtn(function () {
+        if (!guardDelete("op", o.id, "担当者")) return;
+        D.ops.splice(D.ops.indexOf(o), 1);
+        fillOps($("e-op"), S.date, S.op);
+        render();
+      }));
+      tr.appendChild(tdx);
       b.appendChild(tr);
     });
   }
@@ -1061,11 +1319,65 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     $("q-d1").value = "2026-08-17"; $("q-d2").value = "2026-08-21"; renderSum();
   });
 
+  // ---- マスタ保守のタブと追加ボタン ----------------------------------------
+  $("ms-tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-mt]");
+    if (!b) return;
+    Array.prototype.forEach.call($("ms-tabs").children, function (x) {
+      x.className = "btn" + (x === b ? "" : " q");
+    });
+    ["op", "pr", "kb", "tk"].forEach(function (k) {
+      $("mt-" + k).hidden = k !== b.dataset.mt;
+    });
+  });
+
+  $("mp-add").addEventListener("click", function () {
+    var nm = $("mp-name").value.trim();
+    if (!nm) { alert("製品名を入力してください。"); return; }
+    var b = +$("mp-block").value;
+    if (D.prods.some(function (p) { return p.n === nm && p.b === b; })) {
+      alert("同じブロックに同名の製品が既にあります。"); return;
+    }
+    var id = Math.max.apply(null, D.prods.map(function (p) { return p.id; })) + 1;
+    D.prods.push({ id: id, b: b, n: nm, ord: +$("mp-ord").value });
+    $("mp-name").value = "";
+    fillMasterSelects();
+    renderMasterProd();
+    alert("製品「" + nm + "」を追加しました。受付入力の選択肢にもう出ています。");
+  });
+
+  $("mk-add").addEventListener("click", function () {
+    var nm = $("mk-name").value.trim();
+    if (!nm) { alert("区分名を入力してください。"); return; }
+    var id = Math.max.apply(null, D.kubun.map(function (k) { return k.id; })) + 1;
+    var c = +$("mk-col").value;
+    D.kubun.push({ id: id, b: +$("mk-block").value, n: nm, c: c, old: "" });
+    kbById[id] = D.kubun[D.kubun.length - 1];
+    $("mk-name").value = "";
+    fillMasterSelects();
+    renderMasterKubun();
+    alert("区分「" + nm + "」を追加しました。\n" +
+          "集計表の「" + D.cols[c] + "」列に積まれます。\n" +
+          "受付入力の選択肢にもう出ています。");
+  });
+
+  $("tk-add").addEventListener("click", function () {
+    var nm = $("tk-name").value.trim();
+    if (!nm) { alert("帳票表示名を入力してください。"); return; }
+    var id = Math.max.apply(null, D.tasks.map(function (t) { return t.id; })) + 1;
+    D.tasks.push({ id: id, no: $("tk-no").value.trim(), n: nm });
+    $("tk-name").value = ""; $("tk-no").value = "";
+    renderMasterTask();
+    renderPaper($("p-date").value || S.date);
+    alert("業務項目を追加しました。帳票の欄にも出ています。");
+  });
+
   // ---- 起動 ---------------------------------------------------------------
   ["e-date", "d-date", "p-date", "c-date"].forEach(function (i) { $(i).value = S.date; });
   $("q-d1").value = "2026-08-24";
   $("q-d2").value = "2026-08-28";
   fillOps($("e-op"), S.date, S.op);
+  fillMasterSelects();
   render();
 })();
 

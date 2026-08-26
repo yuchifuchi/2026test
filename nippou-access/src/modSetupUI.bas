@@ -534,10 +534,12 @@ Private Sub Build_F_マスタ_担当者()
     frm.Controls("在籍終了日").StatusBarText = _
         "退職日を入れると、その日以降は入力画面の候補に出なくなります。過去データはそのまま残ります。"
 
+    AddUsageColumn frm, "担当者", "担当者ID", x
     frm.DefaultView = 2
     frm.ViewsAllowed = 2
     frm.Caption = "担当者マスタ"
     frm.BeforeInsert = "=App_Event(""担当者_新規"")"
+    frm.OnDelete = "=App_Delete(""担当者"")"
     EndForm frm, "F_マスタ_担当者"
 End Sub
 
@@ -559,10 +561,12 @@ Private Sub Build_F_マスタ_製品()
     frm.Controls("適用開始日").Format = "yyyy/mm/dd"
     frm.Controls("適用終了日").Format = "yyyy/mm/dd"
 
+    AddUsageColumn frm, "製品", "製品ID", x
     frm.DefaultView = 2
     frm.ViewsAllowed = 2
     frm.Caption = "製品マスタ"
     frm.BeforeInsert = "=App_Event(""製品_新規"")"
+    frm.OnDelete = "=App_Delete(""製品"")"
     EndForm frm, "F_マスタ_製品"
 End Sub
 
@@ -586,10 +590,12 @@ Private Sub Build_F_マスタ_区分()
     frm.Controls("旧転記名").Locked = True
     frm.Controls("旧転記名").StatusBarText = "現行 Excel の Sheet2 3 行目にあった名前。移行時の照合用です。"
 
+    AddUsageColumn frm, "区分", "区分ID", x
     frm.DefaultView = 2
     frm.ViewsAllowed = 2
     frm.Caption = "区分マスタ"
     frm.BeforeInsert = "=App_Event(""区分_新規"")"
+    frm.OnDelete = "=App_Delete(""区分"")"
     EndForm frm, "F_マスタ_区分"
 End Sub
 
@@ -609,10 +615,12 @@ Private Sub Build_F_マスタ_業務項目()
         x = x + CLng(w(i))
     Next i
 
+    AddUsageColumn frm, "業務項目", "業務項目ID", x
     frm.DefaultView = 2
     frm.ViewsAllowed = 2
     frm.Caption = "業務項目マスタ"
     frm.BeforeInsert = "=App_Event(""業務項目_新規"")"
+    frm.OnDelete = "=App_Delete(""業務項目"")"
     EndForm frm, "F_マスタ_業務項目"
 End Sub
 
@@ -654,6 +662,19 @@ Private Function AddButton(ByRef frm As Access.Form, ByVal l As Long, ByVal t As
     c.OnClick = "=App_Click(""" & action & """)"
     Set AddButton = c
 End Function
+
+ ' 「使用件数」列。削除して良いかどうかが、消す前に一目で分かるようにする。
+Private Sub AddUsageColumn(ByRef frm As Access.Form, ByVal kind As String, _
+                           ByVal idField As String, ByVal x As Long)
+    Dim c As Access.Control
+    Set c = CreateControl(frm.Name, acTextBox, acDetail, "", "", x, 0, 1100, ROW_H)
+    c.Name = "使用件数"
+    c.ControlSource = "=MasterUsage(""" & kind & """,[" & idField & "])"
+    c.TextAlign = 3
+    c.Locked = True
+    c.StatusBarText = "この" & kind & "を参照している実績の件数。" & _
+                      "0 でない行は削除できません。「有効」を外して無効にしてください。"
+End Sub
 
 ' RowSourceType は日本語版 Access では値が日本語なので、英語・日本語の両方を試す。
 Private Sub SetRowSource(ByRef c As Access.Control, ByVal rowSource As String, _

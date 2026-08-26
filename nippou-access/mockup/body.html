@@ -263,34 +263,120 @@
 
     <div class="note">
       <b>試してみてください。</b>
-      下の表で誰かの「退職日」に 2026-08-01 を入れると、
-      受付入力の担当者リストからその方が消えます。集計表の過去データは変わりません。
+      「区分」タブで区分を 1 つ足すと、受付入力の選択肢にすぐ出ます。
+      担当者に退職日を入れると入力候補から消えます。
+      どちらも過去のデータは変わりません。
     </div>
 
-    <div class="tw"><table>
-      <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th>在籍開始</th>
-        <th>退職日</th><th>状態</th><th class="n">取込済</th></tr></thead>
-      <tbody id="ms-rows"></tbody>
-    </table></div>
+    <div class="row" id="ms-tabs" style="margin-bottom:18px">
+      <button class="btn" data-mt="op" type="button">担当者</button>
+      <button class="btn q" data-mt="pr" type="button">製品</button>
+      <button class="btn q" data-mt="kb" type="button">区分</button>
+      <button class="btn q" data-mt="tk" type="button">業務項目</button>
+    </div>
 
-    <h2>移行時に手当てが必要なもの</h2>
-    <div class="tw"><table>
-      <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
-      <tbody>
-        <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
-          <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
-              5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
-        <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
-          <td>現行データの担当者欄は「鈴木」という姓だけで、
-              015鈴木さんと 018鈴木智さんの区別が付きません。
-              015 の <code>B1</code> が「顧客G」だったことから、
-              この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
-        <tr><td>005 三宅</td><td class="n">0 行</td>
-          <td>記入用フォームの実体がフォルダにありません。
-              印刷用フォームは <code>externalLink9</code> で参照しているのに、
-              ファイルが無いため永久に集計されていませんでした</td></tr>
-      </tbody>
-    </table></div>
+    <!-- 担当者 -->
+    <div id="mt-op">
+      <div class="tw"><table>
+        <thead><tr><th>コード</th><th>氏名</th><th>区分</th>
+          <th>退職日</th><th>状態</th><th class="n">使用件数</th><th>削除</th></tr></thead>
+        <tbody id="ms-rows"></tbody>
+      </table></div>
+
+      <h2>移行時に手当てが必要なもの</h2>
+      <div class="tw"><table>
+        <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
+            <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
+                5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
+          <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
+            <td>現行データの担当者欄は「鈴木」という姓だけで、
+                015鈴木さんと 018鈴木智さんの区別が付きません。
+                015 の <code>B1</code> が「顧客G」だったことから、
+                この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
+          <tr><td>005 三宅</td><td class="n">0 行</td>
+            <td>記入用フォームの実体がフォルダにありません。
+                印刷用フォームは <code>externalLink9</code> で参照しているのに、
+                ファイルが無いため永久に集計されていませんでした</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- 製品 -->
+    <div id="mt-pr" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">製品を追加する</h2>
+        <div class="row">
+          <div class="f-md"><label for="mp-block">ブロック</label>
+            <select id="mp-block"></select></div>
+          <div style="flex:1 1 300px"><label for="mp-name">製品名</label>
+            <input type="text" id="mp-name" placeholder="例: 大阪・関西万博記念貨幣セット"></div>
+          <div class="f-num"><label for="mp-ord">表示順</label>
+            <input type="number" id="mp-ord" value="99"></div>
+          <button class="btn" id="mp-add" type="button">追加</button>
+        </div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>ブロック</th><th>製品名</th>
+          <th>有効</th><th class="n">使用件数</th><th>削除</th></tr></thead>
+        <tbody id="mp-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- 区分 -->
+    <div id="mt-kb" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">区分を追加する</h2>
+        <div class="row">
+          <div class="f-md"><label for="mk-block">ブロック</label>
+            <select id="mk-block"></select></div>
+          <div style="flex:1 1 260px"><label for="mk-name">区分名</label>
+            <input type="text" id="mk-name" placeholder="例: 万博記念貨の抽選方法"></div>
+          <div class="f-md"><label for="mk-col">集計列（集計表のどの列に積むか）</label>
+            <select id="mk-col"></select></div>
+          <div class="f-num"><label for="mk-ord">表示順</label>
+            <input type="number" id="mk-ord" value="99"></div>
+          <button class="btn" id="mk-add" type="button">追加</button>
+        </div>
+        <p class="legend">
+          現行 Excel では、この「どの列に積むか」が Sheet2 の 2 行目のセルに埋まっていて、
+          誰も触れませんでした。ここで見えるようにしています。
+        </p>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>ブロック</th><th>区分名</th><th>集計列</th>
+          <th>有効</th><th class="n">使用件数</th><th>旧転記名</th><th>削除</th></tr></thead>
+        <tbody id="mk-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- 業務項目 -->
+    <div id="mt-tk" hidden>
+      <div class="card" style="margin-bottom:18px">
+        <h2 style="margin-top:0">業務項目を追加する</h2>
+        <div class="row">
+          <div class="f-num"><label for="tk-no">番号</label>
+            <input type="text" id="tk-no" placeholder="⑭"></div>
+          <div style="flex:1 1 320px"><label for="tk-name">帳票表示名（印刷される文言）</label>
+            <input type="text" id="tk-name" placeholder="⑭　返品処理"></div>
+          <button class="btn" id="tk-add" type="button">追加</button>
+        </div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>ID</th><th>番号</th><th>帳票表示名</th>
+          <th>有効</th><th>削除</th></tr></thead>
+        <tbody id="tk-rows"></tbody>
+      </table></div>
+    </div>
+
+    <div class="note warn">
+      <b>削除には安全弁があります。</b>
+      実績で使われているマスタは削除できません。過去の日報・集計表から
+      その名前が失われてしまうためです。代わりに「有効」を外すと、
+      入力候補からは消えて過去のデータは残ります。
+      使われていないものはそのまま削除できます。
+    </div>
   </section>
 </main>
 
