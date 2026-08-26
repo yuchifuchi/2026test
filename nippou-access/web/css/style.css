@@ -1,0 +1,133 @@
+/* =============================================================================
+   電話応対日報 集計システム (Web)
+   ・パート職員が毎日使う画面なので、文字と当たり判定を大きくする
+   ・印刷 (report.asp) は現行の Excel 帳票と同じ体裁になるよう @media print で切替
+   ========================================================================== */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --ink:#1b2733; --muted:#5b6b7c;
+  --line:#d3dbe3; --accent:#155a8f; --accent-weak:#e7f0f8;
+  --ok:#1c7c4a; --warn:#8a5a00; --warn-bg:#fdf3e0; --err:#a32020; --err-bg:#fbeaea;
+  --radius:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Meiryo","Yu Gothic UI","MS PGothic",system-ui,sans-serif;
+  font-size:16px; line-height:1.6;
+}
+
+/* --- ヘッダ --- */
+.appbar{
+  display:flex; align-items:center; gap:24px; flex-wrap:wrap;
+  background:var(--accent); color:#fff; padding:10px 20px;
+}
+.appbar .brand{color:#fff; font-weight:700; font-size:18px; text-decoration:none}
+.appbar nav{display:flex; gap:4px; flex-wrap:wrap}
+.appbar nav a{
+  color:#dce8f3; text-decoration:none; padding:8px 14px;
+  border-radius:var(--radius); font-size:15px;
+}
+.appbar nav a:hover{background:rgba(255,255,255,.14); color:#fff}
+.appbar nav a.on{background:#fff; color:var(--accent); font-weight:700}
+
+main{max-width:1180px; margin:0 auto; padding:22px 20px 60px}
+footer{
+  max-width:1180px; margin:0 auto; padding:16px 20px 40px;
+  color:var(--muted); font-size:13px; border-top:1px solid var(--line);
+}
+
+h1{font-size:23px; margin:0 0 4px}
+h2{font-size:18px; margin:28px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--line)}
+.lead{color:var(--muted); margin:0 0 20px; font-size:14px}
+
+/* --- パネル --- */
+.panel{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius); padding:18px 20px; margin-bottom:20px;
+}
+
+/* --- ボタン --- */
+.btn{
+  display:inline-block; background:var(--accent); color:#fff; border:1px solid var(--accent);
+  padding:9px 18px; border-radius:var(--radius); font-size:15px; cursor:pointer;
+  text-decoration:none; line-height:1.4;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:#fff; color:var(--accent)}
+.btn.ghost:hover{background:var(--accent-weak); filter:none}
+.btn.danger{background:var(--err); border-color:var(--err)}
+.btn.big{font-size:17px; padding:16px 22px; width:100%; text-align:center}
+
+/* --- フォーム --- */
+input[type=text],input[type=date],input[type=number],select,textarea{
+  font:inherit; padding:8px 10px; border:1px solid var(--line);
+  border-radius:6px; background:#fff; color:var(--ink);
+}
+input[type=number]{text-align:right; width:5.5em}
+textarea{width:100%; min-height:5.5em; resize:vertical}
+label{font-size:14px; color:var(--muted)}
+.field{display:flex; flex-direction:column; gap:4px}
+.row{display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end}
+
+.datenav{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px}
+.datenav .wareki{margin-left:auto; font-size:15px; color:var(--muted)}
+
+/* --- 表 --- */
+table{border-collapse:collapse; width:100%; background:#fff; font-size:15px}
+th,td{border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:middle}
+th{background:#eef2f6; font-weight:700; white-space:nowrap}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+tbody tr:hover{background:#f7fafd}
+tfoot td{background:#eef2f6; font-weight:700}
+.table-wrap{overflow-x:auto}
+
+/* --- メニュー --- */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
+.tile{
+  display:block; background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px; text-decoration:none; color:var(--ink);
+}
+.tile:hover{border-color:var(--accent); background:var(--accent-weak)}
+.tile b{display:block; font-size:17px; margin-bottom:6px; color:var(--accent)}
+.tile span{font-size:14px; color:var(--muted)}
+
+/* --- 通知 --- */
+.notice{padding:11px 15px; border-radius:var(--radius); margin:0 0 16px; font-size:15px}
+.notice.ok{background:#e8f5ee; color:var(--ok); border:1px solid #b6ddc6}
+.notice.warn{background:var(--warn-bg); color:var(--warn); border:1px solid #e5cf9e}
+.notice.err{background:var(--err-bg); color:var(--err); border:1px solid #e3b4b4}
+
+.badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px}
+.badge.fix{background:#e8f5ee; color:var(--ok)}
+.badge.wip{background:var(--warn-bg); color:var(--warn)}
+
+/* =============================================================================
+   帳票 (report.asp)  現行 Excel「印刷用」シートの体裁を再現する
+   ========================================================================== */
+.sheet{
+  background:#fff; width:186mm; margin:0 auto; padding:6mm 0;
+  font-family:"MS Mincho","Yu Mincho",serif; color:#000; font-size:10.5pt;
+}
+.sheet .kanai{font-size:9pt}
+.sheet h1.title{
+  text-align:center; font-size:16pt; font-weight:700; margin:10px 0 18px;
+  letter-spacing:.15em;
+}
+.sheet .topright{text-align:right; font-size:11pt}
+.sheet table{border-collapse:collapse; width:100%; font-size:10.5pt}
+.sheet th,.sheet td{border:1px solid #000; padding:3px 6px}
+.sheet .noborder,.sheet .noborder th,.sheet .noborder td{border:none}
+.sheet .memo{border:1px solid #000; min-height:26mm; padding:4px 6px; white-space:pre-wrap}
+.sheet .cap{font-size:10pt; font-weight:700; margin:10px 0 3px}
+.sheet .big{font-size:13pt; font-weight:700; text-align:center}
+.sheet .sub{font-size:9pt; text-align:center; color:#000}
+.printbar{max-width:186mm; margin:0 auto 14px; display:flex; gap:10px}
+
+@media print{
+  .appbar,footer,.printbar,.noprint{display:none !important}
+  body{background:#fff; font-size:10.5pt}
+  main{max-width:none; padding:0; margin:0}
+  .sheet{width:auto; padding:0}
+  @page{size:A4 portrait; margin:12mm}
+}
