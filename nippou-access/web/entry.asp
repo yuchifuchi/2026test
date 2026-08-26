@@ -2,6 +2,7 @@
 <% Option Explicit %>
 <% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
 <!--#include file="include/db.asp"-->
+<!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
 Dim dt, opId, act, msg, msgKind, rs, total, kbId, prId, cnt, rowId
@@ -37,7 +38,7 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
                 DbExec "INSERT INTO [T_受電] " & _
                        "([対象日],[担当者ID],[区分ID],[製品ID],[件数],[備考2]," & _
                        " [登録日時],[更新日時],[登録者]) VALUES (?,?,?,?,?,?,Now(),Now(),?)", _
-                       Array(dt, opId, kbId, prId, cnt, ParamText("biko2"), "web")
+                       Array(dt, opId, kbId, prId, cnt, ParamText("biko2"), CurrentUser())
                 msg = cnt & " 件を登録しました。"
             End If
         End If
@@ -201,5 +202,10 @@ If total = 0 Then Response.Write "<tr><td colspan=""6"">まだ入力がありま
   <tfoot><tr><td colspan="2">合計</td><td class="num"><%= total %></td><td colspan="3"></td></tr></tfoot>
 </table>
 </div>
+
+<p class="lead" style="margin-top:18px">
+  電話応対以外の業務（受注入力・架電など）は別の画面です。
+  <a class="btn ghost" href="tasks.asp?d=<%= Ymd(dt) %>&op=<%= opId %>">その他業務を入力する</a>
+</p>
 <% End If %>
 <% PageFoot() : CloseDb %>

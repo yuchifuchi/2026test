@@ -2,6 +2,7 @@
 <% Option Explicit %>
 <% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
 <!--#include file="include/db.asp"-->
+<!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
 Dim d1, d2, rs, cols, i, tot(6), grand, v

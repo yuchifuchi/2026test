@@ -19,9 +19,9 @@ body{
 
 /* --- ヘッダ --- */
 .appbar{
-  display:flex; align-items:center; gap:24px; flex-wrap:wrap;
-  background:var(--accent); color:#fff; padding:10px 20px;
+  background:var(--accent); color:#fff; padding:10px 0 0;
 }
+.appbar .brand{display:block; padding:0 20px 8px}
 .appbar .brand{color:#fff; font-weight:700; font-size:18px; text-decoration:none}
 .appbar nav{display:flex; gap:4px; flex-wrap:wrap}
 .appbar nav a{
@@ -31,6 +31,10 @@ body{
 .appbar nav a:hover{background:rgba(255,255,255,.14); color:#fff}
 .appbar nav a.on{background:#fff; color:var(--accent); font-weight:700}
 
+.whoami{
+  max-width:1180px; margin:0 auto; padding:4px 20px 8px;
+  color:#dce8f3; font-size:12.5px; text-align:right;
+}
 main{max-width:1180px; margin:0 auto; padding:22px 20px 60px}
 footer{
   max-width:1180px; margin:0 auto; padding:16px 20px 40px;

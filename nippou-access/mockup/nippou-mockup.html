@@ -258,6 +258,7 @@ footer a{color:var(--accent)}
   <nav id="nav" aria-label="画面">
     <button data-s="menu" aria-current="page">メニュー</button>
     <button data-s="entry">受付入力</button>
+    <button data-s="tasks">その他業務</button>
     <button data-s="daily">日報</button>
     <button data-s="paper">帳票プレビュー</button>
     <button data-s="sum">集計表</button>
@@ -301,7 +302,9 @@ footer a{color:var(--accent)}
     <div class="tiles">
       <button class="tile" data-go="entry"><b>受付を入力する</b>
         <span>担当者ごとに、その日の問合せ件数を登録します。転記の操作はありません。</span></button>
-      <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
+      <button class="tile" data-go="tasks"><b>その他業務を入力する</b>
+    <span>受注入力や架電など、電話を受ける以外の作業の件数を入れます。帳票の ①〜⑬ 欄になります。</span></button>
+  <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
         <span>出勤者・回線数・特記事項。件数欄は自動計算で、手では直せません。</span></button>
       <button class="tile" data-go="paper"><b>日報を印刷する</b>
         <span>現行の「印刷用」シートと同じ体裁。ブラウザの印刷で A4 縦 1 枚。</span></button>
@@ -378,6 +381,42 @@ footer a{color:var(--accent)}
     </div>
   </section>
 
+  <!-- ================= その他業務 ================= -->
+  <section class="screen" id="s-tasks">
+    <h1>電話応対以外の業務</h1>
+    <p class="lead">
+      受注入力や架電など、電話を受ける以外の作業の件数を入れます。
+      日報の下半分（①〜⑬ の欄）になります。件数が無い項目は空のままで構いません。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="k-date">対象日</label><input type="date" id="k-date"></div>
+        <div class="f-md"><label for="k-op">担当者</label><select id="k-op"></select></div>
+        <div style="flex:1"></div>
+        <div class="stat" style="box-shadow:none; padding:9px 15px">
+          <div class="k">この担当者・この日の合計</div>
+          <div class="v" style="font-size:24px" id="k-total">0<span class="u">件</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw"><table>
+      <thead><tr><th style="width:60%">項目</th><th class="n" style="width:20%">件数</th><th></th></tr></thead>
+      <tbody id="k-rows"></tbody>
+    </table></div>
+
+    <div class="row" style="margin-top:16px">
+      <button class="btn" data-go="daily" type="button">日報を見る</button>
+      <button class="btn q" data-go="entry" type="button">受付入力に戻る</button>
+    </div>
+
+    <div class="note">
+      <b>入れた数字はすぐ帳票に出ます。</b>
+      「帳票プレビュー」を開くと、①〜⑬ の欄に反映されているのが確認できます。
+    </div>
+  </section>
+
   <!-- ================= 日報 ================= -->
   <section class="screen" id="s-daily">
     <h1>日報</h1>
@@ -406,6 +445,16 @@ footer a{color:var(--accent)}
       </tr></thead>
       <tbody id="d-counts"></tbody>
     </table></div>
+
+    <h2>電話応対以外の業務（帳票の ①〜⑬ 欄）</h2>
+    <div class="tw" style="margin-bottom:8px"><table>
+      <thead><tr><th>項目</th><th class="n">件数</th><th>項目</th><th class="n">件数</th></tr></thead>
+      <tbody id="d-tasks"></tbody>
+    </table></div>
+    <p class="lead">
+      この欄は「その他業務」画面から担当者ごとに入力します。
+      <button class="btn q sm" data-go="tasks" type="button">その他業務を入力する</button>
+    </p>
 
     <div class="grid g2">
       <div>
@@ -663,6 +712,9 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     nippou: JSON.parse(JSON.stringify(D.nippou)),
     attend: {},
     retired: {},
+    // 業務実績。キーは "日付|担当者ID|業務項目ID"
+    tasks: { "2026-08-25|1|1": 12, "2026-08-25|1|5": 3, "2026-08-25|10|2": 8,
+             "2026-08-25|11|7": 5, "2026-08-25|17|10": 21, "2026-08-25|17|11": 6 },
     date: "2026-08-25",
     op: 10
   };
@@ -717,12 +769,29 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     return t;
   }
 
+  function taskCount(d, taskId) {
+    var sum = 0;
+    Object.keys(S.tasks).forEach(function (k) {
+      var p = k.split("|");
+      if (p[0] === d && +p[2] === taskId) sum += S.tasks[k];
+    });
+    return sum;
+  }
+  function myTask(d, opId, taskId) {
+    return S.tasks[d + "|" + opId + "|" + taskId] || 0;
+  }
+
   function attendees(d) {
     return D.ops.filter(function (o) { return S.attend[d + "|" + o.id]; });
   }
   function missing(d) {
     return attendees(d).filter(function (o) {
-      return !S.juden.some(function (r) { return r.d === d && r.o === o.id && r.c; });
+      var hasJuden = S.juden.some(function (r) { return r.d === d && r.o === o.id && r.c; });
+      var hasTask = Object.keys(S.tasks).some(function (k) {
+        var p = k.split("|");
+        return p[0] === d && +p[1] === o.id && S.tasks[k] > 0;
+      });
+      return !hasJuden && !hasTask;
     });
   }
   function nippou(d) {
@@ -831,6 +900,7 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
 
     renderMenu(d, t);
     renderEntry(d);
+    renderTasks(d);
     renderDaily(d, t);
     renderPaper($("p-date").value || d);
     renderSum();
@@ -908,6 +978,37 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     $("e-total").innerHTML = total + '<span class="u">件</span>';
   }
 
+  function renderTasks(d) {
+    var body = $("k-rows"), total = 0;
+    body.innerHTML = "";
+    D.tasks.forEach(function (tk) {
+      var v = myTask(d, S.kop, tk.id);
+      total += v;
+      var tr = el("tr");
+      tr.appendChild(el("td", null, tk.n));
+
+      var td = el("td", "n");
+      var inp = el("input");
+      inp.type = "number"; inp.min = "0"; inp.step = "1";
+      inp.value = v === 0 ? "" : v;
+      inp.placeholder = "0";
+      inp.style.maxWidth = "90px";
+      inp.addEventListener("change", function () {
+        var n = parseInt(inp.value, 10) || 0;
+        var key = d + "|" + S.kop + "|" + tk.id;
+        // 0 は行ごと消す。0 の行を残すと入力済みか未入力かが分からなくなる。
+        if (n > 0) { S.tasks[key] = n; S.attend[d + "|" + S.kop] = true; }
+        else delete S.tasks[key];
+        render();
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+      tr.appendChild(el("td", null, "件"));
+      body.appendChild(tr);
+    });
+    $("k-total").innerHTML = total + '<span class="u">件</span>';
+  }
+
   function renderDaily(d, t) {
     var n = nippou(d);
     $("d-kaisen").value = n.kaisen;
@@ -935,6 +1036,19 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     r2.appendChild(el("td", "n", ""));
     r2.appendChild(el("td", "n", ""));
     b.appendChild(r2);
+
+    var tb = $("d-tasks");
+    tb.innerHTML = "";
+    var half = Math.ceil(D.tasks.length / 2);
+    for (var ti = 0; ti < half; ti++) {
+      var L = D.tasks[ti], R = D.tasks[ti + half];
+      var tr2 = el("tr");
+      tr2.appendChild(el("td", null, L ? L.n : ""));
+      tr2.appendChild(el("td", "n", L ? (taskCount(d, L.id) || "―") : ""));
+      tr2.appendChild(el("td", null, R ? R.n : ""));
+      tr2.appendChild(el("td", "n", R ? (taskCount(d, R.id) || "―") : ""));
+      tb.appendChild(tr2);
+    }
 
     var at = attendees(d);
     $("d-attn-n").textContent = "（" + at.length + " 名）";
@@ -972,11 +1086,15 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     var tasks = "";
     for (var j = 0; j < 8; j++) {
       var L = D.tasks[j], R = D.tasks[j + 8];
+      var lv = L ? (taskCount(d, L.id) || "") : "";
+      var rv = R ? (taskCount(d, R.id) || "") : "";
       tasks +=
         '<tr><td style="width:34%">' + (L ? L.n : "　") + "</td>" +
-        '<td style="width:9%"></td><td style="width:5%">' + (L ? "件" : "") + "</td>" +
+        '<td style="width:9%; text-align:right">' + lv + "</td>" +
+        '<td style="width:5%">' + (L ? "件" : "") + "</td>" +
         '<td style="width:34%">' + (R ? R.n : "　") + "</td>" +
-        '<td style="width:9%"></td><td style="width:9%">' + (R ? "件" : "") + "</td></tr>";
+        '<td style="width:9%; text-align:right">' + rv + "</td>" +
+        '<td style="width:9%">' + (R ? "件" : "") + "</td></tr>";
     }
 
     function cell(v, s) {
@@ -1301,10 +1419,20 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
   $("e-date").addEventListener("change", function () {
     S.date = this.value;
     fillOps($("e-op"), S.date, S.op);
+    fillOps($("k-op"), S.date, S.kop);
+    $("k-date").value = S.date;
     $("d-date").value = S.date; $("p-date").value = S.date; $("c-date").value = S.date;
     render();
   });
   $("e-op").addEventListener("change", function () { S.op = +this.value; render(); });
+  $("k-date").addEventListener("change", function () {
+    S.date = this.value;
+    ["e-date","d-date","p-date","c-date"].forEach(function (i) { $(i).value = S.date; });
+    fillOps($("e-op"), S.date, S.op);
+    fillOps($("k-op"), S.date, S.kop);
+    render();
+  });
+  $("k-op").addEventListener("change", function () { S.kop = +this.value; render(); });
 
   $("e-add").addEventListener("click", function () {
     var k = +$("e-kb").value, p = +$("e-pr").value, c = parseInt($("e-cnt").value, 10);
@@ -1410,10 +1538,12 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
   });
 
   // ---- 起動 ---------------------------------------------------------------
-  ["e-date", "d-date", "p-date", "c-date"].forEach(function (i) { $(i).value = S.date; });
+  S.kop = 1;
+  ["e-date", "d-date", "p-date", "c-date", "k-date"].forEach(function (i) { $(i).value = S.date; });
   $("q-d1").value = "2026-08-24";
   $("q-d2").value = "2026-08-28";
   fillOps($("e-op"), S.date, S.op);
+  fillOps($("k-op"), S.date, S.kop);
   fillMasterSelects();
   render();
 })();

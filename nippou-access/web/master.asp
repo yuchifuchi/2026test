@@ -2,6 +2,7 @@
 <% Option Explicit %>
 <% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
 <!--#include file="include/db.asp"-->
+<!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
 ' -----------------------------------------------------------------------------
@@ -11,6 +12,8 @@
 '  過去の日報・集計表はその担当者のまま残る。職員の入れ替わりが多くても
 '  過去の数字が壊れないのがこの作りの狙い。
 ' -----------------------------------------------------------------------------
+RequireAdmin                              ' 担当者以外はここで止まる
+
 Dim tab_, act, msg, msgKind, rs, id, today, used
 
 today = Date()

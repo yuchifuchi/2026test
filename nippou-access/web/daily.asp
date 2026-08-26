@@ -2,6 +2,7 @@
 <% Option Explicit %>
 <% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
 <!--#include file="include/db.asp"-->
+<!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
 Dim dt, act, msg, msgKind, rs, hd, n, missing, opId
@@ -211,6 +212,46 @@ rs.Close
   </table>
   </div>
 </div>
+
+<h2>電話応対以外の業務（帳票の ①〜⑬ 欄）</h2>
+<div class="table-wrap" style="margin-bottom:8px">
+<table>
+  <thead><tr><th>項目</th><th class="num">件数</th><th>項目</th><th class="num">件数</th></tr></thead>
+  <tbody>
+<%
+Dim tk, tkN, tkV, ti, tn
+ReDim tkN(99) : ReDim tkV(99)
+tn = 0
+Set tk = DbQuery( _
+  "SELECT TM.[番号], TM.[項目名], " & _
+  " (SELECT Nz(Sum(W.[件数]),0) FROM [T_業務実績] AS W " & _
+  "   WHERE W.[対象日]=? AND W.[業務項目ID]=TM.[業務項目ID]) AS [件数] " & _
+  "FROM [M_業務項目] AS TM WHERE TM.[有効]=True ORDER BY TM.[表示順]", Array(dt))
+Do While Not tk.EOF
+    tkN(tn) = tk("番号") & "　" & tk("項目名")
+    tkV(tn) = CLng(tk("件数"))
+    tn = tn + 1
+    tk.MoveNext
+Loop
+tk.Close
+
+Dim half : half = Int((tn + 1) / 2)
+For ti = 0 To half - 1
+%>
+    <tr>
+      <td><%= H(tkN(ti)) %></td>
+      <td class="num"><%= IIfS(tkV(ti) = 0, "―", tkV(ti)) %></td>
+      <td><%= IIfS(ti + half < tn, H(tkN(ti + half)), "") %></td>
+      <td class="num"><%= IIfS(ti + half < tn, IIfS(tkV(ti + half) = 0, "―", tkV(ti + half)), "") %></td>
+    </tr>
+<% Next %>
+  </tbody>
+</table>
+</div>
+<p class="lead">
+  この欄は「その他業務」画面から担当者ごとに入力します。
+  <a href="tasks.asp?d=<%= Ymd(dt) %>">その他業務を入力する</a>
+</p>
 
 <h2>記述欄</h2>
 <form class="panel" method="post" action="daily.asp">

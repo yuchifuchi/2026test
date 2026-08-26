@@ -23,6 +23,44 @@ Public Const APP_VERSION As String = "1.0"
 '------------------------------------------------------------------------------
 ' 入口
 '------------------------------------------------------------------------------
+' -----------------------------------------------------------------------------
+'  DB 専用の構築 (UI は ASP 側が持つ構成のとき、こちらを使う)
+'
+'  テーブル・マスタ・クエリだけを作る。Access のフォームとレポートは作らない。
+'  日々の入力・帳票はすべてブラウザから行うため、Access は
+'  「データの入れ物」と「保守のときに中身を覗く道具」に徹する。
+' -----------------------------------------------------------------------------
+Public Sub Setup_DBOnly()
+    Dim started As Date
+    started = Now
+    On Error GoTo Fail
+
+    Echo_ "=== " & APP_NAME & " データベース構築開始 (DB 専用) ==="
+    CreateTables
+    Setup_Master
+    Setup_Queries
+    Setup_AppOptions_DBOnly
+
+    Echo_ "=== 完了 (" & Format(Now - started, "nn分ss秒") & ") ==="
+    MsgBox "データベースを作成しました。" & vbCrLf & vbCrLf & _
+           "このファイルを共有フォルダに置き、" & vbCrLf & _
+           "Web サーバー側の include\db.asp の DB_PATH に" & vbCrLf & _
+           "そのパスを設定してください。", vbInformation, APP_NAME
+    Exit Sub
+
+Fail:
+    MsgBox "構築中にエラーが発生しました。" & vbCrLf & vbCrLf & _
+           "エラー " & Err.Number & ": " & Err.Description, vbCritical, APP_NAME
+End Sub
+
+Private Sub Setup_AppOptions_DBOnly()
+    On Error Resume Next
+    SetDbProperty "AppTitle", dbText, APP_NAME & " (データベース)"
+    SetDbProperty "StartUpShowDBWindow", dbBoolean, True
+    Application.RefreshTitleBar
+End Sub
+
+' UI も含めて一式作る (Access 単体で運用する場合)
 Public Sub Setup_All()
     Dim started As Date
     started = Now

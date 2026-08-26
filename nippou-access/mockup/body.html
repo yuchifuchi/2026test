@@ -7,6 +7,7 @@
   <nav id="nav" aria-label="画面">
     <button data-s="menu" aria-current="page">メニュー</button>
     <button data-s="entry">受付入力</button>
+    <button data-s="tasks">その他業務</button>
     <button data-s="daily">日報</button>
     <button data-s="paper">帳票プレビュー</button>
     <button data-s="sum">集計表</button>
@@ -50,7 +51,9 @@
     <div class="tiles">
       <button class="tile" data-go="entry"><b>受付を入力する</b>
         <span>担当者ごとに、その日の問合せ件数を登録します。転記の操作はありません。</span></button>
-      <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
+      <button class="tile" data-go="tasks"><b>その他業務を入力する</b>
+    <span>受注入力や架電など、電話を受ける以外の作業の件数を入れます。帳票の ①〜⑬ 欄になります。</span></button>
+  <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
         <span>出勤者・回線数・特記事項。件数欄は自動計算で、手では直せません。</span></button>
       <button class="tile" data-go="paper"><b>日報を印刷する</b>
         <span>現行の「印刷用」シートと同じ体裁。ブラウザの印刷で A4 縦 1 枚。</span></button>
@@ -127,6 +130,42 @@
     </div>
   </section>
 
+  <!-- ================= その他業務 ================= -->
+  <section class="screen" id="s-tasks">
+    <h1>電話応対以外の業務</h1>
+    <p class="lead">
+      受注入力や架電など、電話を受ける以外の作業の件数を入れます。
+      日報の下半分（①〜⑬ の欄）になります。件数が無い項目は空のままで構いません。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="k-date">対象日</label><input type="date" id="k-date"></div>
+        <div class="f-md"><label for="k-op">担当者</label><select id="k-op"></select></div>
+        <div style="flex:1"></div>
+        <div class="stat" style="box-shadow:none; padding:9px 15px">
+          <div class="k">この担当者・この日の合計</div>
+          <div class="v" style="font-size:24px" id="k-total">0<span class="u">件</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tw"><table>
+      <thead><tr><th style="width:60%">項目</th><th class="n" style="width:20%">件数</th><th></th></tr></thead>
+      <tbody id="k-rows"></tbody>
+    </table></div>
+
+    <div class="row" style="margin-top:16px">
+      <button class="btn" data-go="daily" type="button">日報を見る</button>
+      <button class="btn q" data-go="entry" type="button">受付入力に戻る</button>
+    </div>
+
+    <div class="note">
+      <b>入れた数字はすぐ帳票に出ます。</b>
+      「帳票プレビュー」を開くと、①〜⑬ の欄に反映されているのが確認できます。
+    </div>
+  </section>
+
   <!-- ================= 日報 ================= -->
   <section class="screen" id="s-daily">
     <h1>日報</h1>
@@ -155,6 +194,16 @@
       </tr></thead>
       <tbody id="d-counts"></tbody>
     </table></div>
+
+    <h2>電話応対以外の業務（帳票の ①〜⑬ 欄）</h2>
+    <div class="tw" style="margin-bottom:8px"><table>
+      <thead><tr><th>項目</th><th class="n">件数</th><th>項目</th><th class="n">件数</th></tr></thead>
+      <tbody id="d-tasks"></tbody>
+    </table></div>
+    <p class="lead">
+      この欄は「その他業務」画面から担当者ごとに入力します。
+      <button class="btn q sm" data-go="tasks" type="button">その他業務を入力する</button>
+    </p>
 
     <div class="grid g2">
       <div>

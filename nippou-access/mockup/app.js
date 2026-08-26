@@ -14,6 +14,9 @@
     nippou: JSON.parse(JSON.stringify(D.nippou)),
     attend: {},
     retired: {},
+    // 業務実績。キーは "日付|担当者ID|業務項目ID"
+    tasks: { "2026-08-25|1|1": 12, "2026-08-25|1|5": 3, "2026-08-25|10|2": 8,
+             "2026-08-25|11|7": 5, "2026-08-25|17|10": 21, "2026-08-25|17|11": 6 },
     date: "2026-08-25",
     op: 10
   };
@@ -68,12 +71,29 @@
     return t;
   }
 
+  function taskCount(d, taskId) {
+    var sum = 0;
+    Object.keys(S.tasks).forEach(function (k) {
+      var p = k.split("|");
+      if (p[0] === d && +p[2] === taskId) sum += S.tasks[k];
+    });
+    return sum;
+  }
+  function myTask(d, opId, taskId) {
+    return S.tasks[d + "|" + opId + "|" + taskId] || 0;
+  }
+
   function attendees(d) {
     return D.ops.filter(function (o) { return S.attend[d + "|" + o.id]; });
   }
   function missing(d) {
     return attendees(d).filter(function (o) {
-      return !S.juden.some(function (r) { return r.d === d && r.o === o.id && r.c; });
+      var hasJuden = S.juden.some(function (r) { return r.d === d && r.o === o.id && r.c; });
+      var hasTask = Object.keys(S.tasks).some(function (k) {
+        var p = k.split("|");
+        return p[0] === d && +p[1] === o.id && S.tasks[k] > 0;
+      });
+      return !hasJuden && !hasTask;
     });
   }
   function nippou(d) {
@@ -182,6 +202,7 @@
 
     renderMenu(d, t);
     renderEntry(d);
+    renderTasks(d);
     renderDaily(d, t);
     renderPaper($("p-date").value || d);
     renderSum();
@@ -259,6 +280,37 @@
     $("e-total").innerHTML = total + '<span class="u">件</span>';
   }
 
+  function renderTasks(d) {
+    var body = $("k-rows"), total = 0;
+    body.innerHTML = "";
+    D.tasks.forEach(function (tk) {
+      var v = myTask(d, S.kop, tk.id);
+      total += v;
+      var tr = el("tr");
+      tr.appendChild(el("td", null, tk.n));
+
+      var td = el("td", "n");
+      var inp = el("input");
+      inp.type = "number"; inp.min = "0"; inp.step = "1";
+      inp.value = v === 0 ? "" : v;
+      inp.placeholder = "0";
+      inp.style.maxWidth = "90px";
+      inp.addEventListener("change", function () {
+        var n = parseInt(inp.value, 10) || 0;
+        var key = d + "|" + S.kop + "|" + tk.id;
+        // 0 は行ごと消す。0 の行を残すと入力済みか未入力かが分からなくなる。
+        if (n > 0) { S.tasks[key] = n; S.attend[d + "|" + S.kop] = true; }
+        else delete S.tasks[key];
+        render();
+      });
+      td.appendChild(inp);
+      tr.appendChild(td);
+      tr.appendChild(el("td", null, "件"));
+      body.appendChild(tr);
+    });
+    $("k-total").innerHTML = total + '<span class="u">件</span>';
+  }
+
   function renderDaily(d, t) {
     var n = nippou(d);
     $("d-kaisen").value = n.kaisen;
@@ -286,6 +338,19 @@
     r2.appendChild(el("td", "n", ""));
     r2.appendChild(el("td", "n", ""));
     b.appendChild(r2);
+
+    var tb = $("d-tasks");
+    tb.innerHTML = "";
+    var half = Math.ceil(D.tasks.length / 2);
+    for (var ti = 0; ti < half; ti++) {
+      var L = D.tasks[ti], R = D.tasks[ti + half];
+      var tr2 = el("tr");
+      tr2.appendChild(el("td", null, L ? L.n : ""));
+      tr2.appendChild(el("td", "n", L ? (taskCount(d, L.id) || "―") : ""));
+      tr2.appendChild(el("td", null, R ? R.n : ""));
+      tr2.appendChild(el("td", "n", R ? (taskCount(d, R.id) || "―") : ""));
+      tb.appendChild(tr2);
+    }
 
     var at = attendees(d);
     $("d-attn-n").textContent = "（" + at.length + " 名）";
@@ -323,11 +388,15 @@
     var tasks = "";
     for (var j = 0; j < 8; j++) {
       var L = D.tasks[j], R = D.tasks[j + 8];
+      var lv = L ? (taskCount(d, L.id) || "") : "";
+      var rv = R ? (taskCount(d, R.id) || "") : "";
       tasks +=
         '<tr><td style="width:34%">' + (L ? L.n : "　") + "</td>" +
-        '<td style="width:9%"></td><td style="width:5%">' + (L ? "件" : "") + "</td>" +
+        '<td style="width:9%; text-align:right">' + lv + "</td>" +
+        '<td style="width:5%">' + (L ? "件" : "") + "</td>" +
         '<td style="width:34%">' + (R ? R.n : "　") + "</td>" +
-        '<td style="width:9%"></td><td style="width:9%">' + (R ? "件" : "") + "</td></tr>";
+        '<td style="width:9%; text-align:right">' + rv + "</td>" +
+        '<td style="width:9%">' + (R ? "件" : "") + "</td></tr>";
     }
 
     function cell(v, s) {
@@ -652,10 +721,20 @@
   $("e-date").addEventListener("change", function () {
     S.date = this.value;
     fillOps($("e-op"), S.date, S.op);
+    fillOps($("k-op"), S.date, S.kop);
+    $("k-date").value = S.date;
     $("d-date").value = S.date; $("p-date").value = S.date; $("c-date").value = S.date;
     render();
   });
   $("e-op").addEventListener("change", function () { S.op = +this.value; render(); });
+  $("k-date").addEventListener("change", function () {
+    S.date = this.value;
+    ["e-date","d-date","p-date","c-date"].forEach(function (i) { $(i).value = S.date; });
+    fillOps($("e-op"), S.date, S.op);
+    fillOps($("k-op"), S.date, S.kop);
+    render();
+  });
+  $("k-op").addEventListener("change", function () { S.kop = +this.value; render(); });
 
   $("e-add").addEventListener("click", function () {
     var k = +$("e-kb").value, p = +$("e-pr").value, c = parseInt($("e-cnt").value, 10);
@@ -761,10 +840,12 @@
   });
 
   // ---- 起動 ---------------------------------------------------------------
-  ["e-date", "d-date", "p-date", "c-date"].forEach(function (i) { $(i).value = S.date; });
+  S.kop = 1;
+  ["e-date", "d-date", "p-date", "c-date", "k-date"].forEach(function (i) { $(i).value = S.date; });
   $("q-d1").value = "2026-08-24";
   $("q-d2").value = "2026-08-28";
   fillOps($("e-op"), S.date, S.op);
+  fillOps($("k-op"), S.date, S.kop);
   fillMasterSelects();
   render();
 })();
