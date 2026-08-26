@@ -31,6 +31,10 @@ PageHead "日報 印刷", ""
   <a class="btn ghost" href="daily.asp?d=<%= Ymd(dt) %>">日報の編集に戻る</a>
   <input type="date" value="<%= Ymd(dt) %>"
          onchange="location.href='report.asp?d='+this.value">
+  <p class="legend">
+    A4 縦 1 枚に収まります。余白 12mm・等倍で出力してください
+    （「用紙に合わせる」は不要です）。
+  </p>
 </div>
 
 <div class="sheet">
@@ -38,20 +42,19 @@ PageHead "日報 印刷", ""
   <div class="topright"><%= H(Wareki(dt)) %></div>
   <h1 class="title">電話応対報告書日報集計表</h1>
 
+  <!-- 左 3 列は Excel の結合セルと同じく rowspan でまとめる。
+       セルを空けて罫線を消すと表の枠が切れてしまうため。 -->
   <table>
     <tr>
-      <th style="width:22mm">出勤者</th>
-      <td style="width:14mm; text-align:center"><%= H(hd("出勤者数")) %></td>
-      <td style="width:10mm">名</td>
+      <th rowspan="8" class="mid" style="width:22mm">出勤者</th>
+      <td rowspan="8" class="mid num" style="width:14mm"><%= H(hd("出勤者数")) %></td>
+      <td rowspan="8" class="mid" style="width:10mm">名</td>
       <th style="width:52mm">氏名</th>
       <th style="width:52mm">氏名</th>
       <th>備考</th>
     </tr>
 <% For i = 0 To 6 %>
     <tr>
-      <td class="noborder" style="border:none"></td>
-      <td class="noborder" style="border:none"></td>
-      <td class="noborder" style="border:none"></td>
       <td><%= H(names(i)) %>&nbsp;</td>
       <td><%= H(names(i + 7)) %>&nbsp;</td>
       <td>&nbsp;</td>
@@ -59,7 +62,7 @@ PageHead "日報 印刷", ""
 <% Next %>
   </table>
 
-  <p style="margin:8px 0">（　<b><%= H(hd("回線数")) %></b>　回線 ）</p>
+  <p style="margin:6px 0; font-size:9.5pt">（　<b><%= H(hd("回線数")) %></b>　回線 ）</p>
 
   <table>
     <tr>
@@ -117,12 +120,12 @@ tasks.Close
 For i = 0 To 7
 %>
     <tr>
-      <td style="width:46mm"><%= H(leftN(i)) %>&nbsp;</td>
-      <td style="width:14mm; text-align:right"><%= H(leftV(i)) %></td>
-      <td style="width:8mm"><%= IIfS(Len("" & leftN(i)) > 0, "件", "") %></td>
-      <td style="width:46mm"><%= IIfS(i <= 4, H(rightN(i)), "") %>&nbsp;</td>
-      <td style="width:14mm; text-align:right"><%= IIfS(i <= 4, H(rightV(i)), "") %></td>
-      <td><%= IIfS(i <= 4 And Len("" & rightN(i)) > 0, "件", "") %></td>
+      <td style="width:34%"><%= H(leftN(i)) %>&nbsp;</td>
+      <td style="width:9%; text-align:right"><%= H(leftV(i)) %></td>
+      <td style="width:5%"><%= IIfS(Len("" & leftN(i)) > 0, "件", "") %></td>
+      <td style="width:34%"><%= IIfS(i <= 4, H(rightN(i)), "") %>&nbsp;</td>
+      <td style="width:9%; text-align:right"><%= IIfS(i <= 4, H(rightV(i)), "") %></td>
+      <td style="width:9%"><%= IIfS(i <= 4 And Len("" & rightN(i)) > 0, "件", "") %></td>
     </tr>
 <% Next %>
   </table>

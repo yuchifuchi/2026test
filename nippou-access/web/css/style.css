@@ -111,23 +111,43 @@ tfoot td{background:#eef2f6; font-weight:700}
 }
 .sheet .kanai{font-size:9pt}
 .sheet h1.title{
-  text-align:center; font-size:16pt; font-weight:700; margin:10px 0 18px;
+  text-align:center; font-size:15pt; font-weight:700; margin:6px 0 10px;
   letter-spacing:.15em;
 }
 .sheet .topright{text-align:right; font-size:11pt}
-.sheet table{border-collapse:collapse; width:100%; font-size:10.5pt}
-.sheet th,.sheet td{border:1px solid #000; padding:3px 6px}
-.sheet .noborder,.sheet .noborder th,.sheet .noborder td{border:none}
-.sheet .memo{border:1px solid #000; min-height:26mm; padding:4px 6px; white-space:pre-wrap}
-.sheet .cap{font-size:10pt; font-weight:700; margin:10px 0 3px}
-.sheet .big{font-size:13pt; font-weight:700; text-align:center}
-.sheet .sub{font-size:9pt; text-align:center; color:#000}
-.printbar{max-width:186mm; margin:0 auto 14px; display:flex; gap:10px}
+.sheet table{
+  border-collapse:collapse; width:100%; font-size:9.5pt; line-height:1.45;
+  /* 外周を 1 本に閉じる。左 3 列は rowspan でまとめてあるので隙間ができない */
+  border:1px solid #000; table-layout:fixed;
+}
+.sheet th,.sheet td{
+  border:1px solid #000; padding:2.5px 6px; background:#fff; color:#000;
+}
+.sheet td.mid,.sheet th.mid{vertical-align:middle; text-align:center}
+.sheet .num{font-size:14pt; font-weight:700}
+.sheet .memo{
+  border:1px solid #000; min-height:16mm; padding:4px 6px; white-space:pre-wrap;
+  font-size:9.5pt; margin-bottom:6px;
+}
+.sheet .cap{font-size:9.5pt; font-weight:700; margin:6px 0 3px}
+.sheet .big{font-size:12pt; font-weight:700; text-align:center}
+.sheet .sub{font-size:8pt; text-align:center; color:#000}
+.printbar{
+  max-width:186mm; margin:0 auto 16px; display:flex; gap:12px;
+  align-items:center; flex-wrap:wrap;
+}
+.printbar .legend{margin:0; font-size:12px; color:var(--muted)}
+
+@page{ size:A4 portrait; margin:12mm }
 
 @media print{
   .appbar,footer,.printbar,.noprint{display:none !important}
-  body{background:#fff; font-size:10.5pt}
+  body{background:#fff; color:#000; font-size:10.5pt}
   main{max-width:none; padding:0; margin:0}
-  .sheet{width:auto; padding:0}
-  @page{size:A4 portrait; margin:12mm}
+  /* 画面の見出しだけを落とす。帳票の中の h1.title は残す */
+  main > h1, main > .lead{display:none}
+  .sheet{width:auto; margin:0; padding:0; border:0; border-radius:0; box-shadow:none}
+  /* 表が途中で改ページされると罫線が切れて見えるので、まとまりごとに送る */
+  .sheet table,.sheet .memo{page-break-inside:avoid; break-inside:avoid}
+  a{text-decoration:none; color:#000}
 }

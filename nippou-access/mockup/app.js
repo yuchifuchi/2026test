@@ -317,15 +317,17 @@
 
     var rows = "";
     for (var i = 0; i < 7; i++) {
-      rows += '<tr><td class="blank"></td><td class="blank"></td><td class="blank"></td>' +
-        "<td>" + nm(i) + "</td><td>" + nm(i + 7) + "</td><td>　</td></tr>";
+      rows += "<tr><td>" + nm(i) + "</td><td>" + nm(i + 7) + "</td><td>　</td></tr>";
     }
 
     var tasks = "";
     for (var j = 0; j < 8; j++) {
       var L = D.tasks[j], R = D.tasks[j + 8];
-      tasks += "<tr><td>" + (L ? L.n : "　") + "</td><td>　</td><td>" + (L ? "件" : "") + "</td>" +
-        "<td>" + (R ? R.n : "　") + "</td><td>　</td><td>" + (R ? "件" : "") + "</td></tr>";
+      tasks +=
+        '<tr><td style="width:34%">' + (L ? L.n : "　") + "</td>" +
+        '<td style="width:9%"></td><td style="width:5%">' + (L ? "件" : "") + "</td>" +
+        '<td style="width:34%">' + (R ? R.n : "　") + "</td>" +
+        '<td style="width:9%"></td><td style="width:9%">' + (R ? "件" : "") + "</td></tr>";
     }
 
     function cell(v, s) {
@@ -337,9 +339,9 @@
       '<div class="date">' + wareki(d) + "</div>" +
       '<div class="ttl">電話応対報告書日報集計表</div>' +
       "<table><tr>" +
-        '<th style="width:20mm">出勤者</th>' +
-        '<td style="width:12mm;text-align:center">' + at.length + "</td>" +
-        '<td style="width:9mm">名</td>' +
+        '<th rowspan="8" class="mid" style="width:20mm">出勤者</th>' +
+        '<td rowspan="8" class="mid num" style="width:12mm">' + at.length + "</td>" +
+        '<td rowspan="8" class="mid" style="width:9mm">名</td>' +
         '<th style="width:48mm">氏名</th><th style="width:48mm">氏名</th><th>備考</th>' +
       "</tr>" + rows + "</table>" +
       '<p style="margin:9px 0">（　<b>' + n.kaisen + "</b>　回線 ）</p>" +
@@ -694,6 +696,7 @@
   });
 
   $("p-date").addEventListener("change", function () { renderPaper(this.value); });
+  $("p-print").addEventListener("click", function () { window.print(); });
   $("c-date").addEventListener("change", function () { renderCheck(this.value); });
   $("q-d1").addEventListener("change", renderSum);
   $("q-d2").addEventListener("change", renderSum);

@@ -182,8 +182,13 @@
       現行「日報集計印刷用フォーム.xlsm ＞ 印刷用」シートの体裁をそのまま再現しています。
       画面は角ゴシック、紙は明朝。値の出どころは受付記録ただ 1 つです。
     </p>
-    <div class="row" style="margin-bottom:16px">
+    <div class="printbar noprint">
       <div class="f-sm"><label for="p-date">対象日</label><input type="date" id="p-date"></div>
+      <button class="btn" id="p-print" type="button">印刷する</button>
+      <p class="legend">
+        ブラウザの印刷で A4 縦 1 枚に収まります。<br>
+        余白 12mm・等倍で出力してください（「用紙に合わせる」は不要です）。
+      </p>
     </div>
     <div class="paper" id="paper"></div>
   </section>
