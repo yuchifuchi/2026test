@@ -1,0 +1,1072 @@
+<title>電話応対日報 集計システム</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@400;600&display=swap">
+<style>
+/* ==========================================================================
+   電話応対日報 集計システム ― Web 版モックアップ
+   画面は角ゴシック、そこから出る帳票は明朝。
+   「操作するもの」と「紙に残るもの」を書体で分けている。
+   ========================================================================== */
+:root{
+  --ground:#f6f5f2; --panel:#ffffff; --panel2:#fbfaf7;
+  --ink:#17202c; --muted:#5b6675; --line:#dcd8d0; --line2:#eceae4;
+  --accent:#1f4e79; --accent-soft:#e8eff6; --brass:#8a6a2c; --brass-soft:#f4eddc;
+  --ok:#1b6b45; --ok-soft:#e6f1ea; --warn:#8a5a12; --warn-soft:#fbf1de;
+  --crit:#a02c2c; --crit-soft:#f8e9e9;
+  --shadow:0 1px 2px rgba(23,32,44,.06), 0 6px 18px rgba(23,32,44,.05);
+  --r:7px;
+  --ui:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+  --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#11151b; --panel:#181e26; --panel2:#1d242e;
+    --ink:#e7eaee; --muted:#97a2af; --line:#2b3440; --line2:#232b35;
+    --accent:#79aede; --accent-soft:#1b2a3a; --brass:#cba75f; --brass-soft:#2a2416;
+    --ok:#66c793; --ok-soft:#14271e; --warn:#dda94b; --warn-soft:#2a2214;
+    --crit:#e5817f; --crit-soft:#2b1a1a;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11151b; --panel:#181e26; --panel2:#1d242e;
+  --ink:#e7eaee; --muted:#97a2af; --line:#2b3440; --line2:#232b35;
+  --accent:#79aede; --accent-soft:#1b2a3a; --brass:#cba75f; --brass-soft:#2a2416;
+  --ok:#66c793; --ok-soft:#14271e; --warn:#dda94b; --warn-soft:#2a2214;
+  --crit:#e5817f; --crit-soft:#2b1a1a;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--ui); font-size:15px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+/* --- ヘッダ --- */
+.bar{
+  position:sticky; top:0; z-index:20; background:var(--panel);
+  border-bottom:1px solid var(--line);
+}
+.bar-in{
+  max-width:1240px; margin:0 auto; padding:12px 22px 0;
+  display:flex; align-items:baseline; gap:18px; flex-wrap:wrap;
+}
+.brand{font-weight:700; font-size:17px; letter-spacing:.02em}
+.brand em{
+  font-style:normal; font-size:11px; font-weight:500; color:var(--brass);
+  letter-spacing:.16em; margin-left:10px; vertical-align:2px;
+}
+.bar-in .spacer{flex:1}
+.themetog{
+  background:none; border:1px solid var(--line); color:var(--muted);
+  border-radius:99px; padding:4px 13px; font-size:12px; cursor:pointer;
+}
+.themetog:hover{border-color:var(--accent); color:var(--accent)}
+nav{max-width:1240px; margin:0 auto; padding:6px 22px 0; display:flex; gap:2px; overflow-x:auto}
+nav button{
+  background:none; border:0; border-bottom:2px solid transparent;
+  padding:9px 15px 10px; font-size:14px; color:var(--muted); cursor:pointer;
+  white-space:nowrap;
+}
+nav button:hover{color:var(--ink)}
+nav button[aria-current="page"]{color:var(--accent); border-bottom-color:var(--accent); font-weight:700}
+
+/* --- 整合性ストリップ: このシステムの主張そのもの --- */
+.truth{
+  background:var(--brass-soft); border-bottom:1px solid var(--line);
+  font-size:13px;
+}
+.truth-in{
+  max-width:1240px; margin:0 auto; padding:8px 22px;
+  display:flex; gap:10px 20px; align-items:center; flex-wrap:wrap;
+}
+.truth b{font-variant-numeric:tabular-nums; color:var(--brass); font-size:15px}
+.truth .eq{color:var(--brass); font-weight:700}
+.truth .why{color:var(--muted); margin-left:auto; font-size:12px}
+
+main{max-width:1240px; margin:0 auto; padding:26px 22px 70px}
+.screen{display:none}
+.screen.on{display:block; animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0; transform:translateY(3px)}to{opacity:1; transform:none}}
+
+h1{font-size:23px; margin:0 0 6px; letter-spacing:.01em; text-wrap:balance}
+h2{
+  font-size:14px; margin:30px 0 12px; color:var(--muted);
+  letter-spacing:.1em; font-weight:700;
+}
+h2:first-child{margin-top:0}
+.lead{color:var(--muted); font-size:14px; margin:0 0 22px; max-width:64ch}
+
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  padding:18px 20px; box-shadow:var(--shadow);
+}
+.grid{display:grid; gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end}
+
+label{display:block; font-size:12px; color:var(--muted); margin-bottom:4px; letter-spacing:.04em}
+input,select,textarea{
+  background:var(--panel); border:1px solid var(--line); border-radius:6px;
+  padding:8px 10px; width:100%;
+}
+input[type=number]{text-align:right; font-variant-numeric:tabular-nums}
+textarea{min-height:76px; resize:vertical; line-height:1.6}
+.f-sm{max-width:135px} .f-md{max-width:250px} .f-num{max-width:88px}
+
+.btn{
+  background:var(--accent); color:#fff; border:1px solid var(--accent);
+  border-radius:6px; padding:8px 17px; cursor:pointer; white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.q{background:var(--panel); color:var(--accent)}
+.btn.q:hover{background:var(--accent-soft); filter:none}
+.btn.x{background:var(--panel); color:var(--crit); border-color:var(--line)}
+.btn.x:hover{background:var(--crit-soft); border-color:var(--crit)}
+.btn.sm{padding:5px 11px; font-size:13px}
+
+/* --- 表 --- */
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--panel)}
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{padding:8px 12px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:middle}
+th{
+  background:var(--panel2); font-size:12px; color:var(--muted); font-weight:700;
+  letter-spacing:.06em; white-space:nowrap; border-bottom:1px solid var(--line);
+}
+td.n,th.n{text-align:right; font-variant-numeric:tabular-nums}
+tbody tr:last-child td{border-bottom:0}
+tfoot td{background:var(--panel2); font-weight:700; border-top:1px solid var(--line)}
+.empty{color:var(--muted); padding:22px 12px; text-align:center; font-size:14px}
+
+/* --- 統計タイル --- */
+.stat{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  padding:15px 17px; box-shadow:var(--shadow);
+}
+.stat .k{font-size:12px; color:var(--muted); letter-spacing:.08em}
+.stat .v{
+  font-size:31px; font-weight:700; line-height:1.25; font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;
+}
+.stat .u{font-size:14px; font-weight:400; color:var(--muted); margin-left:3px}
+.stat .s{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums}
+.stat.hi{border-color:var(--brass)}
+.stat.hi .v{color:var(--brass)}
+
+.pill{
+  display:inline-block; padding:2px 11px; border-radius:99px; font-size:12px;
+  font-weight:500; white-space:nowrap;
+}
+.pill.ok{background:var(--ok-soft); color:var(--ok)}
+.pill.wip{background:var(--warn-soft); color:var(--warn)}
+.pill.off{background:var(--line2); color:var(--muted)}
+
+.note{
+  border-left:3px solid var(--brass); background:var(--brass-soft);
+  padding:11px 15px; border-radius:0 var(--r) var(--r) 0; font-size:13px;
+  color:var(--ink); margin:16px 0;
+}
+.note b{color:var(--brass)}
+.note.warn{border-left-color:var(--warn); background:var(--warn-soft)}
+.note.warn b{color:var(--warn)}
+
+.tiles{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(262px,1fr))}
+.tile{
+  text-align:left; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r); padding:17px 19px; cursor:pointer; box-shadow:var(--shadow);
+}
+.tile:hover{border-color:var(--accent); background:var(--accent-soft)}
+.tile b{display:block; color:var(--accent); font-size:16px; margin-bottom:3px}
+.tile span{font-size:13px; color:var(--muted)}
+
+/* ==========================================================================
+   帳票  ―  紙は常に紙。テーマに関係なく白地に黒、明朝で組む。
+   ========================================================================== */
+.paper{
+  background:#fff; color:#000; font-family:var(--mincho);
+  width:min(186mm,100%); margin:0 auto; padding:12mm 10mm;
+  border:1px solid var(--line); border-radius:2px; box-shadow:var(--shadow);
+  font-size:14px; line-height:1.5;
+}
+.paper .kanai{font-size:12px}
+.paper .date{text-align:right; font-size:15px; margin-top:-20px}
+.paper .ttl{
+  text-align:center; font-size:23px; font-weight:600; letter-spacing:.22em;
+  margin:18px 0 20px;
+}
+.paper table{width:100%; border-collapse:collapse; font-size:13px; color:#000}
+.paper th,.paper td{border:1px solid #000; padding:4px 7px; color:#000; background:#fff}
+.paper th{font-weight:600; letter-spacing:.04em}
+.paper td.blank{border:none; background:#fff}
+.paper .memo{
+  border:1px solid #000; min-height:22mm; padding:6px 8px; white-space:pre-wrap;
+  font-size:13px; margin-bottom:12px;
+}
+.paper .cap{font-size:13px; font-weight:600; margin:12px 0 4px}
+.paper .big{text-align:center; font-size:19px; font-weight:600; line-height:1.2}
+.paper .sub{text-align:center; font-size:11px; color:#000}
+.paper .uchi{text-align:right; font-size:13px; margin:7px 0 0}
+
+footer{
+  max-width:1240px; margin:0 auto; padding:22px; color:var(--muted);
+  font-size:12.5px; border-top:1px solid var(--line);
+}
+footer a{color:var(--accent)}
+.legend{font-size:12px; color:var(--muted); margin-top:8px}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">電話応対日報 集計システム<em>WEB 版 モックアップ</em></div>
+    <div class="spacer"></div>
+    <button class="themetog" id="themetog" type="button">表示を切り替え</button>
+  </div>
+  <nav id="nav" aria-label="画面">
+    <button data-s="menu" aria-current="page">メニュー</button>
+    <button data-s="entry">受付入力</button>
+    <button data-s="daily">日報</button>
+    <button data-s="paper">帳票プレビュー</button>
+    <button data-s="sum">集計表</button>
+    <button data-s="check">入力もれ</button>
+    <button data-s="master">マスタ保守</button>
+  </nav>
+</header>
+
+<div class="truth">
+  <div class="truth-in">
+    <span>8/25 の件数 ―</span>
+    <span>日報 <b id="t-nippou">0</b> 件</span>
+    <span class="eq">＝</span>
+    <span>集計表 <b id="t-sum">0</b> 件</span>
+    <span class="pill ok" id="t-badge">一致</span>
+    <span class="why">どちらも同じ 1 つの受付記録から計算しています。ずれる余地がありません</span>
+  </div>
+</div>
+
+<main>
+  <!-- ================= メニュー ================= -->
+  <section class="screen on" id="s-menu">
+    <h1>メニュー</h1>
+    <p class="lead">
+      現行の Excel では「記入用フォーム → 集計表」と「記入用フォーム → 集計用フォーム → 日報」の
+      2 本の経路が別々に数を数えていました。ここでは受付記録が 1 つしかありません。
+    </p>
+
+    <div class="grid g3" style="margin-bottom:24px">
+      <div class="stat hi"><div class="k">本日の受付件数</div>
+        <div class="v" id="m-total">0<span class="u">件</span></div>
+        <div class="s" id="m-date">―</div></div>
+      <div class="stat"><div class="k">入力した担当者</div>
+        <div class="v" id="m-ops">0<span class="u">名</span></div>
+        <div class="s" id="m-opsub">出勤登録 0 名</div></div>
+      <div class="stat"><div class="k">入力もれ</div>
+        <div class="v" id="m-miss">0<span class="u">名</span></div>
+        <div class="s">出勤登録があって実績が無い人</div></div>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" data-go="entry"><b>受付を入力する</b>
+        <span>担当者ごとに、その日の問合せ件数を登録します。転記の操作はありません。</span></button>
+      <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
+        <span>出勤者・回線数・特記事項。件数欄は自動計算で、手では直せません。</span></button>
+      <button class="tile" data-go="paper"><b>日報を印刷する</b>
+        <span>現行の「印刷用」シートと同じ体裁。ブラウザの印刷で A4 縦 1 枚。</span></button>
+      <button class="tile" data-go="sum"><b>集計表を見る</b>
+        <span>期間を指定して日別の集計と明細を表示します。</span></button>
+      <button class="tile" data-go="check"><b>入力もれチェック</b>
+        <span>実績が 1 件も無い担当者を毎日洗い出します。</span></button>
+      <button class="tile" data-go="master"><b>マスタ保守</b>
+        <span>担当者の入退職、製品・区分の追加。Excel を配り直す必要はありません。</span></button>
+    </div>
+
+    <div class="note">
+      <b>このモックアップのデータは実物です。</b>
+      製品 34 種・区分 57 種・担当者 18 名は、お預かりした記入用フォームの外部リンクと
+      Sheet2 から機械的に取り出したもの。受付記録 306 件は
+      集計表（ＶＢＡ版）.xlsm の 8/17〜8/25 の実データです。
+    </div>
+  </section>
+
+  <!-- ================= 受付入力 ================= -->
+  <section class="screen" id="s-entry">
+    <h1>受付入力</h1>
+    <p class="lead">
+      担当者を選ぶと、その人はその日の出勤者として自動登録されます。
+      「入力したのに集計に出てこない」が起きない作りです。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="e-date">対象日</label>
+          <input type="date" id="e-date"></div>
+        <div class="f-md"><label for="e-op">担当者</label>
+          <select id="e-op"></select></div>
+        <div style="flex:1"></div>
+        <div class="stat" style="box-shadow:none; padding:9px 15px">
+          <div class="k">この担当者・この日の合計</div>
+          <div class="v" style="font-size:24px" id="e-total">0<span class="u">件</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>追加する</h2>
+    <div class="card" style="margin-bottom:22px">
+      <div class="row">
+        <div style="flex:2 1 320px"><label for="e-kb">区分</label>
+          <select id="e-kb"></select></div>
+        <div style="flex:2 1 320px"><label for="e-pr">製品</label>
+          <select id="e-pr"></select></div>
+        <div class="f-num"><label for="e-cnt">件数</label>
+          <input type="number" id="e-cnt" value="1" min="1"></div>
+        <div style="flex:1 1 200px"><label for="e-bk">備考</label>
+          <input type="text" id="e-bk" placeholder="任意"></div>
+        <button class="btn" id="e-add" type="button">登録</button>
+      </div>
+      <p class="legend">
+        製品を伴わない区分（顧客情報・イベント関係など）は「（製品指定なし）」のままで構いません。
+        同じ区分・製品の行が既にある場合は、その行に足されます。
+      </p>
+    </div>
+
+    <h2>この日の入力内容</h2>
+    <div class="tw"><table>
+      <thead><tr><th>区分</th><th>製品</th><th class="n">件数</th><th>備考</th><th>集計列</th><th></th></tr></thead>
+      <tbody id="e-rows"></tbody>
+      <tfoot><tr><td colspan="2">合計</td><td class="n" id="e-foot">0</td><td colspan="3"></td></tr></tfoot>
+    </table></div>
+
+    <div class="note">
+      <b>現行 Excel との違い。</b>
+      現行では、この人が誰なのかは記入用フォームの <code>Sheet1!B1</code> という
+      セルの文字列で決まっていました。18 本のうち 6 本がそのセルを直し忘れており、
+      5 名分が「顧客G」に、1 名分が「髙橋」に合算されていました。
+      ここでは担当者マスタから選ぶので、そもそも打ち間違えられません。
+    </div>
+  </section>
+
+  <!-- ================= 日報 ================= -->
+  <section class="screen" id="s-daily">
+    <h1>日報</h1>
+    <p class="lead">
+      問合せ件数の欄は受付入力から自動で計算されます。<b>手では直せません。</b>
+      ここが現行 Excel との決定的な違いです。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="d-date">対象日</label><input type="date" id="d-date"></div>
+        <div class="f-num"><label for="d-kaisen">回線数</label>
+          <input type="number" id="d-kaisen" min="0"></div>
+        <div style="flex:1"></div>
+        <div style="align-self:center"><span class="pill wip" id="d-state">入力中</span></div>
+        <button class="btn q" id="d-fix" type="button">確定する</button>
+        <button class="btn" data-go="paper" type="button">印刷用を開く</button>
+      </div>
+    </div>
+
+    <h2>問合せ件数（自動集計）</h2>
+    <div class="tw" style="margin-bottom:22px"><table>
+      <thead><tr>
+        <th>合計</th><th class="n">申込</th><th class="n">抽選</th><th class="n">払込用紙</th>
+        <th class="n">商品発送</th><th class="n">その他</th><th class="n">内 交換</th><th class="n">内 返金</th>
+      </tr></thead>
+      <tbody id="d-counts"></tbody>
+    </table></div>
+
+    <div class="grid g2">
+      <div>
+        <h2>出勤者 <span id="d-attn-n" style="letter-spacing:0"></span></h2>
+        <div class="tw"><table>
+          <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th class="n">受電件数</th></tr></thead>
+          <tbody id="d-attn"></tbody>
+        </table></div>
+      </div>
+      <div>
+        <h2>記述欄</h2>
+        <div class="card grid" style="gap:13px">
+          <div><label for="d-tokki">特記事項</label><textarea id="d-tokki"></textarea></div>
+          <div><label for="d-daitai">職員に代わった案件（概要）</label><textarea id="d-daitai"></textarea></div>
+          <div><label for="d-youbou">要望</label><textarea id="d-youbou"></textarea></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 帳票 ================= -->
+  <section class="screen" id="s-paper">
+    <h1>帳票プレビュー</h1>
+    <p class="lead">
+      現行「日報集計印刷用フォーム.xlsm ＞ 印刷用」シートの体裁をそのまま再現しています。
+      画面は角ゴシック、紙は明朝。値の出どころは受付記録ただ 1 つです。
+    </p>
+    <div class="row" style="margin-bottom:16px">
+      <div class="f-sm"><label for="p-date">対象日</label><input type="date" id="p-date"></div>
+    </div>
+    <div class="paper" id="paper"></div>
+  </section>
+
+  <!-- ================= 集計表 ================= -->
+  <section class="screen" id="s-sum">
+    <h1>集計表</h1>
+    <p class="lead">
+      日報とまったく同じデータから集計しています。
+      突き合わせの作業そのものが要らなくなります。
+    </p>
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="q-d1">開始日</label><input type="date" id="q-d1"></div>
+        <div class="f-sm"><label for="q-d2">終了日</label><input type="date" id="q-d2"></div>
+        <button class="btn q" id="q-w1" type="button">今週（8/24〜8/28）</button>
+        <button class="btn q" id="q-w0" type="button">先週（8/17〜8/21）</button>
+      </div>
+    </div>
+
+    <h2>日別</h2>
+    <div class="tw" style="margin-bottom:22px"><table>
+      <thead><tr><th>日付</th><th class="n">申込方法</th><th class="n">抽選結果</th>
+        <th class="n">納付書発送</th><th class="n">商品発送</th><th class="n">その他</th>
+        <th class="n">商品交換</th><th class="n">計</th></tr></thead>
+      <tbody id="q-days"></tbody>
+      <tfoot><tr id="q-foot"></tr></tfoot>
+    </table></div>
+
+    <div class="note warn">
+      <b>現行の集計表では、この表がずれていました。</b>
+      SUMIF の範囲が行ごとにバラバラで（月・火は <code>$A$8:$J$383</code>、
+      水・木は <code>$935</code>、金は <code>$428</code>）、データが 383 行を超えた時点で
+      月曜と火曜の合計だけが過少になります。実データは 379 行あり、あと数行で境界を越えるところでした。
+    </div>
+
+    <h2>明細</h2>
+    <div class="tw"><table>
+      <thead><tr><th>日付</th><th>担当者</th><th>ブロック</th><th>製品</th>
+        <th>区分</th><th>集計列</th><th class="n">件数</th></tr></thead>
+      <tbody id="q-rows"></tbody>
+    </table></div>
+    <p class="legend" id="q-count"></p>
+  </section>
+
+  <!-- ================= 入力もれ ================= -->
+  <section class="screen" id="s-check">
+    <h1>入力もれチェック</h1>
+    <p class="lead">
+      出勤登録があるのに、受付・業務のどちらも 1 件も入っていない担当者を出します。
+    </p>
+    <div class="row" style="margin-bottom:18px">
+      <div class="f-sm"><label for="c-date">対象日</label><input type="date" id="c-date"></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>コード</th><th>氏名</th><th></th></tr></thead>
+      <tbody id="c-rows"></tbody>
+    </table></div>
+
+    <div class="note">
+      <b>これが無かったために起きていたこと。</b>
+      現行の集計表を数えると、<b>堀・谷口・三宅・国森・西岡・福島・鈴木智</b> の 7 名は
+      1 行も出てきません。原因は担当者名の設定ミスと、
+      <code>005三宅記入用フォーム.xlsm</code> がフォルダに存在しないこと。
+      マクロは指示どおり動いているのでエラーも出ず、誰も気付けませんでした。
+    </div>
+  </section>
+
+  <!-- ================= マスタ ================= -->
+  <section class="screen" id="s-master">
+    <h1>マスタ保守</h1>
+    <p class="lead">
+      職員の入れ替わりが多いので、担当者は<b>削除せず在籍期間で管理</b>します。
+      退職日を入れると入力画面の候補から消えますが、過去の日報・集計表は
+      その方の名前のまま残ります。
+    </p>
+
+    <div class="note">
+      <b>試してみてください。</b>
+      下の表で誰かの「退職日」に 2026-08-01 を入れると、
+      受付入力の担当者リストからその方が消えます。集計表の過去データは変わりません。
+    </div>
+
+    <div class="tw"><table>
+      <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th>在籍開始</th>
+        <th>退職日</th><th>状態</th><th class="n">取込済</th></tr></thead>
+      <tbody id="ms-rows"></tbody>
+    </table></div>
+
+    <h2>移行時に手当てが必要なもの</h2>
+    <div class="tw"><table>
+      <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
+          <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
+              5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
+        <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
+          <td>現行データの担当者欄は「鈴木」という姓だけで、
+              015鈴木さんと 018鈴木智さんの区別が付きません。
+              015 の <code>B1</code> が「顧客G」だったことから、
+              この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
+        <tr><td>005 三宅</td><td class="n">0 行</td>
+          <td>記入用フォームの実体がフォルダにありません。
+              印刷用フォームは <code>externalLink9</code> で参照しているのに、
+              ファイルが無いため永久に集計されていませんでした</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</main>
+
+<footer>
+  電話応対日報 集計システム ― Web 版モックアップ。
+  データはこのページの中だけで動いており、保存されません。
+  実装は Access（デスクトップ）と Classic ASP（この画面）の 2 通りを用意しています。
+  どちらも同じ <code>.accdb</code> を見るので、混在させても数値は一致します。
+</footer>
+
+<script>
+var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6":"商品発送","7":"その他","8":"商品交換"},"blocks":{"1":"区分","2":"その他","3":"顧客情報","4":"イベント関係","5":"その他のその他①","6":"その他のその他②","7":"特殊な問合せ"},"prods":[{"id":0,"b":0,"n":"（製品指定なし）"},{"id":1,"b":1,"n":"ミント"},{"id":2,"b":1,"n":"通常プルーフ"},{"id":3,"b":1,"n":"通年（記念日・ジャパン）"},{"id":4,"b":1,"n":"国立公園記念貨"},{"id":5,"b":1,"n":"ドラゴンプルーフ・貨幣セット"},{"id":6,"b":1,"n":"鳥獣人物戯画貨幣セット"},{"id":7,"b":1,"n":"ＩＣＤＣメダル"},{"id":8,"b":1,"n":"桜の通り抜けプルーフ"},{"id":9,"b":1,"n":"桜の通り抜け貨幣セット"},{"id":10,"b":1,"n":"花のまわりみち貨幣セット"},{"id":11,"b":1,"n":"桜の通り抜け記念メダル"},{"id":12,"b":1,"n":"純金メダル-星座-"},{"id":13,"b":1,"n":"国宝章牌「鳥獣人物戯画」"},{"id":14,"b":1,"n":"干支メダル"},{"id":15,"b":1,"n":"アジア大会記念貨"},{"id":16,"b":1,"n":"コナンプルーフ・貨幣セット"},{"id":17,"b":1,"n":"昭和100年記念貨幣"},{"id":18,"b":1,"n":"七宝章牌「長浜曳山祭」"},{"id":24,"b":2,"n":"オリンピック記念貨(過去）"},{"id":25,"b":2,"n":"皇室関係記念貨(過去)"},{"id":26,"b":2,"n":"ミント"},{"id":27,"b":2,"n":"通常プルーフ"},{"id":28,"b":2,"n":"通年（記念日・ジャパン）"},{"id":29,"b":2,"n":"世界文化遺産セット"},{"id":30,"b":2,"n":"ＩＣＤＣメダル"},{"id":31,"b":2,"n":"干支メダル"},{"id":32,"b":2,"n":"純金メダル-星座-"},{"id":33,"b":2,"n":"万博記念貨"},{"id":34,"b":2,"n":"国立公園記念貨"},{"id":35,"b":2,"n":"万博メダル(過去）"},{"id":36,"b":2,"n":"世界陸上プルーフ貨幣セット"},{"id":37,"b":2,"n":"鳥獣人物戯画ケース"},{"id":38,"b":2,"n":"地方自治千円銀貨幣"}],"kubun":[{"id":1,"b":1,"n":"申込関係","c":3,"old":""},{"id":2,"b":1,"n":"受注","c":3,"old":"受注"},{"id":3,"b":1,"n":"抽選結果","c":4,"old":""},{"id":4,"b":1,"n":"払込用紙・再発行・可","c":5,"old":"払込用紙再発行（可）"},{"id":5,"b":1,"n":"払込用紙・再発行・不可","c":5,"old":"払込用紙再発行（不可）"},{"id":6,"b":1,"n":"払込用紙・内容等・照会","c":5,"old":"払込用紙内容照会"},{"id":7,"b":1,"n":"払込用紙・発送状況・照会","c":5,"old":"払込用紙発送状況"},{"id":8,"b":1,"n":"入金関係","c":7,"old":"入金関係"},{"id":9,"b":1,"n":"商品発送照会・問合せ","c":6,"old":"商品発送問合せ"},{"id":10,"b":1,"n":"商品発送照会・未着","c":6,"old":"商品発送受領照会"},{"id":11,"b":1,"n":"製品交換","c":8,"old":"製品交換"},{"id":12,"b":2,"n":"販売予定","c":7,"old":"販売予定"},{"id":13,"b":2,"n":"製品内容","c":7,"old":"製品内容"},{"id":14,"b":2,"n":"在庫照会","c":7,"old":"在庫照会"},{"id":15,"b":2,"n":"価格照会","c":7,"old":"価格照会"},{"id":23,"b":3,"n":"ＤＭ停止等・死亡","c":7,"old":"ＤＭ停止(①死亡)"},{"id":24,"b":3,"n":"ＤＭ停止等・病気等","c":7,"old":"ＤＭ停止(②病気等)"},{"id":25,"b":3,"n":"ＤＭ停止等・種類多い","c":7,"old":"ＤＭ停止(③種類多い)"},{"id":26,"b":3,"n":"ＤＭ停止等・特定商品のみ","c":7,"old":"ＤＭ停止(④特定商品のみ)"},{"id":27,"b":3,"n":"ＤＭ停止等・理由なし","c":7,"old":"ＤＭ停止(⑤理由なし)"},{"id":28,"b":3,"n":"ＤＭ再開・宛名人変更","c":7,"old":"ＤＭ再開・宛名人変更"},{"id":29,"b":3,"n":"ＤＭ確認","c":7,"old":"ＤＭ確認"},{"id":30,"b":3,"n":"住所変更","c":7,"old":"住所変更"},{"id":31,"b":3,"n":"新規登録","c":7,"old":"新規登録"},{"id":32,"b":3,"n":"資料送付","c":7,"old":"資料送付"},{"id":33,"b":3,"n":"購入履歴","c":7,"old":"購入履歴"},{"id":34,"b":4,"n":"お金と切手","c":7,"old":"イベント関係（お金と切手）"},{"id":35,"b":4,"n":"宇佐神宮","c":7,"old":"イベント関係（造幣局 ＩＮ）"},{"id":36,"b":4,"n":"桜の通り抜け","c":7,"old":"イベント関係（桜の通り抜け）"},{"id":37,"b":4,"n":"花のまわり道","c":7,"old":"イベント関係（まわり道）"},{"id":38,"b":4,"n":"ＴＩＣＣ","c":7,"old":"イベント関係（TICC）"},{"id":39,"b":4,"n":"国体","c":7,"old":"イベント関係（国体）"},{"id":40,"b":4,"n":"大阪コインショー","c":7,"old":"イベント関係（大阪コイン）"},{"id":41,"b":4,"n":"さいたまフェア","c":7,"old":"イベント関係（さいたまフェア）"},{"id":42,"b":4,"n":"佐伯区民まつり","c":7,"old":"イベント関係（名古屋貨幣まつり）"},{"id":43,"b":4,"n":"観桜会","c":7,"old":"イベント関係（観桜会の電話転送）"},{"id":44,"b":4,"n":"アンケート","c":7,"old":"イベント関係（予備）"},{"id":45,"b":5,"n":"オンライン登録関係","c":7,"old":"オンライン登録関係"},{"id":46,"b":5,"n":"クレジット関係","c":7,"old":"クレジット関係"},{"id":47,"b":5,"n":"金工品Ｇ関係","c":7,"old":"金工品Ｇへ電話転送"},{"id":48,"b":5,"n":"広報（工場見学含む）","c":7,"old":"広報室（工場見学含む）"},{"id":49,"b":5,"n":"ミントショップ案内","c":7,"old":"ミントショップ案内"},{"id":50,"b":5,"n":"金工品懇談会","c":7,"old":"桜サポート"},{"id":51,"b":5,"n":"流通貨幣関係","c":7,"old":"流通貨幣関係"},{"id":52,"b":5,"n":"紙幣関係","c":7,"old":"紙幣関係"},{"id":53,"b":5,"n":"ミントクラブ関係","c":7,"old":"ミントクラブ関係"},{"id":54,"b":5,"n":"1円ぬいぐるみ","c":7,"old":"1円ぬいぐるみ"},{"id":55,"b":5,"n":"記念貨引換関係","c":7,"old":"記念貨引換関係"},{"id":56,"b":6,"n":"返 品","c":7,"old":"返品"},{"id":57,"b":6,"n":"返 金","c":7,"old":"返金"},{"id":61,"b":6,"n":"貨幣ｾｯﾄ処分関係","c":7,"old":"貨幣ｾｯﾄ処分関係"},{"id":62,"b":6,"n":"貨幣洗浄方法","c":7,"old":"貨幣洗浄方法"},{"id":63,"b":6,"n":"名称未確定製品予定","c":7,"old":"名称未確定製品"},{"id":64,"b":6,"n":"業者販売関係","c":7,"old":"業者販売関係"},{"id":65,"b":6,"n":"抽選倍率等(過去）","c":7,"old":"抽選倍率等"},{"id":67,"b":7,"n":"別添のとおり","c":7,"old":"特殊な問合せ"},{"id":68,"b":7,"n":"下記のとおり（別添不要）","c":7,"old":"特殊な問合せ"}],"ops":[{"id":1,"code":"001","sei":"髙嶋","name":"髙嶋 名保美","kbn":"パート","note":"","bad":false,"on":true},{"id":2,"code":"002","sei":"堀","name":"堀 真澄","kbn":"パート","note":"","bad":true,"on":true},{"id":3,"code":"003","sei":"三原","name":"三原 多恵子","kbn":"パート","note":"","bad":false,"on":true},{"id":4,"code":"004","sei":"谷口","name":"谷口 友佳子","kbn":"パート","note":"","bad":true,"on":true},{"id":5,"code":"006","sei":"国森","name":"国森 紀子","kbn":"パート","note":"","bad":true,"on":true},{"id":6,"code":"007","sei":"山口","name":"山口 恵子","kbn":"パート","note":"","bad":false,"on":true},{"id":7,"code":"008","sei":"逢坂","name":"逢坂 江里加","kbn":"パート","note":"","bad":false,"on":true},{"id":8,"code":"009","sei":"西岡","name":"西岡 由美子","kbn":"パート","note":"","bad":true,"on":true},{"id":9,"code":"010","sei":"石原","name":"石原 裕子","kbn":"パート","note":"","bad":false,"on":true},{"id":10,"code":"011","sei":"石井","name":"石井 淳子","kbn":"パート","note":"","bad":false,"on":true},{"id":11,"code":"012","sei":"髙橋","name":"髙橋 理恵子","kbn":"パート","note":"","bad":false,"on":true},{"id":12,"code":"013","sei":"予備","name":"予備","kbn":"パート","note":"","bad":false,"on":false},{"id":13,"code":"014","sei":"福島","name":"福島","kbn":"パート","note":"","bad":true,"on":true},{"id":14,"code":"015","sei":"鈴木","name":"鈴木","kbn":"パート","note":"","bad":true,"on":true},{"id":15,"code":"016","sei":"小澤","name":"小澤 朋子","kbn":"パート","note":"","bad":false,"on":true},{"id":16,"code":"017","sei":"寺本","name":"寺本 法子","kbn":"パート","note":"","bad":false,"on":true},{"id":17,"code":"018","sei":"鈴木智","name":"鈴木 智子","kbn":"パート","note":"","bad":false,"on":true},{"id":18,"code":"100","sei":"顧客Ｇ","name":"顧客G","kbn":"職員","note":"","bad":false,"on":true}],"tasks":[{"id":1,"n":"①　受注入力"},{"id":2,"n":"②　受注チェック"},{"id":3,"n":"③　戻り郵便処理／払込書チェック"},{"id":4,"n":"④　ＤＭ処理／戻り郵便"},{"id":5,"n":"⑤　架電"},{"id":6,"n":"⑥　その他（　　　　　　　　）"},{"id":7,"n":"⑦　エクセル入力"},{"id":8,"n":"⑧　エクセルチェック"},{"id":9,"n":"⑨　アンケート入力"},{"id":10,"n":"⑩　ﾊｶﾞｷﾃﾞｰﾀ入力"},{"id":11,"n":"⑪　ハガキデータチェック"},{"id":12,"n":"⑫　新規ｺｰﾄﾞ取り"},{"id":13,"n":"⑬　顧客整理"}],"juden":[{"d":"2026-08-17","o":1,"k":3,"p":4,"c":1},{"d":"2026-08-17","o":1,"k":9,"p":4,"c":4},{"d":"2026-08-17","o":1,"k":5,"p":5,"c":1},{"d":"2026-08-17","o":1,"k":4,"p":6,"c":1},{"d":"2026-08-17","o":1,"k":1,"p":12,"c":1},{"d":"2026-08-17","o":1,"k":12,"p":0,"c":2},{"d":"2026-08-17","o":1,"k":33,"p":0,"c":1},{"d":"2026-08-17","o":3,"k":1,"p":4,"c":1},{"d":"2026-08-17","o":3,"k":9,"p":4,"c":2},{"d":"2026-08-17","o":3,"k":3,"p":15,"c":2},{"d":"2026-08-17","o":3,"k":1,"p":16,"c":1},{"d":"2026-08-17","o":3,"k":3,"p":16,"c":1},{"d":"2026-08-17","o":3,"k":12,"p":0,"c":2},{"d":"2026-08-17","o":3,"k":45,"p":0,"c":1},{"d":"2026-08-17","o":10,"k":1,"p":3,"c":1},{"d":"2026-08-17","o":10,"k":4,"p":4,"c":1},{"d":"2026-08-17","o":10,"k":9,"p":4,"c":3},{"d":"2026-08-17","o":10,"k":1,"p":9,"c":1},{"d":"2026-08-17","o":10,"k":3,"p":15,"c":1},{"d":"2026-08-17","o":10,"k":3,"p":16,"c":1},{"d":"2026-08-17","o":10,"k":13,"p":26,"c":1},{"d":"2026-08-17","o":10,"k":12,"p":0,"c":1},{"d":"2026-08-17","o":10,"k":23,"p":0,"c":1},{"d":"2026-08-17","o":11,"k":2,"p":3,"c":1},{"d":"2026-08-17","o":11,"k":3,"p":4,"c":1},{"d":"2026-08-17","o":11,"k":9,"p":4,"c":3},{"d":"2026-08-17","o":11,"k":3,"p":15,"c":2},{"d":"2026-08-17","o":11,"k":13,"p":25,"c":1},{"d":"2026-08-17","o":16,"k":1,"p":3,"c":2},{"d":"2026-08-17","o":16,"k":9,"p":4,"c":1},{"d":"2026-08-17","o":16,"k":9,"p":11,"c":1},{"d":"2026-08-17","o":16,"k":1,"p":15,"c":1},{"d":"2026-08-17","o":16,"k":3,"p":15,"c":1},{"d":"2026-08-17","o":16,"k":12,"p":0,"c":3},{"d":"2026-08-17","o":16,"k":24,"p":0,"c":1},{"d":"2026-08-17","o":16,"k":30,"p":0,"c":1},{"d":"2026-08-17","o":18,"k":3,"p":16,"c":1},{"d":"2026-08-17","o":18,"k":12,"p":0,"c":1},{"d":"2026-08-17","o":18,"k":49,"p":0,"c":1},{"d":"2026-08-18","o":1,"k":9,"p":1,"c":1},{"d":"2026-08-18","o":1,"k":9,"p":4,"c":1},{"d":"2026-08-18","o":1,"k":3,"p":16,"c":1},{"d":"2026-08-18","o":1,"k":12,"p":0,"c":2},{"d":"2026-08-18","o":3,"k":1,"p":1,"c":1},{"d":"2026-08-18","o":3,"k":2,"p":1,"c":1},{"d":"2026-08-18","o":3,"k":4,"p":1,"c":1},{"d":"2026-08-18","o":3,"k":9,"p":1,"c":1},{"d":"2026-08-18","o":3,"k":3,"p":16,"c":1},{"d":"2026-08-18","o":3,"k":13,"p":0,"c":1},{"d":"2026-08-18","o":6,"k":1,"p":3,"c":1},{"d":"2026-08-18","o":6,"k":1,"p":15,"c":1},{"d":"2026-08-18","o":6,"k":3,"p":15,"c":1},{"d":"2026-08-18","o":6,"k":30,"p":0,"c":1},{"d":"2026-08-18","o":6,"k":31,"p":0,"c":1},{"d":"2026-08-18","o":15,"k":1,"p":4,"c":1},{"d":"2026-08-18","o":15,"k":3,"p":4,"c":1},{"d":"2026-08-18","o":15,"k":9,"p":4,"c":5},{"d":"2026-08-18","o":14,"k":2,"p":3,"c":1},{"d":"2026-08-18","o":14,"k":9,"p":4,"c":1},{"d":"2026-08-18","o":14,"k":11,"p":6,"c":1},{"d":"2026-08-18","o":14,"k":3,"p":15,"c":1},{"d":"2026-08-18","o":14,"k":12,"p":0,"c":2},{"d":"2026-08-18","o":14,"k":27,"p":0,"c":1},{"d":"2026-08-18","o":18,"k":9,"p":4,"c":1},{"d":"2026-08-18","o":18,"k":12,"p":0,"c":3},{"d":"2026-08-19","o":1,"k":3,"p":4,"c":2},{"d":"2026-08-19","o":1,"k":9,"p":4,"c":3},{"d":"2026-08-19","o":1,"k":3,"p":5,"c":1},{"d":"2026-08-19","o":1,"k":1,"p":17,"c":4},{"d":"2026-08-19","o":6,"k":2,"p":1,"c":1},{"d":"2026-08-19","o":6,"k":2,"p":3,"c":1},{"d":"2026-08-19","o":6,"k":9,"p":4,"c":3},{"d":"2026-08-19","o":6,"k":1,"p":17,"c":5},{"d":"2026-08-19","o":6,"k":14,"p":0,"c":1},{"d":"2026-08-19","o":7,"k":9,"p":4,"c":2},{"d":"2026-08-19","o":7,"k":3,"p":15,"c":3},{"d":"2026-08-19","o":7,"k":1,"p":17,"c":3},{"d":"2026-08-19","o":9,"k":1,"p":2,"c":1},{"d":"2026-08-19","o":9,"k":9,"p":4,"c":1},{"d":"2026-08-19","o":9,"k":3,"p":16,"c":2},{"d":"2026-08-19","o":9,"k":1,"p":17,"c":3},{"d":"2026-08-19","o":9,"k":13,"p":0,"c":1},{"d":"2026-08-19","o":9,"k":24,"p":0,"c":1},{"d":"2026-08-19","o":11,"k":4,"p":3,"c":1},{"d":"2026-08-19","o":11,"k":9,"p":4,"c":2},{"d":"2026-08-19","o":11,"k":1,"p":17,"c":4},{"d":"2026-08-19","o":11,"k":31,"p":0,"c":1},{"d":"2026-08-19","o":18,"k":1,"p":17,"c":2},{"d":"2026-08-19","o":18,"k":55,"p":0,"c":1},{"d":"2026-08-20","o":3,"k":2,"p":2,"c":1},{"d":"2026-08-20","o":3,"k":2,"p":3,"c":1},{"d":"2026-08-20","o":3,"k":9,"p":4,"c":2},{"d":"2026-08-20","o":3,"k":8,"p":4,"c":1},{"d":"2026-08-20","o":3,"k":4,"p":6,"c":1},{"d":"2026-08-20","o":3,"k":8,"p":12,"c":1},{"d":"2026-08-20","o":3,"k":3,"p":15,"c":1},{"d":"2026-08-20","o":3,"k":1,"p":17,"c":6},{"d":"2026-08-20","o":3,"k":29,"p":0,"c":4},{"d":"2026-08-20","o":6,"k":2,"p":3,"c":1},{"d":"2026-08-20","o":6,"k":9,"p":4,"c":1},{"d":"2026-08-20","o":6,"k":3,"p":16,"c":1},{"d":"2026-08-20","o":6,"k":1,"p":17,"c":11},{"d":"2026-08-20","o":6,"k":14,"p":0,"c":1},{"d":"2026-08-20","o":7,"k":9,"p":4,"c":1},{"d":"2026-08-20","o":7,"k":3,"p":16,"c":1},{"d":"2026-08-20","o":7,"k":1,"p":17,"c":11},{"d":"2026-08-20","o":7,"k":45,"p":0,"c":2},{"d":"2026-08-20","o":10,"k":9,"p":1,"c":1},{"d":"2026-08-20","o":10,"k":9,"p":4,"c":2},{"d":"2026-08-20","o":10,"k":3,"p":15,"c":1},{"d":"2026-08-20","o":10,"k":1,"p":17,"c":10},{"d":"2026-08-20","o":10,"k":27,"p":0,"c":1},{"d":"2026-08-20","o":10,"k":33,"p":0,"c":1},{"d":"2026-08-20","o":10,"k":39,"p":0,"c":1},{"d":"2026-08-20","o":10,"k":45,"p":0,"c":2},{"d":"2026-08-20","o":16,"k":4,"p":1,"c":1},{"d":"2026-08-20","o":16,"k":3,"p":4,"c":1},{"d":"2026-08-20","o":16,"k":9,"p":4,"c":1},{"d":"2026-08-20","o":16,"k":9,"p":6,"c":1},{"d":"2026-08-20","o":16,"k":3,"p":15,"c":1},{"d":"2026-08-20","o":16,"k":1,"p":17,"c":9},{"d":"2026-08-20","o":16,"k":27,"p":0,"c":1},{"d":"2026-08-20","o":16,"k":62,"p":0,"c":1},{"d":"2026-08-20","o":18,"k":1,"p":17,"c":7},{"d":"2026-08-20","o":18,"k":29,"p":0,"c":3},{"d":"2026-08-20","o":18,"k":45,"p":0,"c":1},{"d":"2026-08-21","o":7,"k":5,"p":4,"c":1},{"d":"2026-08-21","o":7,"k":3,"p":16,"c":1},{"d":"2026-08-21","o":7,"k":1,"p":17,"c":11},{"d":"2026-08-21","o":7,"k":23,"p":0,"c":3},{"d":"2026-08-21","o":7,"k":27,"p":0,"c":4},{"d":"2026-08-21","o":7,"k":28,"p":0,"c":1},{"d":"2026-08-21","o":7,"k":45,"p":0,"c":1},{"d":"2026-08-21","o":7,"k":55,"p":0,"c":1},{"d":"2026-08-21","o":9,"k":2,"p":1,"c":1},{"d":"2026-08-21","o":9,"k":9,"p":1,"c":1},{"d":"2026-08-21","o":9,"k":9,"p":12,"c":1},{"d":"2026-08-21","o":9,"k":3,"p":15,"c":1},{"d":"2026-08-21","o":9,"k":7,"p":15,"c":1},{"d":"2026-08-21","o":9,"k":3,"p":16,"c":2},{"d":"2026-08-21","o":9,"k":1,"p":17,"c":13},{"d":"2026-08-21","o":9,"k":14,"p":30,"c":1},{"d":"2026-08-21","o":9,"k":23,"p":0,"c":3},{"d":"2026-08-21","o":9,"k":27,"p":0,"c":3},{"d":"2026-08-21","o":9,"k":39,"p":0,"c":1},{"d":"2026-08-21","o":9,"k":45,"p":0,"c":1},{"d":"2026-08-21","o":9,"k":51,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":1,"p":3,"c":1},{"d":"2026-08-21","o":11,"k":3,"p":4,"c":1},{"d":"2026-08-21","o":11,"k":9,"p":4,"c":1},{"d":"2026-08-21","o":11,"k":9,"p":11,"c":1},{"d":"2026-08-21","o":11,"k":3,"p":15,"c":1},{"d":"2026-08-21","o":11,"k":1,"p":17,"c":7},{"d":"2026-08-21","o":11,"k":23,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":27,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":30,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":39,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":45,"p":0,"c":1},{"d":"2026-08-21","o":11,"k":51,"p":0,"c":1},{"d":"2026-08-21","o":15,"k":2,"p":1,"c":1},{"d":"2026-08-21","o":15,"k":1,"p":4,"c":1},{"d":"2026-08-21","o":15,"k":1,"p":16,"c":1},{"d":"2026-08-21","o":15,"k":3,"p":16,"c":2},{"d":"2026-08-21","o":15,"k":1,"p":17,"c":8},{"d":"2026-08-21","o":15,"k":23,"p":0,"c":5},{"d":"2026-08-21","o":15,"k":27,"p":0,"c":1},{"d":"2026-08-21","o":15,"k":28,"p":0,"c":1},{"d":"2026-08-21","o":15,"k":31,"p":0,"c":2},{"d":"2026-08-21","o":15,"k":45,"p":0,"c":1},{"d":"2026-08-21","o":14,"k":2,"p":3,"c":1},{"d":"2026-08-21","o":14,"k":6,"p":4,"c":1},{"d":"2026-08-21","o":14,"k":9,"p":4,"c":1},{"d":"2026-08-21","o":14,"k":7,"p":11,"c":1},{"d":"2026-08-21","o":14,"k":9,"p":12,"c":1},{"d":"2026-08-21","o":14,"k":3,"p":15,"c":2},{"d":"2026-08-21","o":14,"k":3,"p":16,"c":2},{"d":"2026-08-21","o":14,"k":1,"p":17,"c":7},{"d":"2026-08-21","o":14,"k":23,"p":0,"c":2},{"d":"2026-08-21","o":14,"k":27,"p":0,"c":1},{"d":"2026-08-21","o":14,"k":45,"p":0,"c":2},{"d":"2026-08-21","o":14,"k":46,"p":0,"c":1},{"d":"2026-08-21","o":14,"k":55,"p":0,"c":1},{"d":"2026-08-21","o":18,"k":3,"p":15,"c":1},{"d":"2026-08-21","o":18,"k":3,"p":16,"c":3},{"d":"2026-08-21","o":18,"k":1,"p":17,"c":6},{"d":"2026-08-24","o":3,"k":5,"p":4,"c":1},{"d":"2026-08-24","o":3,"k":5,"p":5,"c":1},{"d":"2026-08-24","o":3,"k":9,"p":6,"c":1},{"d":"2026-08-24","o":3,"k":3,"p":16,"c":1},{"d":"2026-08-24","o":3,"k":1,"p":17,"c":8},{"d":"2026-08-24","o":3,"k":13,"p":27,"c":1},{"d":"2026-08-24","o":3,"k":23,"p":0,"c":4},{"d":"2026-08-24","o":3,"k":26,"p":0,"c":1},{"d":"2026-08-24","o":3,"k":27,"p":0,"c":3},{"d":"2026-08-24","o":3,"k":29,"p":0,"c":1},{"d":"2026-08-24","o":6,"k":9,"p":4,"c":1},{"d":"2026-08-24","o":6,"k":2,"p":10,"c":1},{"d":"2026-08-24","o":6,"k":9,"p":12,"c":1},{"d":"2026-08-24","o":6,"k":3,"p":16,"c":4},{"d":"2026-08-24","o":6,"k":1,"p":17,"c":8},{"d":"2026-08-24","o":6,"k":23,"p":0,"c":1},{"d":"2026-08-24","o":6,"k":26,"p":0,"c":1},{"d":"2026-08-24","o":6,"k":46,"p":0,"c":1},{"d":"2026-08-24","o":7,"k":3,"p":4,"c":1},{"d":"2026-08-24","o":7,"k":3,"p":16,"c":1},{"d":"2026-08-24","o":7,"k":1,"p":17,"c":8},{"d":"2026-08-24","o":7,"k":15,"p":38,"c":1},{"d":"2026-08-24","o":7,"k":23,"p":0,"c":3},{"d":"2026-08-24","o":7,"k":24,"p":0,"c":1},{"d":"2026-08-24","o":7,"k":27,"p":0,"c":2},{"d":"2026-08-24","o":9,"k":1,"p":3,"c":1},{"d":"2026-08-24","o":9,"k":1,"p":4,"c":1},{"d":"2026-08-24","o":9,"k":3,"p":4,"c":2},{"d":"2026-08-24","o":9,"k":9,"p":4,"c":1},{"d":"2026-08-24","o":9,"k":1,"p":12,"c":1},{"d":"2026-08-24","o":9,"k":1,"p":15,"c":1},{"d":"2026-08-24","o":9,"k":3,"p":15,"c":1},{"d":"2026-08-24","o":9,"k":3,"p":16,"c":1},{"d":"2026-08-24","o":9,"k":1,"p":17,"c":3},{"d":"2026-08-24","o":9,"k":12,"p":32,"c":1},{"d":"2026-08-24","o":9,"k":23,"p":0,"c":1},{"d":"2026-08-24","o":9,"k":24,"p":0,"c":1},{"d":"2026-08-24","o":9,"k":27,"p":0,"c":2},{"d":"2026-08-24","o":9,"k":29,"p":0,"c":2},{"d":"2026-08-24","o":9,"k":30,"p":0,"c":2},{"d":"2026-08-24","o":9,"k":45,"p":0,"c":1},{"d":"2026-08-24","o":10,"k":9,"p":2,"c":1},{"d":"2026-08-24","o":10,"k":1,"p":3,"c":1},{"d":"2026-08-24","o":10,"k":2,"p":3,"c":1},{"d":"2026-08-24","o":10,"k":3,"p":4,"c":1},{"d":"2026-08-24","o":10,"k":3,"p":5,"c":1},{"d":"2026-08-24","o":10,"k":9,"p":5,"c":1},{"d":"2026-08-24","o":10,"k":3,"p":15,"c":2},{"d":"2026-08-24","o":10,"k":3,"p":16,"c":2},{"d":"2026-08-24","o":10,"k":1,"p":17,"c":7},{"d":"2026-08-24","o":10,"k":23,"p":0,"c":1},{"d":"2026-08-24","o":10,"k":24,"p":0,"c":2},{"d":"2026-08-24","o":10,"k":27,"p":0,"c":2},{"d":"2026-08-24","o":10,"k":28,"p":0,"c":1},{"d":"2026-08-24","o":10,"k":63,"p":0,"c":1},{"d":"2026-08-24","o":11,"k":3,"p":4,"c":1},{"d":"2026-08-24","o":11,"k":3,"p":15,"c":1},{"d":"2026-08-24","o":11,"k":3,"p":16,"c":1},{"d":"2026-08-24","o":11,"k":1,"p":17,"c":8},{"d":"2026-08-24","o":11,"k":23,"p":0,"c":1},{"d":"2026-08-24","o":11,"k":24,"p":0,"c":1},{"d":"2026-08-24","o":11,"k":27,"p":0,"c":5},{"d":"2026-08-24","o":11,"k":29,"p":0,"c":1},{"d":"2026-08-24","o":11,"k":30,"p":0,"c":1},{"d":"2026-08-24","o":11,"k":45,"p":0,"c":1},{"d":"2026-08-24","o":18,"k":1,"p":17,"c":3},{"d":"2026-08-24","o":18,"k":29,"p":0,"c":1},{"d":"2026-08-25","o":1,"k":3,"p":4,"c":1},{"d":"2026-08-25","o":1,"k":3,"p":15,"c":1},{"d":"2026-08-25","o":1,"k":3,"p":16,"c":3},{"d":"2026-08-25","o":1,"k":1,"p":17,"c":9},{"d":"2026-08-25","o":1,"k":23,"p":0,"c":1},{"d":"2026-08-25","o":1,"k":27,"p":0,"c":7},{"d":"2026-08-25","o":1,"k":30,"p":0,"c":1},{"d":"2026-08-25","o":1,"k":45,"p":0,"c":1},{"d":"2026-08-25","o":1,"k":64,"p":0,"c":1},{"d":"2026-08-25","o":9,"k":2,"p":3,"c":1},{"d":"2026-08-25","o":9,"k":1,"p":4,"c":1},{"d":"2026-08-25","o":9,"k":9,"p":4,"c":1},{"d":"2026-08-25","o":9,"k":1,"p":16,"c":2},{"d":"2026-08-25","o":9,"k":1,"p":17,"c":9},{"d":"2026-08-25","o":9,"k":13,"p":34,"c":1},{"d":"2026-08-25","o":9,"k":23,"p":0,"c":2},{"d":"2026-08-25","o":9,"k":27,"p":0,"c":2},{"d":"2026-08-25","o":9,"k":30,"p":0,"c":3},{"d":"2026-08-25","o":9,"k":64,"p":0,"c":1},{"d":"2026-08-25","o":10,"k":3,"p":4,"c":2},{"d":"2026-08-25","o":10,"k":9,"p":4,"c":1},{"d":"2026-08-25","o":10,"k":3,"p":15,"c":1},{"d":"2026-08-25","o":10,"k":1,"p":16,"c":1},{"d":"2026-08-25","o":10,"k":3,"p":16,"c":2},{"d":"2026-08-25","o":10,"k":1,"p":17,"c":2},{"d":"2026-08-25","o":10,"k":23,"p":0,"c":2},{"d":"2026-08-25","o":10,"k":24,"p":0,"c":1},{"d":"2026-08-25","o":10,"k":26,"p":0,"c":4},{"d":"2026-08-25","o":10,"k":27,"p":0,"c":7},{"d":"2026-08-25","o":10,"k":45,"p":0,"c":1},{"d":"2026-08-25","o":16,"k":9,"p":3,"c":1},{"d":"2026-08-25","o":16,"k":3,"p":4,"c":1},{"d":"2026-08-25","o":16,"k":3,"p":5,"c":1},{"d":"2026-08-25","o":16,"k":3,"p":15,"c":1},{"d":"2026-08-25","o":16,"k":1,"p":17,"c":6},{"d":"2026-08-25","o":16,"k":13,"p":34,"c":1},{"d":"2026-08-25","o":16,"k":23,"p":0,"c":3},{"d":"2026-08-25","o":16,"k":24,"p":0,"c":1},{"d":"2026-08-25","o":16,"k":27,"p":0,"c":4},{"d":"2026-08-25","o":16,"k":29,"p":0,"c":1},{"d":"2026-08-25","o":16,"k":30,"p":0,"c":1},{"d":"2026-08-25","o":16,"k":61,"p":0,"c":1},{"d":"2026-08-25","o":14,"k":3,"p":4,"c":1},{"d":"2026-08-25","o":14,"k":1,"p":16,"c":1},{"d":"2026-08-25","o":14,"k":1,"p":17,"c":8},{"d":"2026-08-25","o":14,"k":14,"p":34,"c":1},{"d":"2026-08-25","o":14,"k":23,"p":0,"c":5},{"d":"2026-08-25","o":14,"k":24,"p":0,"c":1},{"d":"2026-08-25","o":14,"k":26,"p":0,"c":1},{"d":"2026-08-25","o":14,"k":27,"p":0,"c":2},{"d":"2026-08-25","o":14,"k":30,"p":0,"c":1},{"d":"2026-08-25","o":14,"k":45,"p":0,"c":2},{"d":"2026-08-25","o":18,"k":1,"p":4,"c":1},{"d":"2026-08-25","o":18,"k":49,"p":0,"c":1}],"nippou":{"2026-08-25":{"kaisen":5,"tokki":"昭和100年記念貨幣の抽選結果について、発表日の問合せが集中した。","daitai":"支払方法の変更依頼 1 件を職員が対応。","youbou":"抽選結果の発表日をハガキにも明記していただけると、問合せが減ると思われます。"}}};
+</script>
+<script>
+(function () {
+  "use strict";
+
+  // ---- 索引 ---------------------------------------------------------------
+  var opById = {}, kbById = {}, prById = {};
+  D.ops.forEach(function (o) { opById[o.id] = o; });
+  D.kubun.forEach(function (k) { kbById[k.id] = k; });
+  D.prods.forEach(function (p) { prById[p.id] = p; });
+  var KB_RETURN = (D.kubun.filter(function (k) { return k.old === "返金"; })[0] || {}).id;
+
+  // ---- 状態 (このページの中だけ。保存はしない) ------------------------------
+  var S = {
+    juden: D.juden.slice(),
+    nippou: JSON.parse(JSON.stringify(D.nippou)),
+    attend: {},
+    retired: {},
+    date: "2026-08-25",
+    op: 10
+  };
+  S.juden.forEach(function (r) { S.attend[r.d + "|" + r.o] = true; });
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, txt) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  function fmt(d) {
+    var w = "日月火水木金土"[new Date(d + "T00:00:00").getDay()];
+    return d.replace(/-/g, "/") + "（" + w + "）";
+  }
+  function wareki(d) {
+    var t = new Date(d + "T00:00:00"), y = t.getFullYear();
+    var g = y >= 2019 ? ["令和", y - 2018] : ["平成", y - 1988];
+    return g[0] + "　" + g[1] + "年　" + (t.getMonth() + 1) + "月　" + t.getDate() +
+      "日（" + "日月火水木金土"[t.getDay()] + "）";
+  }
+  function rowsOn(d) { return S.juden.filter(function (r) { return r.d === d; }); }
+
+  // 現役の担当者。退職日を入れた人はここから外れるが、過去データは触らない。
+  function activeOps(d) {
+    return D.ops.filter(function (o) {
+      if (!o.on) return false;
+      var end = S.retired[o.id];
+      return !end || end >= d;
+    });
+  }
+
+  // ---- 集計 (日報も集計表もここを通る。経路が 1 本しかない) -----------------
+  function tally(d) {
+    var t = { 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, total: 0, ret: 0, staff: {} };
+    [3, 4, 5, 6, 7, 8].forEach(function (c) { t.staff[c] = 0; });
+    t.staff.total = 0;
+    rowsOn(d).forEach(function (r) {
+      var k = kbById[r.k], o = opById[r.o];
+      if (!k) return;
+      t[k.c] += r.c;
+      t.total += r.c;
+      if (r.k === KB_RETURN) t.ret += r.c;
+      if (o && o.kbn === "職員") { t.staff[k.c] += r.c; t.staff.total += r.c; }
+    });
+    // 帳票の欄への割り当て。現行 印刷用シート 18 行目の数式から復元したもの。
+    t.moushikomi = t[3]; t.chusen = t[4]; t.haraikomi = t[5];
+    t.hassou = t[6]; t.sonota = t[7] + t[8]; t.kokan = t[8];
+    t.s_moushikomi = t.staff[3]; t.s_chusen = t.staff[4]; t.s_haraikomi = t.staff[5];
+    t.s_hassou = t.staff[6]; t.s_sonota = t.staff[7] + t.staff[8];
+    return t;
+  }
+
+  function attendees(d) {
+    return D.ops.filter(function (o) { return S.attend[d + "|" + o.id]; });
+  }
+  function missing(d) {
+    return attendees(d).filter(function (o) {
+      return !S.juden.some(function (r) { return r.d === d && r.o === o.id && r.c; });
+    });
+  }
+  function nippou(d) {
+    if (!S.nippou[d]) S.nippou[d] = { kaisen: 5, tokki: "", daitai: "", youbou: "", state: "入力中" };
+    if (!S.nippou[d].state) S.nippou[d].state = "入力中";
+    return S.nippou[d];
+  }
+
+  // ---- 画面切替 -----------------------------------------------------------
+  function show(name) {
+    Array.prototype.forEach.call(document.querySelectorAll(".screen"), function (s) {
+      s.classList.toggle("on", s.id === "s-" + name);
+    });
+    Array.prototype.forEach.call($("nav").children, function (b) {
+      if (b.dataset.s === name) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
+    });
+    render();
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  $("nav").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-s]");
+    if (b) show(b.dataset.s);
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-go]");
+    if (b) show(b.dataset.go);
+  });
+
+  // ---- テーマ -------------------------------------------------------------
+  $("themetog").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = cur ? cur === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  // ---- 選択肢 -------------------------------------------------------------
+  function fillOps(sel, d, keep) {
+    sel.innerHTML = "";
+    activeOps(d).forEach(function (o) {
+      var op = el("option", null, o.code + "　" + o.name);
+      op.value = o.id;
+      sel.appendChild(op);
+    });
+    if (keep && sel.querySelector('option[value="' + keep + '"]')) sel.value = keep;
+    else if (sel.options.length) S.op = +sel.value;
+  }
+  (function fillStatic() {
+    var kb = $("e-kb");
+    D.kubun.forEach(function (k) {
+      var o = el("option", null, D.blocks[k.b] + " / " + k.n);
+      o.value = k.id;
+      kb.appendChild(o);
+    });
+    var pr = $("e-pr");
+    D.prods.forEach(function (p) {
+      var o = el("option", null, p.id === 0 ? p.n : D.blocks[p.b] + " / " + p.n);
+      o.value = p.id;
+      pr.appendChild(o);
+    });
+  })();
+
+  // ---- 描画 ---------------------------------------------------------------
+  function render() {
+    var d = S.date, t = tally(d);
+
+    // 整合性ストリップ: 日報は集計列ごとの合計、集計表は件数の素の合計。
+    // 計算の入口を分けても必ず一致することを見せている。
+    var byCol = t.moushikomi + t.chusen + t.haraikomi + t.hassou + t.sonota;
+    var raw = rowsOn(d).reduce(function (a, r) { return a + r.c; }, 0);
+    $("t-nippou").textContent = byCol;
+    $("t-sum").textContent = raw;
+    $("t-badge").textContent = byCol === raw ? "一致" : "不一致";
+    $("t-badge").className = "pill " + (byCol === raw ? "ok" : "wip");
+    document.querySelector(".truth-in span").textContent =
+      d.slice(5).replace("-", "/") + " の件数 ―";
+
+    renderMenu(d, t);
+    renderEntry(d);
+    renderDaily(d, t);
+    renderPaper($("p-date").value || d);
+    renderSum();
+    renderCheck($("c-date").value || d);
+    renderMaster();
+  }
+
+  function renderMenu(d, t) {
+    $("m-total").innerHTML = t.total + '<span class="u">件</span>';
+    $("m-date").textContent = fmt(d);
+    var input = {};
+    rowsOn(d).forEach(function (r) { input[r.o] = true; });
+    $("m-ops").innerHTML = Object.keys(input).length + '<span class="u">名</span>';
+    $("m-opsub").textContent = "出勤登録 " + attendees(d).length + " 名";
+    var ms = missing(d).length;
+    $("m-miss").innerHTML = ms + '<span class="u">名</span>';
+    $("m-miss").style.color = ms ? "var(--warn)" : "";
+  }
+
+  function renderEntry(d) {
+    var body = $("e-rows"), total = 0;
+    body.innerHTML = "";
+    var mine = S.juden.filter(function (r) { return r.d === d && r.o === S.op; });
+    mine.sort(function (a, b) { return a.k - b.k; });
+
+    mine.forEach(function (r) {
+      var k = kbById[r.k], p = prById[r.p] || { n: "" };
+      total += r.c;
+      var tr = el("tr");
+      tr.appendChild(el("td", null, D.blocks[k.b] + " / " + k.n));
+      tr.appendChild(el("td", null, p.n));
+
+      var tdc = el("td", "n");
+      var inp = el("input");
+      inp.type = "number"; inp.min = "0"; inp.value = r.c;
+      inp.style.maxWidth = "78px";
+      inp.addEventListener("change", function () {
+        var v = parseInt(inp.value, 10);
+        if (!v || v < 0) S.juden.splice(S.juden.indexOf(r), 1);
+        else r.c = v;
+        render();
+      });
+      tdc.appendChild(inp);
+      tr.appendChild(tdc);
+
+      var tdb = el("td");
+      var bk = el("input");
+      bk.type = "text"; bk.value = r.b || ""; bk.placeholder = "―";
+      bk.addEventListener("change", function () { r.b = bk.value; });
+      tdb.appendChild(bk);
+      tr.appendChild(tdb);
+
+      tr.appendChild(el("td", null, D.cols[k.c]));
+
+      var tdx = el("td");
+      var del = el("button", "btn x sm", "削除");
+      del.type = "button";
+      del.addEventListener("click", function () {
+        S.juden.splice(S.juden.indexOf(r), 1);
+        render();
+      });
+      tdx.appendChild(del);
+      tr.appendChild(tdx);
+      body.appendChild(tr);
+    });
+
+    if (!mine.length) {
+      var tr0 = el("tr");
+      var td0 = el("td", "empty", "まだ入力がありません。上のフォームから登録してください。");
+      td0.colSpan = 6;
+      tr0.appendChild(td0);
+      body.appendChild(tr0);
+    }
+    $("e-foot").textContent = total;
+    $("e-total").innerHTML = total + '<span class="u">件</span>';
+  }
+
+  function renderDaily(d, t) {
+    var n = nippou(d);
+    $("d-kaisen").value = n.kaisen;
+    $("d-tokki").value = n.tokki || "";
+    $("d-daitai").value = n.daitai || "";
+    $("d-youbou").value = n.youbou || "";
+    $("d-state").textContent = n.state;
+    $("d-state").className = "pill " + (n.state === "確定" ? "ok" : "wip");
+    $("d-fix").textContent = n.state === "確定" ? "確定を解除" : "確定する";
+
+    var b = $("d-counts");
+    b.innerHTML = "";
+    var r1 = el("tr");
+    var c0 = el("td", "n");
+    c0.innerHTML = '<b style="font-size:19px">' + t.total + "</b> 件";
+    r1.appendChild(c0);
+    [t.moushikomi, t.chusen, t.haraikomi, t.hassou, t.sonota, t.kokan, t.ret]
+      .forEach(function (v) { r1.appendChild(el("td", "n", v)); });
+    b.appendChild(r1);
+
+    var r2 = el("tr");
+    r2.appendChild(el("td", null, "うち職員受電"));
+    [t.s_moushikomi, t.s_chusen, t.s_haraikomi, t.s_hassou, t.s_sonota]
+      .forEach(function (v) { r2.appendChild(el("td", "n", "(" + v + ")")); });
+    r2.appendChild(el("td", "n", ""));
+    r2.appendChild(el("td", "n", ""));
+    b.appendChild(r2);
+
+    var at = attendees(d);
+    $("d-attn-n").textContent = "（" + at.length + " 名）";
+    var ab = $("d-attn");
+    ab.innerHTML = "";
+    at.forEach(function (o) {
+      var cnt = S.juden.reduce(function (a, r) {
+        return a + (r.d === d && r.o === o.id ? r.c : 0);
+      }, 0);
+      var tr = el("tr");
+      tr.appendChild(el("td", null, o.code));
+      tr.appendChild(el("td", null, o.name));
+      tr.appendChild(el("td", null, o.kbn));
+      var td = el("td", "n", cnt);
+      if (!cnt) td.style.color = "var(--warn)";
+      tr.appendChild(td);
+      ab.appendChild(tr);
+    });
+    if (!at.length) {
+      var tr0 = el("tr"), td0 = el("td", "empty", "出勤者がいません。");
+      td0.colSpan = 4; tr0.appendChild(td0); ab.appendChild(tr0);
+    }
+  }
+
+  function renderPaper(d) {
+    var t = tally(d), n = nippou(d), at = attendees(d);
+    var names = at.map(function (o) { return o.name; });
+    function nm(i) { return names[i] || "　"; }
+
+    var rows = "";
+    for (var i = 0; i < 7; i++) {
+      rows += '<tr><td class="blank"></td><td class="blank"></td><td class="blank"></td>' +
+        "<td>" + nm(i) + "</td><td>" + nm(i + 7) + "</td><td>　</td></tr>";
+    }
+
+    var tasks = "";
+    for (var j = 0; j < 8; j++) {
+      var L = D.tasks[j], R = D.tasks[j + 8];
+      tasks += "<tr><td>" + (L ? L.n : "　") + "</td><td>　</td><td>" + (L ? "件" : "") + "</td>" +
+        "<td>" + (R ? R.n : "　") + "</td><td>　</td><td>" + (R ? "件" : "") + "</td></tr>";
+    }
+
+    function cell(v, s) {
+      return '<td class="big">' + v + '<div class="sub">(' + s + ")</div></td>";
+    }
+
+    $("paper").innerHTML =
+      '<div class="kanai">【課内限り】</div>' +
+      '<div class="date">' + wareki(d) + "</div>" +
+      '<div class="ttl">電話応対報告書日報集計表</div>' +
+      "<table><tr>" +
+        '<th style="width:20mm">出勤者</th>' +
+        '<td style="width:12mm;text-align:center">' + at.length + "</td>" +
+        '<td style="width:9mm">名</td>' +
+        '<th style="width:48mm">氏名</th><th style="width:48mm">氏名</th><th>備考</th>' +
+      "</tr>" + rows + "</table>" +
+      '<p style="margin:9px 0">（　<b>' + n.kaisen + "</b>　回線 ）</p>" +
+      "<table><tr>" +
+        '<th rowspan="2" style="width:24mm">問合せ件数<br>' +
+        '<span style="font-size:10px">（　）内は職員受電数</span></th>' +
+        '<td rowspan="2" class="big" style="width:22mm">' + t.total + " 件</td>" +
+        '<th style="text-align:center">申込</th><th style="text-align:center">抽選</th>' +
+        '<th style="text-align:center">払込用紙</th><th style="text-align:center">商品発送</th>' +
+        '<th style="text-align:center">その他</th>' +
+      "</tr><tr>" +
+        cell(t.moushikomi, t.s_moushikomi) + cell(t.chusen, t.s_chusen) +
+        cell(t.haraikomi, t.s_haraikomi) + cell(t.hassou, t.s_hassou) +
+        cell(t.sonota, t.s_sonota) +
+      "</tr></table>" +
+      '<p class="uchi">内　　交換 <b>' + t.kokan + "</b> 件　／　内　　返金 <b>" + t.ret + "</b> 件</p>" +
+      '<div class="cap">特記事項（報告書の電話件数だけでは伝わり難い事項など）</div>' +
+      '<div class="memo">' + esc(n.tokki) + "</div>" +
+      '<div class="cap">職員に代わった案件（概要）</div>' +
+      '<div class="memo">' + esc(n.daitai) + "</div>" +
+      '<div class="cap">要望（お客様からの問い合わせを減らすための改善提案等）</div>' +
+      '<div class="memo">' + esc(n.youbou) + "</div>" +
+      '<div class="cap">電話対応以外の業務（データ入力作業等）</div>' +
+      "<table>" + tasks + "</table>";
+  }
+  function esc(s) {
+    return String(s || "").replace(/[&<>]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+    });
+  }
+
+  function renderSum() {
+    var d1 = $("q-d1").value, d2 = $("q-d2").value;
+    if (!d1 || !d2) return;
+    var days = {}, tot = [0, 0, 0, 0, 0, 0, 0];
+    S.juden.forEach(function (r) {
+      if (r.d < d1 || r.d > d2) return;
+      var k = kbById[r.k];
+      if (!k) return;
+      if (!days[r.d]) days[r.d] = { 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, t: 0 };
+      days[r.d][k.c] += r.c;
+      days[r.d].t += r.c;
+    });
+
+    var b = $("q-days");
+    b.innerHTML = "";
+    Object.keys(days).sort().forEach(function (d) {
+      var v = days[d], tr = el("tr");
+      var td = el("td");
+      var a = el("button", "btn q sm", fmt(d));
+      a.type = "button";
+      a.addEventListener("click", function () {
+        S.date = d; $("d-date").value = d; $("p-date").value = d; show("daily");
+      });
+      td.appendChild(a);
+      tr.appendChild(td);
+      [3, 4, 5, 6, 7, 8].forEach(function (c, i) {
+        tr.appendChild(el("td", "n", v[c])); tot[i] += v[c];
+      });
+      var tt = el("td", "n", v.t);
+      tt.style.fontWeight = "700";
+      tr.appendChild(tt);
+      tot[6] += v.t;
+      b.appendChild(tr);
+    });
+    if (!Object.keys(days).length) {
+      var tr0 = el("tr"), td0 = el("td", "empty", "この期間のデータはありません。");
+      td0.colSpan = 8; tr0.appendChild(td0); b.appendChild(tr0);
+    }
+    var f = $("q-foot");
+    f.innerHTML = "";
+    f.appendChild(el("td", null, "計"));
+    tot.forEach(function (v) { f.appendChild(el("td", "n", v)); });
+
+    var rb = $("q-rows");
+    rb.innerHTML = "";
+    var det = S.juden.filter(function (r) { return r.d >= d1 && r.d <= d2; });
+    det.sort(function (a, b2) {
+      return a.d < b2.d ? -1 : a.d > b2.d ? 1 : a.o - b2.o || a.k - b2.k;
+    });
+    det.slice(0, 200).forEach(function (r) {
+      var k = kbById[r.k], o = opById[r.o], p = prById[r.p] || { n: "" };
+      var tr = el("tr");
+      [r.d.replace(/-/g, "/"), o ? o.name : "―", D.blocks[k.b], p.n, k.n, D.cols[k.c]]
+        .forEach(function (v) { tr.appendChild(el("td", null, v)); });
+      tr.appendChild(el("td", "n", r.c));
+      rb.appendChild(tr);
+    });
+    $("q-count").textContent = det.length > 200
+      ? "全 " + det.length + " 件のうち先頭 200 件を表示しています。"
+      : "全 " + det.length + " 件。";
+  }
+
+  function renderCheck(d) {
+    var b = $("c-rows");
+    b.innerHTML = "";
+    var ms = missing(d);
+    ms.forEach(function (o) {
+      var tr = el("tr");
+      tr.appendChild(el("td", null, o.code));
+      tr.appendChild(el("td", null, o.name));
+      var td = el("td");
+      var go = el("button", "btn q sm", "入力画面を開く");
+      go.type = "button";
+      go.addEventListener("click", function () {
+        S.date = d; S.op = o.id;
+        $("e-date").value = d;
+        fillOps($("e-op"), d, o.id);
+        show("entry");
+      });
+      td.appendChild(go);
+      tr.appendChild(td);
+      b.appendChild(tr);
+    });
+    if (!ms.length) {
+      var tr0 = el("tr"), td0 = el("td", "empty", "入力もれはありません。");
+      td0.colSpan = 3; tr0.appendChild(td0); b.appendChild(tr0);
+    }
+  }
+
+  function renderMaster() {
+    var b = $("ms-rows"), today = S.date;
+    b.innerHTML = "";
+    D.ops.forEach(function (o) {
+      var cnt = S.juden.reduce(function (a, r) { return a + (r.o === o.id ? r.c : 0); }, 0);
+      var end = S.retired[o.id] || "";
+      var zai = o.on && (!end || end >= today);
+      var tr = el("tr");
+      tr.appendChild(el("td", null, o.code));
+
+      var tdn = el("td");
+      tdn.appendChild(document.createTextNode(o.name));
+      if (o.bad) {
+        var w = el("div");
+        w.style.cssText = "font-size:11.5px;color:var(--warn);margin-top:2px";
+        w.textContent = "現行の Sheet1!B1 が別人のまま";
+        tdn.appendChild(w);
+      }
+      tr.appendChild(tdn);
+      tr.appendChild(el("td", null, o.kbn));
+      tr.appendChild(el("td", null, "―"));
+
+      var tde = el("td");
+      var inp = el("input");
+      inp.type = "date"; inp.value = end; inp.style.maxWidth = "150px";
+      inp.addEventListener("change", function () {
+        if (inp.value) S.retired[o.id] = inp.value;
+        else delete S.retired[o.id];
+        fillOps($("e-op"), S.date, S.op);
+        render();
+      });
+      tde.appendChild(inp);
+      tr.appendChild(tde);
+
+      var tds = el("td");
+      tds.appendChild(el("span", "pill " + (zai ? "ok" : "off"), zai ? "在籍" : "退職"));
+      tr.appendChild(tds);
+      tr.appendChild(el("td", "n", cnt || "―"));
+      b.appendChild(tr);
+    });
+  }
+
+  // ---- 入力の受け口 -------------------------------------------------------
+  $("e-date").addEventListener("change", function () {
+    S.date = this.value;
+    fillOps($("e-op"), S.date, S.op);
+    $("d-date").value = S.date; $("p-date").value = S.date; $("c-date").value = S.date;
+    render();
+  });
+  $("e-op").addEventListener("change", function () { S.op = +this.value; render(); });
+
+  $("e-add").addEventListener("click", function () {
+    var k = +$("e-kb").value, p = +$("e-pr").value, c = parseInt($("e-cnt").value, 10);
+    if (!k || !c || c < 1) return;
+    S.attend[S.date + "|" + S.op] = true;
+    // 同じ 日付・担当者・区分・製品 は 1 行にまとめる。Access 側の UNIQUE 制約と同じ挙動。
+    var hit = S.juden.filter(function (r) {
+      return r.d === S.date && r.o === S.op && r.k === k && r.p === p;
+    })[0];
+    if (hit) hit.c += c;
+    else S.juden.push({ d: S.date, o: S.op, k: k, p: p, c: c, b: $("e-bk").value });
+    $("e-cnt").value = 1; $("e-bk").value = "";
+    render();
+  });
+
+  $("d-date").addEventListener("change", function () {
+    S.date = this.value;
+    $("e-date").value = S.date; $("p-date").value = S.date; $("c-date").value = S.date;
+    fillOps($("e-op"), S.date, S.op);
+    render();
+  });
+  ["kaisen", "tokki", "daitai", "youbou"].forEach(function (f) {
+    $("d-" + f).addEventListener("input", function () {
+      var n = nippou(S.date);
+      n[f] = f === "kaisen" ? (parseInt(this.value, 10) || 0) : this.value;
+      renderPaper($("p-date").value || S.date);
+    });
+  });
+  $("d-fix").addEventListener("click", function () {
+    var n = nippou(S.date);
+    if (n.state === "確定") { n.state = "入力中"; render(); return; }
+    var ms = missing(S.date);
+    if (ms.length && !confirm("実績が 1 件も無い担当者が " + ms.length +
+        " 名います。\n\n" + ms.map(function (o) { return "・" + o.name; }).join("\n") +
+        "\n\nこのまま確定しますか？")) { show("check"); return; }
+    n.state = "確定";
+    render();
+  });
+
+  $("p-date").addEventListener("change", function () { renderPaper(this.value); });
+  $("c-date").addEventListener("change", function () { renderCheck(this.value); });
+  $("q-d1").addEventListener("change", renderSum);
+  $("q-d2").addEventListener("change", renderSum);
+  $("q-w1").addEventListener("click", function () {
+    $("q-d1").value = "2026-08-24"; $("q-d2").value = "2026-08-28"; renderSum();
+  });
+  $("q-w0").addEventListener("click", function () {
+    $("q-d1").value = "2026-08-17"; $("q-d2").value = "2026-08-21"; renderSum();
+  });
+
+  // ---- 起動 ---------------------------------------------------------------
+  ["e-date", "d-date", "p-date", "c-date"].forEach(function (i) { $(i).value = S.date; });
+  $("q-d1").value = "2026-08-24";
+  $("q-d2").value = "2026-08-28";
+  fillOps($("e-op"), S.date, S.op);
+  render();
+})();
+
+</script>

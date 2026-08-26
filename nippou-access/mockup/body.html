@@ -1,0 +1,302 @@
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">電話応対日報 集計システム<em>WEB 版 モックアップ</em></div>
+    <div class="spacer"></div>
+    <button class="themetog" id="themetog" type="button">表示を切り替え</button>
+  </div>
+  <nav id="nav" aria-label="画面">
+    <button data-s="menu" aria-current="page">メニュー</button>
+    <button data-s="entry">受付入力</button>
+    <button data-s="daily">日報</button>
+    <button data-s="paper">帳票プレビュー</button>
+    <button data-s="sum">集計表</button>
+    <button data-s="check">入力もれ</button>
+    <button data-s="master">マスタ保守</button>
+  </nav>
+</header>
+
+<div class="truth">
+  <div class="truth-in">
+    <span>8/25 の件数 ―</span>
+    <span>日報 <b id="t-nippou">0</b> 件</span>
+    <span class="eq">＝</span>
+    <span>集計表 <b id="t-sum">0</b> 件</span>
+    <span class="pill ok" id="t-badge">一致</span>
+    <span class="why">どちらも同じ 1 つの受付記録から計算しています。ずれる余地がありません</span>
+  </div>
+</div>
+
+<main>
+  <!-- ================= メニュー ================= -->
+  <section class="screen on" id="s-menu">
+    <h1>メニュー</h1>
+    <p class="lead">
+      現行の Excel では「記入用フォーム → 集計表」と「記入用フォーム → 集計用フォーム → 日報」の
+      2 本の経路が別々に数を数えていました。ここでは受付記録が 1 つしかありません。
+    </p>
+
+    <div class="grid g3" style="margin-bottom:24px">
+      <div class="stat hi"><div class="k">本日の受付件数</div>
+        <div class="v" id="m-total">0<span class="u">件</span></div>
+        <div class="s" id="m-date">―</div></div>
+      <div class="stat"><div class="k">入力した担当者</div>
+        <div class="v" id="m-ops">0<span class="u">名</span></div>
+        <div class="s" id="m-opsub">出勤登録 0 名</div></div>
+      <div class="stat"><div class="k">入力もれ</div>
+        <div class="v" id="m-miss">0<span class="u">名</span></div>
+        <div class="s">出勤登録があって実績が無い人</div></div>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" data-go="entry"><b>受付を入力する</b>
+        <span>担当者ごとに、その日の問合せ件数を登録します。転記の操作はありません。</span></button>
+      <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
+        <span>出勤者・回線数・特記事項。件数欄は自動計算で、手では直せません。</span></button>
+      <button class="tile" data-go="paper"><b>日報を印刷する</b>
+        <span>現行の「印刷用」シートと同じ体裁。ブラウザの印刷で A4 縦 1 枚。</span></button>
+      <button class="tile" data-go="sum"><b>集計表を見る</b>
+        <span>期間を指定して日別の集計と明細を表示します。</span></button>
+      <button class="tile" data-go="check"><b>入力もれチェック</b>
+        <span>実績が 1 件も無い担当者を毎日洗い出します。</span></button>
+      <button class="tile" data-go="master"><b>マスタ保守</b>
+        <span>担当者の入退職、製品・区分の追加。Excel を配り直す必要はありません。</span></button>
+    </div>
+
+    <div class="note">
+      <b>このモックアップのデータは実物です。</b>
+      製品 34 種・区分 57 種・担当者 18 名は、お預かりした記入用フォームの外部リンクと
+      Sheet2 から機械的に取り出したもの。受付記録 306 件は
+      集計表（ＶＢＡ版）.xlsm の 8/17〜8/25 の実データです。
+    </div>
+  </section>
+
+  <!-- ================= 受付入力 ================= -->
+  <section class="screen" id="s-entry">
+    <h1>受付入力</h1>
+    <p class="lead">
+      担当者を選ぶと、その人はその日の出勤者として自動登録されます。
+      「入力したのに集計に出てこない」が起きない作りです。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="e-date">対象日</label>
+          <input type="date" id="e-date"></div>
+        <div class="f-md"><label for="e-op">担当者</label>
+          <select id="e-op"></select></div>
+        <div style="flex:1"></div>
+        <div class="stat" style="box-shadow:none; padding:9px 15px">
+          <div class="k">この担当者・この日の合計</div>
+          <div class="v" style="font-size:24px" id="e-total">0<span class="u">件</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>追加する</h2>
+    <div class="card" style="margin-bottom:22px">
+      <div class="row">
+        <div style="flex:2 1 320px"><label for="e-kb">区分</label>
+          <select id="e-kb"></select></div>
+        <div style="flex:2 1 320px"><label for="e-pr">製品</label>
+          <select id="e-pr"></select></div>
+        <div class="f-num"><label for="e-cnt">件数</label>
+          <input type="number" id="e-cnt" value="1" min="1"></div>
+        <div style="flex:1 1 200px"><label for="e-bk">備考</label>
+          <input type="text" id="e-bk" placeholder="任意"></div>
+        <button class="btn" id="e-add" type="button">登録</button>
+      </div>
+      <p class="legend">
+        製品を伴わない区分（顧客情報・イベント関係など）は「（製品指定なし）」のままで構いません。
+        同じ区分・製品の行が既にある場合は、その行に足されます。
+      </p>
+    </div>
+
+    <h2>この日の入力内容</h2>
+    <div class="tw"><table>
+      <thead><tr><th>区分</th><th>製品</th><th class="n">件数</th><th>備考</th><th>集計列</th><th></th></tr></thead>
+      <tbody id="e-rows"></tbody>
+      <tfoot><tr><td colspan="2">合計</td><td class="n" id="e-foot">0</td><td colspan="3"></td></tr></tfoot>
+    </table></div>
+
+    <div class="note">
+      <b>現行 Excel との違い。</b>
+      現行では、この人が誰なのかは記入用フォームの <code>Sheet1!B1</code> という
+      セルの文字列で決まっていました。18 本のうち 6 本がそのセルを直し忘れており、
+      5 名分が「顧客G」に、1 名分が「髙橋」に合算されていました。
+      ここでは担当者マスタから選ぶので、そもそも打ち間違えられません。
+    </div>
+  </section>
+
+  <!-- ================= 日報 ================= -->
+  <section class="screen" id="s-daily">
+    <h1>日報</h1>
+    <p class="lead">
+      問合せ件数の欄は受付入力から自動で計算されます。<b>手では直せません。</b>
+      ここが現行 Excel との決定的な違いです。
+    </p>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="d-date">対象日</label><input type="date" id="d-date"></div>
+        <div class="f-num"><label for="d-kaisen">回線数</label>
+          <input type="number" id="d-kaisen" min="0"></div>
+        <div style="flex:1"></div>
+        <div style="align-self:center"><span class="pill wip" id="d-state">入力中</span></div>
+        <button class="btn q" id="d-fix" type="button">確定する</button>
+        <button class="btn" data-go="paper" type="button">印刷用を開く</button>
+      </div>
+    </div>
+
+    <h2>問合せ件数（自動集計）</h2>
+    <div class="tw" style="margin-bottom:22px"><table>
+      <thead><tr>
+        <th>合計</th><th class="n">申込</th><th class="n">抽選</th><th class="n">払込用紙</th>
+        <th class="n">商品発送</th><th class="n">その他</th><th class="n">内 交換</th><th class="n">内 返金</th>
+      </tr></thead>
+      <tbody id="d-counts"></tbody>
+    </table></div>
+
+    <div class="grid g2">
+      <div>
+        <h2>出勤者 <span id="d-attn-n" style="letter-spacing:0"></span></h2>
+        <div class="tw"><table>
+          <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th class="n">受電件数</th></tr></thead>
+          <tbody id="d-attn"></tbody>
+        </table></div>
+      </div>
+      <div>
+        <h2>記述欄</h2>
+        <div class="card grid" style="gap:13px">
+          <div><label for="d-tokki">特記事項</label><textarea id="d-tokki"></textarea></div>
+          <div><label for="d-daitai">職員に代わった案件（概要）</label><textarea id="d-daitai"></textarea></div>
+          <div><label for="d-youbou">要望</label><textarea id="d-youbou"></textarea></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 帳票 ================= -->
+  <section class="screen" id="s-paper">
+    <h1>帳票プレビュー</h1>
+    <p class="lead">
+      現行「日報集計印刷用フォーム.xlsm ＞ 印刷用」シートの体裁をそのまま再現しています。
+      画面は角ゴシック、紙は明朝。値の出どころは受付記録ただ 1 つです。
+    </p>
+    <div class="row" style="margin-bottom:16px">
+      <div class="f-sm"><label for="p-date">対象日</label><input type="date" id="p-date"></div>
+    </div>
+    <div class="paper" id="paper"></div>
+  </section>
+
+  <!-- ================= 集計表 ================= -->
+  <section class="screen" id="s-sum">
+    <h1>集計表</h1>
+    <p class="lead">
+      日報とまったく同じデータから集計しています。
+      突き合わせの作業そのものが要らなくなります。
+    </p>
+    <div class="card" style="margin-bottom:18px">
+      <div class="row">
+        <div class="f-sm"><label for="q-d1">開始日</label><input type="date" id="q-d1"></div>
+        <div class="f-sm"><label for="q-d2">終了日</label><input type="date" id="q-d2"></div>
+        <button class="btn q" id="q-w1" type="button">今週（8/24〜8/28）</button>
+        <button class="btn q" id="q-w0" type="button">先週（8/17〜8/21）</button>
+      </div>
+    </div>
+
+    <h2>日別</h2>
+    <div class="tw" style="margin-bottom:22px"><table>
+      <thead><tr><th>日付</th><th class="n">申込方法</th><th class="n">抽選結果</th>
+        <th class="n">納付書発送</th><th class="n">商品発送</th><th class="n">その他</th>
+        <th class="n">商品交換</th><th class="n">計</th></tr></thead>
+      <tbody id="q-days"></tbody>
+      <tfoot><tr id="q-foot"></tr></tfoot>
+    </table></div>
+
+    <div class="note warn">
+      <b>現行の集計表では、この表がずれていました。</b>
+      SUMIF の範囲が行ごとにバラバラで（月・火は <code>$A$8:$J$383</code>、
+      水・木は <code>$935</code>、金は <code>$428</code>）、データが 383 行を超えた時点で
+      月曜と火曜の合計だけが過少になります。実データは 379 行あり、あと数行で境界を越えるところでした。
+    </div>
+
+    <h2>明細</h2>
+    <div class="tw"><table>
+      <thead><tr><th>日付</th><th>担当者</th><th>ブロック</th><th>製品</th>
+        <th>区分</th><th>集計列</th><th class="n">件数</th></tr></thead>
+      <tbody id="q-rows"></tbody>
+    </table></div>
+    <p class="legend" id="q-count"></p>
+  </section>
+
+  <!-- ================= 入力もれ ================= -->
+  <section class="screen" id="s-check">
+    <h1>入力もれチェック</h1>
+    <p class="lead">
+      出勤登録があるのに、受付・業務のどちらも 1 件も入っていない担当者を出します。
+    </p>
+    <div class="row" style="margin-bottom:18px">
+      <div class="f-sm"><label for="c-date">対象日</label><input type="date" id="c-date"></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>コード</th><th>氏名</th><th></th></tr></thead>
+      <tbody id="c-rows"></tbody>
+    </table></div>
+
+    <div class="note">
+      <b>これが無かったために起きていたこと。</b>
+      現行の集計表を数えると、<b>堀・谷口・三宅・国森・西岡・福島・鈴木智</b> の 7 名は
+      1 行も出てきません。原因は担当者名の設定ミスと、
+      <code>005三宅記入用フォーム.xlsm</code> がフォルダに存在しないこと。
+      マクロは指示どおり動いているのでエラーも出ず、誰も気付けませんでした。
+    </div>
+  </section>
+
+  <!-- ================= マスタ ================= -->
+  <section class="screen" id="s-master">
+    <h1>マスタ保守</h1>
+    <p class="lead">
+      職員の入れ替わりが多いので、担当者は<b>削除せず在籍期間で管理</b>します。
+      退職日を入れると入力画面の候補から消えますが、過去の日報・集計表は
+      その方の名前のまま残ります。
+    </p>
+
+    <div class="note">
+      <b>試してみてください。</b>
+      下の表で誰かの「退職日」に 2026-08-01 を入れると、
+      受付入力の担当者リストからその方が消えます。集計表の過去データは変わりません。
+    </div>
+
+    <div class="tw"><table>
+      <thead><tr><th>コード</th><th>氏名</th><th>区分</th><th>在籍開始</th>
+        <th>退職日</th><th>状態</th><th class="n">取込済</th></tr></thead>
+      <tbody id="ms-rows"></tbody>
+    </table></div>
+
+    <h2>移行時に手当てが必要なもの</h2>
+    <div class="tw"><table>
+      <thead><tr><th>対象</th><th>件数</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>100 顧客Ｇ</td><td class="n">17 行 / 37 件</td>
+          <td>現行の設定ミスで <b>002堀・004谷口・006国森・009西岡・015鈴木</b> の
+              5 名分が混ざっています。誰の分かは元の Excel からは判別できません</td></tr>
+        <tr><td>015 鈴木</td><td class="n">29 行 / 53 件</td>
+          <td>現行データの担当者欄は「鈴木」という姓だけで、
+              015鈴木さんと 018鈴木智さんの区別が付きません。
+              015 の <code>B1</code> が「顧客G」だったことから、
+              この 29 行は 018鈴木智さんの分である可能性が高いです</td></tr>
+        <tr><td>005 三宅</td><td class="n">0 行</td>
+          <td>記入用フォームの実体がフォルダにありません。
+              印刷用フォームは <code>externalLink9</code> で参照しているのに、
+              ファイルが無いため永久に集計されていませんでした</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</main>
+
+<footer>
+  電話応対日報 集計システム ― Web 版モックアップ。
+  データはこのページの中だけで動いており、保存されません。
+  実装は Access（デスクトップ）と Classic ASP（この画面）の 2 通りを用意しています。
+  どちらも同じ <code>.accdb</code> を見るので、混在させても数値は一致します。
+</footer>

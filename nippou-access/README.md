@@ -40,7 +40,8 @@ nippou-access/
 ├─ dist/         同じものを Shift_JIS + CRLF に変換したもの (VBE インポート用)
 ├─ data/         マスタ初期データ CSV (現行 Excel から機械的に抽出したもの)
 ├─ tools/        抽出・生成・検査スクリプト (Python)
-├─ web/          Access を DB にした ASP サイト (モックアップ)
+├─ web/          Access を DB にした ASP サイト
+├─ mockup/      ASP 版の画面を評価するための動くモックアップ (HTML 1 枚)
 └─ docs/         調査結果・設計・手順書
 ```
 
@@ -51,6 +52,10 @@ nippou-access/
 | [03 導入手順](docs/03_導入手順.md) | Access アプリの作り方（コピペ 3 分） |
 | [04 運用手順](docs/04_運用手順.md) | 日々の操作、担当者の入退職、月次の点検 |
 | [05 Web 版](docs/05_Web版.md) | ASP サイトの構成と IIS への配置 |
+
+Web 版の画面は、サーバーを立てる前に
+[動くモックアップ](https://claude.ai/code/artifact/46df2775-819d-479e-8ff3-4b0f7f4730ab)
+で確かめられます（実データ入り・ブラウザだけで動きます）。
 
 ---
 
