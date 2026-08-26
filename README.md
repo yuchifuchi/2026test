@@ -36,3 +36,9 @@
 | バズ型 | L3: 診断・分析シェア(TikTok自走) | 24 | バズ→サブスク(IsTalk: 月商250万円) |
 
 詳細比較は [docs/lifestyle-app-research.md](docs/lifestyle-app-research.md) の比較表を参照。
+
+## その他
+
+| ディレクトリ | 内容 |
+|---|---|
+| [loto6/](loto6/) | ロト6の過去当せん番号の出現回数分析と番号生成(ホット10口 / 逆張り3口) |
