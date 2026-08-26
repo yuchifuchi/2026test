@@ -31,16 +31,54 @@ python3 loto6/analyze_loto6.py          # report.md を再生成して標準出�
 出典: [Rosyuku/loto6](https://github.com/Rosyuku/loto6) の `loto6.csv`(みずほ銀行の公表結果をスクレイピングしたもの)を
 UTF-8・列名英字に整形したもの。読み込み時に本数字の重複と 1〜43 の範囲を検証している。
 
-### データが2017年8月までである理由
+### 第1198回以降が入っていない理由
 
-本セッションのネットワークは egress ポリシーで GitHub とパッケージレジストリ以外への接続が遮断されており、
-みずほ銀行(`www.mizuhobank.co.jp`)や各ロト系CSV配布サイトはすべて 403 で到達できなかった。
-そのため GitHub 上から取得できる最大のデータセットを使っている。
+本セッションのネットワークは egress ポリシーの許可リスト方式で、GitHub とパッケージレジストリ以外への
+接続がすべて遮断されている。第1198回〜最新回を取りにいった結果は次の通り:
 
-### 最新データへの更新手順
+| 取得先 | 結果 |
+|---|---|
+| みずほ銀行 `www.mizuhobank.co.jp` (公式の当せん番号CSV) | 403 (egress ポリシーで遮断) |
+| mk-mode / KYO's LOTO6 / ロトライフ / LAT / kawaninon (CSV配布サイト) | すべて 403 |
+| Google, Wikipedia など一般サイト | 403 |
+| GitHub のリポジトリ検索 API | セッションのスコープ外として拒否 |
+| `github.com` の HTML ページ / `*.github.io` | 403 |
+| npm レジストリ検索 (`loto6`, `takarakuji`) | 該当パッケージなし(検索自体は動作) |
+| PyPI (`loto6`, `takarakuji`, `lottery-jp` ほか) | 該当パッケージなし |
+| `raw.githubusercontent.com` / `gist.github.com` | 到達可。ただしロト6の生データは Rosyuku/loto6 (第1197回まで) が最大 |
 
-`data/loto6_draws.csv` を同じ列構成のまま新しい抽せん結果まで差し替えて、`analyze_loto6.py` を再実行するだけでよい。
-みずほ銀行の「過去の当せん番号」CSV を使う場合は、本数字6列とボーナス数字1列を上記の列名に合わせる。
+到達できるホストの中に、第1198回以降の抽せん結果を持つものが存在しなかった。
+2026-08-26 時点の最新回は第2131回(2026-08-24)とみられるため、**第1198回〜第2131回の934回分**が未取得となる
+(最新回はWeb検索の結果によるもので、このリポジトリのデータでは検証していない)。
+
+解除するには、環境のネットワークポリシーで `www.mizuhobank.co.jp` を許可するか
+(参照: [Claude Code on the web のドキュメント](https://code.claude.com/docs/en/claude-code-on-the-web))、
+下記の取り込みスクリプトを手元の環境で実行する。
+
+### 最新データへの取り込み: `fetch_draws.py`
+
+配布元のCSVを読み、`data/loto6_draws.csv` に**不足している回だけ**を追記する。
+列名(`回別` / `抽せん日` / `本数字1`〜`6` / `ボーナス数字`)と文字コード(Shift_JIS / UTF-8)は自動判別し、
+`第1199回` や `2017年8月10日` のような表記ゆれもそのまま読める。
+
+```
+# 手元にダウンロードしたCSVから取り込む
+python3 loto6/fetch_draws.py --input ~/Downloads/loto6.csv
+
+# URLから直接取り込む(そのホストに到達できるネットワークで実行すること)
+python3 loto6/fetch_draws.py --url https://example.com/loto6.csv
+
+# 書き込まずに差分だけ確認する
+python3 loto6/fetch_draws.py --input loto6.csv --dry-run
+
+# 取り込んだらレポートを再生成
+python3 loto6/analyze_loto6.py
+```
+
+取り込み時に本数字の重複・1〜43の範囲・ボーナス数字との重複を検証し、1件でも壊れていれば
+その行を示して中断する。既存の回は上書きせず、内容が食い違う場合は回番号を報告するだけに留める。
+
+テストは `python3 loto6/test_fetch_draws.py`。
 
 ## 注意
 
