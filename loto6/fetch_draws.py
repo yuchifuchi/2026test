@@ -136,6 +136,27 @@ def load_existing(path: Path) -> dict[int, dict]:
         return {int(r["draw"]): {k: r[k] for k in OUT_FIELDS} for r in csv.DictReader(f)}
 
 
+def missing_draws(draws) -> list[int]:
+    """最小回〜最大回のうち、データに存在しない回(歯抜け)を返す。"""
+    if not draws:
+        return []
+    return sorted(set(range(min(draws), max(draws) + 1)) - set(draws))
+
+
+def format_ranges(numbers: list[int], limit: int = 5) -> str:
+    """[1198,1199,1200,1300] を '1198〜1200, 1300' のように畳んで表示する。"""
+    ranges: list[tuple[int, int]] = []
+    for n in numbers:
+        if ranges and n == ranges[-1][1] + 1:
+            ranges[-1] = (ranges[-1][0], n)
+        else:
+            ranges.append((n, n))
+    shown = [f"第{a}回" if a == b else f"第{a}回〜第{b}回" for a, b in ranges[:limit]]
+    if len(ranges) > limit:
+        shown.append(f"ほか{len(ranges) - limit}区間")
+    return ", ".join(shown)
+
+
 def read_source(args) -> str:
     if args.url:
         req = urllib.request.Request(args.url, headers={"User-Agent": "loto6-fetch/1.0"})
@@ -173,6 +194,15 @@ def main() -> int:
     print(f"追加される回: {len(new)}回" + (f" (第{new[0]}回〜第{new[-1]}回)" if new else ""))
     if conflicts:
         print(f"既存と内容が食い違う回: {len(conflicts)}回 {conflicts[:10]} (既存を優先し、上書きしません)")
+    merged = dict(existing)
+    for d in new:
+        merged[d] = incoming[d]
+    gaps = missing_draws(merged)
+    if gaps:
+        print(f"取り込み後も歯抜けが残る回: {len(gaps)}回 ({format_ranges(gaps)})")
+    else:
+        print(f"取り込み後は第{min(merged)}回〜第{max(merged)}回が歯抜けなく揃う。" if merged else "")
+
     if not new:
         print("追加する回はありません。")
         return 0
@@ -180,9 +210,6 @@ def main() -> int:
         print("--dry-run のため書き込みませんでした。")
         return 0
 
-    merged = dict(existing)
-    for d in new:
-        merged[d] = incoming[d]
     with args.csv.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=OUT_FIELDS)
         w.writeheader()

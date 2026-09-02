@@ -86,6 +86,18 @@ def test_merge_adds_only_new_draws():
         assert sorted(set(incoming) - set(existing)) == [1198, 1199]
 
 
+def test_missing_draws_and_ranges():
+    assert fd.missing_draws({1: {}, 2: {}, 3: {}}) == []
+    assert fd.missing_draws({}) == []
+    assert fd.missing_draws({1: {}, 4: {}}) == [2, 3]
+    assert fd.format_ranges([2, 3]) == "第2回〜第3回"
+    assert fd.format_ranges([1198, 1199, 1200, 1300]) == "第1198回〜第1200回, 第1300回"
+    assert fd.format_ranges([5]) == "第5回"
+    # 区間が多いときは先頭だけ出して残りは件数でまとめる
+    many = [n for n in range(1, 40, 2)]
+    assert "ほか" in fd.format_ranges(many, limit=3)
+
+
 def main() -> int:
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for t in tests:
