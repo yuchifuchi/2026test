@@ -1,0 +1,641 @@
+<title>やさしい導入手順書</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@600&display=swap">
+<style>
+/* ==========================================================================
+   やさしい導入手順書
+   VBA の画面を一度も開いたことがない人が、迷わず最後までたどり着くための冊子。
+   1 ステップ = 1 動作。やったあとに「こうなっていれば成功」を必ず置く。
+   ========================================================================== */
+:root{
+  --ground:#f6f5f2; --panel:#fff; --panel2:#faf9f6;
+  --ink:#17202c; --muted:#5b6675; --line:#dcd8d0; --line2:#ebe8e2;
+  --accent:#1f4e79; --accent-soft:#e8eff6;
+  --ok:#1b6b45; --ok-soft:#e6f2ec; --ok-line:#a8d2bc;
+  --warn:#8a5a12; --warn-soft:#fbf1de; --warn-line:#e3cd9c;
+  --crit:#a02c2c; --crit-soft:#f8e9e9;
+  --brass:#8a6a2c; --brass-soft:#f4eddc;
+  --shadow:0 1px 2px rgba(23,32,44,.06), 0 8px 22px rgba(23,32,44,.06);
+  --g:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic UI",system-ui,sans-serif;
+  --m:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#11151b; --panel:#181e26; --panel2:#1d242e;
+    --ink:#e7eaee; --muted:#97a2af; --line:#2b3440; --line2:#232b35;
+    --accent:#79aede; --accent-soft:#1b2a3a;
+    --ok:#66c793; --ok-soft:#14271e; --ok-line:#2c5741;
+    --warn:#dda94b; --warn-soft:#2a2214; --warn-line:#5a4a24;
+    --crit:#e5817f; --crit-soft:#2b1a1a;
+    --brass:#cba75f; --brass-soft:#2a2416;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.32);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11151b; --panel:#181e26; --panel2:#1d242e;
+  --ink:#e7eaee; --muted:#97a2af; --line:#2b3440; --line2:#232b35;
+  --accent:#79aede; --accent-soft:#1b2a3a;
+  --ok:#66c793; --ok-soft:#14271e; --ok-line:#2c5741;
+  --warn:#dda94b; --warn-soft:#2a2214; --warn-line:#5a4a24;
+  --crit:#e5817f; --crit-soft:#2b1a1a;
+  --brass:#cba75f; --brass-soft:#2a2416;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.32);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--g); font-size:17px; line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 表紙 */
+.cover{background:var(--panel); border-bottom:1px solid var(--line); padding:46px 26px 36px}
+.in{max-width:800px; margin:0 auto}
+.cover .kicker{font-size:12px; letter-spacing:.2em; color:var(--brass); font-weight:700}
+.cover h1{
+  font-family:var(--m); font-size:clamp(30px,6vw,44px); font-weight:600;
+  margin:8px 0 14px; letter-spacing:.05em; line-height:1.3;
+}
+.cover .sub{font-size:16px; color:var(--muted); margin:0 0 20px; max-width:56ch}
+.meta{display:flex; gap:10px; flex-wrap:wrap}
+.meta b{
+  font-weight:500; font-size:13.5px; padding:6px 15px; border-radius:99px;
+  border:1px solid var(--line); color:var(--muted); background:var(--panel2);
+}
+
+main{max-width:800px; margin:0 auto; padding:28px 26px 90px}
+
+h2.part{
+  font-family:var(--m); font-size:26px; font-weight:600; letter-spacing:.04em;
+  margin:0 0 4px; line-height:1.4;
+}
+.partwrap{
+  margin:52px 0 26px; padding:22px 24px; border-radius:10px;
+  background:var(--accent-soft); border:1px solid var(--line);
+}
+.partwrap:first-of-type{margin-top:14px}
+.partwrap .no{font-size:12px; letter-spacing:.18em; color:var(--accent); font-weight:700}
+.partwrap p{margin:8px 0 0; color:var(--muted); font-size:15px}
+.partwrap .time{
+  display:inline-block; margin-top:12px; font-size:13px; color:var(--muted);
+  border:1px solid var(--line); border-radius:99px; padding:3px 13px; background:var(--panel);
+}
+
+/* 手順 */
+.step{
+  position:relative; padding:0 0 8px 62px; margin:0 0 30px;
+}
+.step .num{
+  position:absolute; left:0; top:0;
+  width:42px; height:42px; border-radius:50%;
+  background:var(--accent); color:#fff;
+  font-size:19px; font-weight:700; display:grid; place-items:center;
+  box-shadow:var(--shadow);
+}
+.step .do{font-size:20px; font-weight:700; line-height:1.6; margin:4px 0 10px}
+.step p{margin:0 0 12px}
+.step .hint{font-size:14.5px; color:var(--muted)}
+
+/* 確認 */
+.check{
+  border:2px solid var(--ok-line); background:var(--ok-soft);
+  border-radius:10px; padding:15px 19px; margin:16px 0 0;
+}
+.check .t{font-weight:700; color:var(--ok); margin-bottom:5px; font-size:16px}
+.check p{margin:0; font-size:15.5px}
+.check p + p{margin-top:8px}
+
+.warnbox{
+  border-left:5px solid var(--warn); background:var(--warn-soft);
+  border-radius:0 9px 9px 0; padding:14px 19px; margin:16px 0;
+}
+.warnbox .t{font-weight:700; color:var(--warn); margin-bottom:4px}
+.warnbox p{margin:0; font-size:15.5px}
+.critbox{
+  border:2px solid var(--crit); background:var(--crit-soft);
+  border-radius:10px; padding:16px 20px; margin:18px 0;
+}
+.critbox .t{font-weight:700; color:var(--crit); margin-bottom:5px; font-size:17px}
+.critbox p{margin:0; font-size:15.5px}
+
+/* 絵 */
+figure{margin:16px 0 6px}
+figure svg{
+  width:100%; height:auto; display:block; background:var(--panel);
+  border:1px solid var(--line); border-radius:9px; box-shadow:var(--shadow);
+}
+figcaption{font-size:13.5px; color:var(--muted); margin-top:7px}
+
+/* 用語 */
+.words{
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 22px 18px; margin:20px 0 0; box-shadow:var(--shadow);
+}
+.words dt{font-weight:700; margin:16px 0 2px; color:var(--accent)}
+.words dd{margin:0; font-size:15.5px}
+
+.kbd{
+  display:inline-block; font-size:.92em; border:1px solid var(--line);
+  border-bottom-width:3px; border-radius:6px; padding:1px 9px;
+  background:var(--panel); font-weight:700;
+}
+code{background:var(--line2); padding:2px 7px; border-radius:5px; font-size:.9em}
+b.hl{background:linear-gradient(transparent 62%, var(--brass-soft) 62%); padding:0 2px}
+
+h3{font-size:19px; margin:38px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--line)}
+dl.qa dt{font-weight:700; margin:22px 0 5px; padding-left:28px; position:relative}
+dl.qa dt::before{content:"Q"; position:absolute; left:0; color:var(--accent); font-family:var(--m); font-size:18px}
+dl.qa dd{margin:0 0 0 28px}
+ul{padding-left:1.4em} li{margin-bottom:6px}
+
+.printbar{position:fixed; right:20px; bottom:20px; z-index:9; display:flex; gap:8px}
+.printbar button{
+  font:inherit; font-size:14px; cursor:pointer; border-radius:99px; padding:11px 22px;
+  border:1px solid var(--accent); background:var(--accent); color:#fff; box-shadow:var(--shadow);
+}
+.printbar button.q{background:var(--panel); color:var(--accent)}
+
+footer{
+  max-width:800px; margin:0 auto; padding:22px 26px 60px;
+  border-top:1px solid var(--line); color:var(--muted); font-size:13.5px;
+}
+
+@page{ size:A4 portrait; margin:16mm 15mm }
+@media print{
+  .printbar{display:none!important}
+  body{background:#fff; color:#000; font-size:10.5pt; line-height:1.8}
+  .cover{border-bottom:2px solid #000; padding:0 0 14px; margin-bottom:16px; background:#fff}
+  .in,main,footer{max-width:none; padding-left:0; padding-right:0}
+  .partwrap{page-break-before:always; background:#fff; border:2px solid #000}
+  .partwrap:first-of-type{page-break-before:avoid}
+  .step,.check,.warnbox,.critbox,figure,.words{page-break-inside:avoid}
+  .step .num{background:#000; box-shadow:none}
+  figure svg{box-shadow:none}
+  a{color:#000; text-decoration:none}
+}
+</style>
+
+<div class="printbar">
+  <button type="button" id="btn-theme" class="q">表示を切り替え</button>
+  <button type="button" id="btn-print">印刷する</button>
+</div>
+
+<header class="cover">
+  <div class="in">
+    <div class="kicker">電話応対報告書 日報集計</div>
+    <h1>やさしい導入手順書</h1>
+    <p class="sub">
+      このシステムを使えるようにするまでの手順です。
+      パソコンにくわしくない方でも、上から順にそのとおりにやれば終わります。
+      むずかしい言葉には、そのつど説明をつけました。
+    </p>
+    <div class="meta">
+      <b>全部で 3 つのパート</b>
+      <b>合わせて 40 分ほど</b>
+      <b>1 回やれば終わりです</b>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <h3 style="margin-top:6px">これから何をするのか</h3>
+  <p>
+    このシステムは、3 つの場所に分かれて動きます。
+    まずは全体の形を見てください。細かいことは分からなくて大丈夫です。
+  </p>
+
+  <figure>
+    <svg viewBox="0 0 720 250" role="img"
+         aria-label="全体の形。利用者のパソコンのブラウザが、社内のウェブサーバーを通じて、共有フォルダにある1つのデータファイルを読み書きする。">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <rect x="18" y="60" width="180" height="96" rx="9"
+            fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"/>
+      <text x="108" y="48" font-size="13" font-weight="700" fill="var(--accent)" text-anchor="middle">みなさんのパソコン</text>
+      <text x="108" y="98" font-size="15" fill="var(--ink)" text-anchor="middle">ブラウザ</text>
+      <text x="108" y="120" font-size="11.5" fill="var(--muted)" text-anchor="middle">Edge など</text>
+      <text x="108" y="140" font-size="11.5" fill="var(--muted)" text-anchor="middle">入れるものはありません</text>
+
+      <rect x="270" y="60" width="180" height="96" rx="9"
+            fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="360" y="48" font-size="13" font-weight="700" fill="var(--accent)" text-anchor="middle">社内のサーバー</text>
+      <text x="360" y="98" font-size="15" fill="var(--ink)" text-anchor="middle">画面のしくみ</text>
+      <text x="360" y="120" font-size="11.5" fill="var(--muted)" text-anchor="middle">IIS ＋ 今回のファイル</text>
+      <text x="360" y="140" font-size="11.5" fill="var(--muted)" text-anchor="middle">パート 2 で置きます</text>
+
+      <rect x="522" y="60" width="180" height="96" rx="9"
+            fill="var(--brass-soft)" stroke="var(--brass)" stroke-width="1.5"/>
+      <text x="612" y="48" font-size="13" font-weight="700" fill="var(--brass)" text-anchor="middle">共有フォルダ</text>
+      <text x="612" y="98" font-size="15" fill="var(--ink)" text-anchor="middle">データ 1 個</text>
+      <text x="612" y="120" font-size="11.5" fill="var(--muted)" text-anchor="middle">日報集計_be.accdb</text>
+      <text x="612" y="140" font-size="11.5" fill="var(--muted)" text-anchor="middle">パート 1 で作ります</text>
+
+      <path d="M198,108 L262,108" stroke="var(--accent)" stroke-width="2" marker-end="url(#a1)"/>
+      <path d="M450,108 L514,108" stroke="var(--accent)" stroke-width="2" marker-end="url(#a1)"/>
+
+      <text x="360" y="200" font-size="12.5" fill="var(--muted)" text-anchor="middle">
+        数字はいちばん右の「データ 1 個」にだけ入ります。
+      </text>
+      <text x="360" y="220" font-size="12.5" fill="var(--muted)" text-anchor="middle">
+        日報も集計表も、そこから作ります。だから数字がずれません。
+      </text>
+    </svg>
+    <figcaption>全体の形。作業するのは真ん中と右の 2 か所だけです。</figcaption>
+  </figure>
+
+  <h3>先に、6 つの言葉だけ</h3>
+  <p>この手順書に出てくる、聞きなれない言葉です。ここだけ読んでおけば大丈夫です。</p>
+
+  <dl class="words">
+    <dt>Access（アクセス）</dt>
+    <dd>Microsoft の、データをためておくソフトです。Excel の仲間ですが、
+        たくさんのデータをきちんと管理するのが得意です。
+        <b class="hl">今回は「データの入れ物」としてだけ使います。</b>開いて操作することはありません。</dd>
+
+    <dt>accdb（アクシーディービー）</dt>
+    <dd>Access で作られるファイルの種類です。<code>日報集計_be.accdb</code> のように、
+        名前のうしろに <code>.accdb</code> が付きます。この 1 個がデータの本体です。</dd>
+
+    <dt>サーバー</dt>
+    <dd>みんなが使う画面を配る役目のパソコンです。
+        ふだん誰も前に座らない、置きっぱなしのパソコンだと思ってください。</dd>
+
+    <dt>IIS（アイアイエス）</dt>
+    <dd>Windows にもともと入っている、画面を配るためのしくみです。
+        新しく買う必要はありません。<b class="hl">スイッチを入れるだけです。</b></dd>
+
+    <dt>ブラウザ</dt>
+    <dd>インターネットを見るソフトです。Microsoft Edge、Chrome など。
+        みなさんはこれだけを使います。</dd>
+
+    <dt>共有フォルダ</dt>
+    <dd>職場のみんながアクセスできる、ネットワーク上のフォルダです。
+        <code>\\fsx.sales.mint.go.jp\share\…</code> のような場所のことです。</dd>
+  </dl>
+
+  <!-- ============ パート 1 ============ -->
+  <div class="partwrap">
+    <div class="no">パート 1</div>
+    <h2 class="part">データの入れ物を作る</h2>
+    <p>Access が入っているパソコンで行います。どのパソコンでもかまいません。</p>
+    <span class="time">かかる時間：1 分</span>
+  </div>
+
+  <div class="step">
+    <div class="num">1</div>
+    <div class="do"><code>02_データベース_Access</code> のフォルダを開きます</div>
+    <p class="hint">お渡しした一式の中にあります。</p>
+  </div>
+
+  <div class="step">
+    <div class="num">2</div>
+    <div class="do"><code>データベースを作る.vbs</code> をダブルクリックします</div>
+    <p>それだけです。あとは自動で進みます。</p>
+    <div class="warnbox">
+      <div class="t">「WindowsによってPCが保護されました」と出たら</div>
+      <p>
+        「<b>詳細情報</b>」を押し、出てきた「<b>実行</b>」を押してください。
+        よそから来たファイルを実行するときに Windows が出す、いつもの確認画面です。
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">3</div>
+    <div class="do">10 秒ほど待ちます</div>
+    <p>画面が固まったように見えても、待ってください。裏で作業しています。</p>
+
+    <figure>
+      <svg viewBox="0 0 620 200" role="img"
+           aria-label="成功したときに出る小さな窓。データベースを作りました、というメッセージとOKボタンがある。">
+        <rect x="90" y="24" width="440" height="150" rx="7"
+              fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
+        <rect x="90" y="24" width="440" height="30" rx="7"
+              fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"/>
+        <text x="106" y="44" font-size="12.5" fill="var(--muted)">電話応対日報</text>
+        <circle cx="130" cy="90" r="15" fill="none" stroke="var(--ok)" stroke-width="2.2"/>
+        <path d="M123,90 l5,6 l10,-13" fill="none" stroke="var(--ok)" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="160" y="86" font-size="14.5" font-weight="700" fill="var(--ink)">データベースを作りました。</text>
+        <text x="160" y="108" font-size="12" fill="var(--muted)">…\\日報集計_be.accdb</text>
+        <text x="160" y="126" font-size="12" fill="var(--muted)">このファイルを共有フォルダに置いてください。</text>
+        <rect x="440" y="138" width="72" height="26" rx="5"
+              fill="var(--accent)" stroke="var(--accent)"/>
+        <text x="476" y="156" font-size="13" fill="#fff" text-anchor="middle">OK</text>
+      </svg>
+      <figcaption>この窓が出れば成功です。</figcaption>
+    </figure>
+
+    <div class="check">
+      <div class="t">ここまでできたか確認</div>
+      <p>同じフォルダに <code>日報集計_be.accdb</code> というファイルができていますか。</p>
+      <p>できていれば、パート 1 は終わりです。<b>Access を開く必要すらありません。</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">4</div>
+    <div class="do">できたファイルを共有フォルダに移します</div>
+    <p>
+      <code>日報集計_be.accdb</code> を、職場の共有フォルダにコピーします。
+      場所はどこでもかまいませんが、<b class="hl">みんなが読み書きできる場所</b>にしてください。
+    </p>
+    <div class="check">
+      <div class="t">大事：置いた場所をメモしてください</div>
+      <p>
+        フォルダのアドレス欄をクリックすると、こういう文字が出ます。これをメモしてください。
+      </p>
+      <p><code>\\fsx.sales.mint.go.jp\share\share_電話オペレータ\日報\日報集計_be.accdb</code></p>
+      <p>パート 2 の <b>手順 9</b> で、この文字をそのまま貼り付けます。</p>
+    </div>
+  </div>
+
+  <!-- ============ パート 2 ============ -->
+  <div class="partwrap">
+    <div class="no">パート 2</div>
+    <h2 class="part">画面をサーバーに置く</h2>
+    <p>
+      ここがいちばん手数の多いところです。とはいえ、やることは
+      「スイッチを入れる」「ファイルを置く」「2 か所だけ書き換える」の 3 つです。
+      サーバーを触れる方（情報システム担当のかた）にお願いしてください。
+    </p>
+    <span class="time">かかる時間：30 分ほど</span>
+  </div>
+
+  <div class="step">
+    <div class="num">5</div>
+    <div class="do">サーバーのスイッチを 2 つ入れます</div>
+    <p>
+      Windows のサーバーには、画面を配るしくみ（IIS）が最初から入っています。
+      使う状態にするだけです。
+    </p>
+    <p>
+      「サーバー マネージャー」→「役割と機能の追加」と進み、
+      次の 2 つにチェックを入れます。
+    </p>
+    <ul>
+      <li><b>ASP</b>　… Web サーバー → アプリケーション開発 → の中にあります</li>
+      <li><b>Windows 認証</b>　… Web サーバー → セキュリティ → の中にあります</li>
+    </ul>
+    <p class="hint">
+      「Windows 認証」を入れると、<b>誰が入力したか</b>が自動で記録されます。
+      利用者がパスワードを打つ必要はありません。
+    </p>
+  </div>
+
+  <div class="step">
+    <div class="num">6</div>
+    <div class="do">Access のデータを読むための部品を入れます</div>
+    <p>
+      <b>Microsoft Access Database Engine 2016 Redistributable</b> という、
+      Microsoft が無料で配っているものを入れます。
+      「Access のデータを読むための部品」だと思ってください。
+    </p>
+    <div class="critbox">
+      <div class="t">ここだけは間違えやすいので気をつけてください</div>
+      <p>
+        入れた部品が <b>64 ビット版</b>なら、IIS の側も 64 ビットで動かす必要があります。
+      </p>
+      <p style="margin-top:8px">
+        IIS マネージャーの「アプリケーション プール」で、使うプールを選び、
+        「詳細設定」→ <b>「32 ビット アプリケーションの有効化」を False</b> にしてください。
+      </p>
+      <p style="margin-top:8px">
+        ここが合っていないと、あとで
+        「<b>Provider が見つかりません</b>」というエラーが出ます。
+        このエラーが出たら、まずここを疑ってください。
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">7</div>
+    <div class="do">ファイルをサーバーに置きます</div>
+    <p>
+      お渡しした一式の <code>03_Webサイト_ASP</code> の中にある
+      <code>wwwroot</code> フォルダの<b>中身</b>を、そのままコピーします。
+    </p>
+    <p>置き場所：<code>C:\inetpub\wwwroot\nippou\</code></p>
+    <p class="hint">
+      <code>wwwroot</code> というフォルダごとではなく、<b>中身</b>をコピーしてください。
+      <code>default.asp</code> や <code>css</code> フォルダが直接
+      <code>nippou</code> の下に並ぶ形が正解です。
+    </p>
+    <div class="check">
+      <div class="t">ここまでできたか確認</div>
+      <p><code>C:\inetpub\wwwroot\nippou\default.asp</code> というファイルがありますか。</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">8</div>
+    <div class="do">データを置いたフォルダに、書き込みの許可を出します</div>
+    <p>
+      パート 1 で <code>日報集計_be.accdb</code> を置いた<b>フォルダ</b>を右クリックし、
+      「プロパティ」→「セキュリティ」タブ→「編集」と進みます。
+    </p>
+    <p>
+      「追加」を押して、次の名前を入れます（<code>&lt;プール名&gt;</code> は
+      手順 6 で見たアプリケーション プールの名前です）。
+    </p>
+    <p><code>IIS AppPool\&lt;プール名&gt;</code></p>
+    <p>追加できたら、<b>「変更」</b>にチェックを入れて「OK」を押します。</p>
+    <div class="critbox">
+      <div class="t">「読み取り」だけでは動きません</div>
+      <p>
+        Access は、データを読むときに、同じフォルダに小さな作業用ファイル
+        （<code>.laccdb</code>）を作ります。
+        そのため<b>書き込みの許可が要ります</b>。
+        ここを「読み取り」だけにすると、あとで
+        「外部データベースを開けません」というエラーになります。
+      </p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">9</div>
+    <div class="do">2 か所だけ書き換えます</div>
+    <p>
+      置いたファイルのうち、<code>include</code> フォルダの中の 2 つを、
+      メモ帳ではなく <b>「メモ帳」以外の編集ソフト</b>で開いて直します。
+    </p>
+    <div class="warnbox">
+      <div class="t">なぜメモ帳ではないのか</div>
+      <p>
+        古いメモ帳で保存すると、日本語が読めなくなることがあります。
+        <b>「サクラエディタ」「Visual Studio Code」など</b>、
+        文字コードを選べる編集ソフトを使い、
+        <b>UTF-8（BOM なし）</b>のまま保存してください。
+      </p>
+    </div>
+
+    <p style="margin-top:18px"><b>1 つめ：<code>include\db.asp</code></b></p>
+    <p>上のほうにある、この行を探します。</p>
+    <p><code>Const DB_PATH = "D:\nippou\data\日報集計_be.accdb"</code></p>
+    <p>
+      引用符（<code>"</code>）の間を、<b>手順 4 でメモした文字</b>に置き換えます。
+      引用符そのものは消さないでください。
+    </p>
+
+    <p style="margin-top:18px"><b>2 つめ：<code>include\auth.asp</code></b></p>
+    <p>上のほうにある、この行を探します。</p>
+    <p><code>Const ADMIN_USERS = ""</code></p>
+    <p>
+      引用符の間に、<b>マスタ保守を任せる方のログオン名</b>を、
+      カンマ区切りで入れます。
+    </p>
+    <p><code>Const ADMIN_USERS = "t-okada,y-fujita"</code></p>
+    <div class="critbox">
+      <div class="t">ここを空のままにしないでください</div>
+      <p>
+        空のままだと、<b>全員がマスタ保守を触れてしまいます</b>。
+        担当者を消したり、区分を変えたりできてしまうので、必ず設定してください。
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ パート 3 ============ -->
+  <div class="partwrap">
+    <div class="no">パート 3</div>
+    <h2 class="part">ちゃんと動くか確かめる</h2>
+    <p>ここまでできたら、実際に開いて確かめます。</p>
+    <span class="time">かかる時間：5 分</span>
+  </div>
+
+  <div class="step">
+    <div class="num">10</div>
+    <div class="do">ブラウザで開きます</div>
+    <p>アドレス欄に、次のように打ちます。</p>
+    <p><code>http://&lt;サーバーの名前&gt;/nippou/</code></p>
+    <div class="check">
+      <div class="t">5 つ確かめてください</div>
+      <p>1. メニューの画面が出る</p>
+      <p>2. 画面の<b>右上に自分の名前</b>が出る（「(未認証)」ではない）</p>
+      <p>3.「受付入力」を開くと、担当者の一覧に名前がずらりと並ぶ</p>
+      <p>4.「帳票プレビュー」→「印刷する」で、A4 縦 1 枚に収まる</p>
+      <p>5. 一般の方のパソコンから開くと、<b>「マスタ保守」のボタンが出ない</b></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="num">11</div>
+    <div class="do">みなさんにショートカットを配ります</div>
+    <p>
+      デスクトップに、手順 10 のアドレスへのショートカットを作って配ります。
+    </p>
+    <p class="hint">
+      パソコンにくわしくない方も多いので、
+      <b class="hl">アドレスを手で打たせない形にしてください。</b>
+      これだけで問い合わせがぐっと減ります。
+    </p>
+  </div>
+
+  <div class="step">
+    <div class="num">12</div>
+    <div class="do">マニュアルを印刷して配ります</div>
+    <p>
+      <code>01_マニュアル</code> の <code>操作マニュアル.html</code> を開き、
+      「印刷する」を押します。A4 縦 20 ページで出ます。
+    </p>
+    <p>
+      役割ごとに章が分かれています。
+      パート職員のかたは 2 章、職員のかたは 3 章、担当者のかたは 4 章だけ読めば足ります。
+    </p>
+    <div class="check">
+      <div class="t">これで導入は完了です</div>
+      <p>おつかれさまでした。翌営業日から使い始められます。</p>
+    </div>
+  </div>
+
+  <!-- ============ 困ったとき ============ -->
+  <h3 style="margin-top:60px">うまくいかないとき</h3>
+
+  <dl class="qa">
+    <dt>「Provider が見つかりません」と出る</dt>
+    <dd>
+      手順 6 の部品が入っていないか、ビット数が合っていません。
+      IIS マネージャーの「アプリケーション プール」→「詳細設定」で
+      「32 ビット アプリケーションの有効化」を確認してください。
+      64 ビットの部品を入れたなら <b>False</b> です。
+    </dd>
+
+    <dt>「外部データベースを開けません」と出る</dt>
+    <dd>
+      手順 8 の書き込み許可が足りていません。
+      <code>.accdb</code> を置いた<b>フォルダ</b>に「変更」の権限があるか確認してください。
+      ファイルではなくフォルダです。
+    </dd>
+
+    <dt>画面の文字が「&#xFFFD;」のように化ける</dt>
+    <dd>
+      手順 9 で、メモ帳などで保存し直したときに文字コードが変わっています。
+      お渡しした元のファイルに戻し、
+      文字コードを選べる編集ソフトで <b>UTF-8（BOM なし）</b>のまま保存し直してください。
+    </dd>
+
+    <dt>右上の名前が「(未認証)」になっている</dt>
+    <dd>
+      IIS の「匿名認証」が有効なままです。
+      IIS マネージャーで対象のサイトを選び、「認証」を開いて、
+      <b>匿名認証を「無効」</b>、<b>Windows 認証を「有効」</b>にしてください。
+    </dd>
+
+    <dt>全員が「マスタ保守」を開けてしまう</dt>
+    <dd>手順 9 の <code>ADMIN_USERS</code> が空のままです。</dd>
+
+    <dt>担当者の一覧に名前が出ない</dt>
+    <dd>
+      その方に「退職日」が入っているか、「有効」のチェックが外れています。
+      「マスタ保守」→「担当者」で確認してください。
+    </dd>
+
+    <dt>印刷すると 2 枚になる</dt>
+    <dd>
+      印刷の設定で<b>倍率が 100% になっていない</b>ことがほとんどです。
+      「用紙に合わせる」のチェックを外してください。
+      それでも 2 枚になるときは、特記事項の文章が長すぎます。
+    </dd>
+
+    <dt>どうしても分からない</dt>
+    <dd>
+      画面を<b>写真に撮って</b>、次の 3 つと一緒に連絡してください。
+      原因がすぐ分かります。
+      <ul>
+        <li>どの手順の番号でつまずいたか</li>
+        <li>何をしたときに出たか</li>
+        <li>起きた時刻</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>もっとくわしく知りたいとき</h3>
+  <ul>
+    <li><code>01_マニュアル</code> … 毎日の使い方（役割ごと）</li>
+    <li><code>05_設計資料</code> … なぜ作り替えたのか、どういう仕組みか</li>
+    <li><code>04_モックアップ</code> … 本番と同じ画面を、ブラウザだけで試せます</li>
+  </ul>
+</main>
+
+<footer>
+  電話応対日報 集計システム やさしい導入手順書 ／
+  この手順書は印刷して持ち歩けます。右下の「印刷する」を押してください。
+</footer>
+
+<script>
+document.getElementById("btn-print").addEventListener("click", function () {
+  window.print();
+});
+document.getElementById("btn-theme").addEventListener("click", function () {
+  var cur = document.documentElement.getAttribute("data-theme");
+  var dark = cur ? cur === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+});
+</script>
