@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+web/_report_preview*.html
+dist_pkg/

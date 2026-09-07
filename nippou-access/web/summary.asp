@@ -5,6 +5,8 @@
 <!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
+RequireStaff                              ' 職員以外はここで止まる
+
 Dim d1, d2, rs, cols, i, tot(6), grand, v
 
 ' 既定は今週の月〜金 (現行「集計表」の B2:B6 と同じ範囲)

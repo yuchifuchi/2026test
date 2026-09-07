@@ -5,6 +5,8 @@
 <!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
+RequireStaff                              ' 職員以外はここで止まる
+
 Dim dt, act, msg, msgKind, rs, hd, n, missing, opId
 
 dt  = ParamDate("d", Date())

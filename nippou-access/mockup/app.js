@@ -123,6 +123,26 @@
     if (b) show(b.dataset.go);
   });
 
+  // ---- 役割 ---------------------------------------------------------------
+  // 本番では Windows のログオン名で自動的に決まる (include/auth.asp)。
+  // ここは「どちらの画面になるか」を見てもらうためのスイッチ。
+  var STAFF_ONLY = ["daily", "paper", "sum", "check", "master"];
+
+  function setRole(role) {
+    document.body.dataset.role = role;
+    Array.prototype.forEach.call($("rolesw").children, function (b) {
+      b.setAttribute("aria-pressed", b.dataset.role === role ? "true" : "false");
+    });
+    // 職員用の画面を開いたままパート職員に切り替えたら、メニューに戻す
+    var cur = document.querySelector(".screen.on");
+    if (role === "part" && cur && STAFF_ONLY.indexOf(cur.id.slice(2)) >= 0) show("menu");
+  }
+  $("rolesw").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-role]");
+    if (b) setRole(b.dataset.role);
+  });
+  setRole("staff");
+
   // ---- テーマ -------------------------------------------------------------
   $("themetog").addEventListener("click", function () {
     var cur = document.documentElement.getAttribute("data-theme");
@@ -776,6 +796,13 @@
 
   $("p-date").addEventListener("change", function () { renderPaper(this.value); });
   $("p-print").addEventListener("click", function () { window.print(); });
+  // 本番はサーバーが PDF を作って別タブに開く (printpdf.asp)。
+  // このモックアップにはサーバーが無いので、そのことを断ってから印刷画面を出す。
+  $("p-pdf").addEventListener("click", function () {
+    var box = $("p-pdfnote");
+    if (box) box.hidden = false;
+    window.print();
+  });
   $("c-date").addEventListener("change", function () { renderCheck(this.value); });
   $("q-d1").addEventListener("change", renderSum);
   $("q-d2").addEventListener("change", renderSum);

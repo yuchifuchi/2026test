@@ -18,17 +18,32 @@ Access の `.accdb` をそのまま DB として使うイントラ Web サイト
 
 ## ファイル
 
+画面は**役割で分かれています**。誰がどれを開けるかは `include/auth.asp` の
+`STAFF_USERS` だけで決まります。
+
 ```
-default.asp      メニュー
+【パート職員が使う画面】
+default.asp      メニュー（受付入力とその他業務だけ）
 entry.asp        受付入力
+tasks.asp        その他業務（受注入力・架電など ①〜⑬）
+
+【職員が使う画面】RequireStaff で入口を止めている
+staff.asp        職員用メニュー
 daily.asp        日報（出勤者・回線数・記述欄・確定）
-report.asp       印刷用（現行「印刷用」シートの体裁）
+report.asp       帳票プレビュー（現行「印刷用」シートの体裁）
+printpdf.asp     帳票を PDF にして返す（report.asp の「PDF で印刷する」の行き先）
 summary.asp      集計表
 check.asp        入力もれチェック
 master.asp       マスタ保守（担当者／製品／区分／業務項目）
-include/db.asp   接続・パラメータ化クエリ・共通関数
-include/layout.asp  ヘッダ・フッタ・日付ナビ
-css/style.css    画面と印刷のスタイル
+
+【共通】
+error.asp        エラー画面
+include/auth.asp    ログオン名の取得と役割の判定（STAFF_USERS / IsStaff / RequireStaff）
+include/db.asp      接続・パラメータ化クエリ・共通関数
+include/layout.asp  ヘッダ・フッタ・日付ナビ（役割でメニューが変わる）
+include/sheet.asp   帳票 1 枚ぶんの HTML（report.asp と printpdf.asp が共用）
+include/pdf.asp     PDF 変換（Edge / wkhtmltopdf）
+css/style.css       画面と印刷のスタイル
 ```
 
 ## 編集するときの注意
@@ -36,4 +51,18 @@ css/style.css    画面と印刷のスタイル
 - **UTF-8（BOM なし）で保存すること。** Shift_JIS で保存し直すと文字化けします
 - **SQL は必ず `DbQuery` / `DbExec` のパラメータ経由で書くこと。**
   値を文字列連結で SQL に埋めないでください
-- 認証はまだ入っていません。運用前に IIS の Windows 認証を有効にしてください
+- **職員用の画面を足したら、先頭に `RequireStaff` を書くこと。**
+  メニューから消すだけでは、URL を直接打てば開けてしまいます
+- **帳票の中身は `include/sheet.asp` だけを直すこと。**
+  画面（report.asp）と PDF（printpdf.asp）が同じ関数を呼んでいます
+- 認証は IIS の Windows 認証に任せています。運用前に
+  「Windows 認証 = 有効／匿名認証 = 無効」にしてください
+
+## 直したら実行する
+
+```bash
+python3 tools/check_asp.py        # <% %> の対応・呼び出し先・配列の添字を見る
+python3 tools/render_asp_report.py  # 帳票を静的 HTML に起こして体裁を見る
+```
+
+IIS が無くても、この 2 つで「開いた瞬間に落ちる」類の壊れは見つかります。

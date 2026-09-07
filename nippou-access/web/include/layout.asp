@@ -8,25 +8,31 @@ Sub PageHead(title, activeNav)
     Response.Write "<link rel=""stylesheet"" href=""css/style.css""></head><body>" & vbCrLf
 
     Response.Write "<header class=""appbar"">" & vbCrLf
-    Response.Write "  <a class=""brand"" href=""default.asp"">" & H(APP_NAME) & "</a>" & vbCrLf
+    Response.Write "  <a class=""brand"" href=""" & HomePage() & """>" & _
+                   H(APP_NAME) & "</a>" & vbCrLf
     Response.Write "  <nav>"
-    navs = Array("entry.asp", "受付入力", "tasks.asp", "その他業務", _
-                 "daily.asp", "日報", "summary.asp", "集計表", _
-                 "check.asp", "入力もれ")
-    ' マスタ保守は担当者だけに出す。押せないボタンを見せても混乱するだけなので
-    ' 権限が無い人にはそもそも表示しない。
-    If IsAdmin() Then
-        navs = Array("entry.asp", "受付入力", "tasks.asp", "その他業務", _
-                     "daily.asp", "日報", "summary.asp", "集計表", _
-                     "check.asp", "入力もれ", "master.asp", "マスタ保守")
+
+    ' 役割ごとに、その人が使う画面だけを並べる。
+    ' 押せない画面を見せても迷わせるだけなので、そもそも出さない。
+    If IsStaff() Then
+        navs = Array("staff.asp", "メニュー", _
+                     "daily.asp", "日報", "report.asp", "帳票印刷", _
+                     "summary.asp", "集計表", "check.asp", "入力もれ", _
+                     "master.asp", "マスタ保守", _
+                     "entry.asp", "受付入力", "tasks.asp", "その他業務")
+    Else
+        navs = Array("default.asp", "メニュー", _
+                     "entry.asp", "受付入力", "tasks.asp", "その他業務")
     End If
+
     For i = 0 To UBound(navs) Step 2
         url = navs(i) : nm = navs(i + 1)
         Response.Write "<a href=""" & url & """" & _
                        IIfS(url = activeNav, " class=""on""", "") & ">" & H(nm) & "</a>"
     Next
     Response.Write "</nav>" & vbCrLf
-    Response.Write "<div class=""whoami"">" & H(CurrentUser()) & " さん</div>" & vbCrLf
+    Response.Write "<div class=""whoami"">" & H(CurrentUser()) & " さん" & _
+                   IIfS(IsStaff(), "（職員）", "") & "</div>" & vbCrLf
     Response.Write "</header>" & vbCrLf
     Response.Write "<main>" & vbCrLf
 End Sub

@@ -66,6 +66,20 @@ button,input,select,textarea{font:inherit; color:inherit}
   border-radius:99px; padding:4px 13px; font-size:12px; cursor:pointer;
 }
 .themetog:hover{border-color:var(--accent); color:var(--accent)}
+
+/* 役割の切り替え。モックアップを見る人が両方の画面を見られるようにするための飾りで、
+   本番は Windows のログオン名で自動的に決まる (include/auth.asp の STAFF_USERS)。 */
+.rolesw{display:inline-flex; border:1px solid var(--line); border-radius:99px; overflow:hidden}
+.rolesw button{
+  background:none; border:0; color:var(--muted);
+  padding:4px 13px; font:inherit; font-size:12px; cursor:pointer;
+}
+.rolesw button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.rolesw button:not([aria-pressed="true"]):hover{color:var(--accent)}
+.rolelabel{font-size:12px; color:var(--muted); margin-right:6px}
+/* パート職員のときは職員用のもの、職員のときはパート用の注記を隠す */
+body[data-role="part"] [data-staff]{display:none !important}
+body[data-role="staff"] [data-part]{display:none !important}
 nav{max-width:1240px; margin:0 auto; padding:6px 22px 0; display:flex; gap:2px; overflow-x:auto}
 nav button{
   background:none; border:0; border-bottom:2px solid transparent;
@@ -253,17 +267,22 @@ footer a{color:var(--accent)}
   <div class="bar-in">
     <div class="brand">電話応対日報 集計システム<em>WEB 版 モックアップ</em></div>
     <div class="spacer"></div>
+    <span class="rolelabel">いま見ている立場</span>
+    <span class="rolesw" id="rolesw">
+      <button data-role="part" type="button" aria-pressed="false">パート職員</button>
+      <button data-role="staff" type="button" aria-pressed="true">職員</button>
+    </span>
     <button class="themetog" id="themetog" type="button">表示を切り替え</button>
   </div>
   <nav id="nav" aria-label="画面">
     <button data-s="menu" aria-current="page">メニュー</button>
     <button data-s="entry">受付入力</button>
     <button data-s="tasks">その他業務</button>
-    <button data-s="daily">日報</button>
-    <button data-s="paper">帳票プレビュー</button>
-    <button data-s="sum">集計表</button>
-    <button data-s="check">入力もれ</button>
-    <button data-s="master">マスタ保守</button>
+    <button data-s="daily" data-staff>日報</button>
+    <button data-s="paper" data-staff>帳票プレビュー</button>
+    <button data-s="sum" data-staff>集計表</button>
+    <button data-s="check" data-staff>入力もれ</button>
+    <button data-s="master" data-staff>マスタ保守</button>
   </nav>
 </header>
 
@@ -281,13 +300,17 @@ footer a{color:var(--accent)}
 <main>
   <!-- ================= メニュー ================= -->
   <section class="screen on" id="s-menu">
-    <h1>メニュー</h1>
+    <h1><span data-part>受付入力メニュー</span><span data-staff>職員用メニュー</span></h1>
     <p class="lead">
       現行の Excel では「記入用フォーム → 集計表」と「記入用フォーム → 集計用フォーム → 日報」の
       2 本の経路が別々に数を数えていました。ここでは受付記録が 1 つしかありません。
     </p>
+    <p class="lead" data-part>
+      パート職員のかたが使うのは <b>受付入力</b> と <b>その他業務</b> の 2 つだけです。
+      日報・帳票・集計表・マスタ保守は職員のかたの画面なので、ここには出てきません。
+    </p>
 
-    <div class="grid g3" style="margin-bottom:24px">
+    <div class="grid g3" data-staff style="margin-bottom:24px">
       <div class="stat hi"><div class="k">本日の受付件数</div>
         <div class="v" id="m-total">0<span class="u">件</span></div>
         <div class="s" id="m-date">―</div></div>
@@ -299,21 +322,36 @@ footer a{color:var(--accent)}
         <div class="s">出勤登録があって実績が無い人</div></div>
     </div>
 
+    <h2 data-staff>パート職員の画面（代わりに入力するとき）</h2>
     <div class="tiles">
       <button class="tile" data-go="entry"><b>受付を入力する</b>
         <span>担当者ごとに、その日の問合せ件数を登録します。転記の操作はありません。</span></button>
       <button class="tile" data-go="tasks"><b>その他業務を入力する</b>
-    <span>受注入力や架電など、電話を受ける以外の作業の件数を入れます。帳票の ①〜⑬ 欄になります。</span></button>
-  <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
+        <span>受注入力や架電など、電話を受ける以外の作業の件数を入れます。帳票の ①〜⑬ 欄になります。</span></button>
+    </div>
+
+    <h2 data-staff>日々の作業</h2>
+    <div class="tiles" data-staff>
+      <button class="tile" data-go="daily"><b>日報を作る・確認する</b>
         <span>出勤者・回線数・特記事項。件数欄は自動計算で、手では直せません。</span></button>
       <button class="tile" data-go="paper"><b>日報を印刷する</b>
-        <span>現行の「印刷用」シートと同じ体裁。ブラウザの印刷で A4 縦 1 枚。</span></button>
-      <button class="tile" data-go="sum"><b>集計表を見る</b>
-        <span>期間を指定して日別の集計と明細を表示します。</span></button>
+        <span>現行の「印刷用」シートと同じ体裁。PDF にして A4 縦 1 枚。</span></button>
       <button class="tile" data-go="check"><b>入力もれチェック</b>
         <span>実績が 1 件も無い担当者を毎日洗い出します。</span></button>
+    </div>
+
+    <h2 data-staff>集計・保守</h2>
+    <div class="tiles" data-staff>
+      <button class="tile" data-go="sum"><b>集計表を見る</b>
+        <span>期間を指定して日別の集計と明細を表示します。</span></button>
       <button class="tile" data-go="master"><b>マスタ保守</b>
         <span>担当者の入退職、製品・区分の追加。Excel を配り直す必要はありません。</span></button>
+    </div>
+
+    <div class="note" data-part>
+      <b>自分の名前が一覧に無いときは、職員のかたにご連絡ください。</b>
+      名前や区分の追加は職員のかたの画面（マスタ保守）で行います。
+      入れたものはその場で保存されるので、「転記」や「更新」を押す必要はありません。
     </div>
 
     <div class="note">
@@ -484,10 +522,20 @@ footer a{color:var(--accent)}
     </p>
     <div class="printbar noprint">
       <div class="f-sm"><label for="p-date">対象日</label><input type="date" id="p-date"></div>
-      <button class="btn" id="p-print" type="button">印刷する</button>
+      <button class="btn" id="p-pdf" type="button">PDF で印刷する</button>
+      <button class="btn ghost" id="p-print" type="button">ブラウザで印刷する</button>
       <p class="legend">
-        ブラウザの印刷で A4 縦 1 枚に収まります。<br>
-        余白 12mm・等倍で出力してください（「用紙に合わせる」は不要です）。
+        本番（ASP 版）では <b>「PDF で印刷する」</b> を押すと、サーバーが PDF を作って
+        別のタブに開きます。あとは PDF をいつもどおり印刷するだけです。<br>
+        ブラウザの印刷と違い、紙の上に日付や URL（ヘッダー・フッター）が入りません。
+        課内限りの文書なので、そこは設定任せにしていません。<br>
+        「ブラウザで印刷する」は PDF が作れないときの逃げ道です。
+        そのときは印刷設定で「ヘッダーとフッター」を外し、余白 12mm・等倍にしてください。
+      </p>
+      <p class="legend" id="p-pdfnote" hidden>
+        <b>このモックアップには PDF を作るサーバーがありません。</b>
+        代わりにブラウザの印刷画面を開きました。
+        本番（ASP 版）では、ここで PDF が別のタブに開きます。
       </p>
     </div>
     <div class="paper" id="paper"></div>
@@ -820,6 +868,26 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     var b = e.target.closest("[data-go]");
     if (b) show(b.dataset.go);
   });
+
+  // ---- 役割 ---------------------------------------------------------------
+  // 本番では Windows のログオン名で自動的に決まる (include/auth.asp)。
+  // ここは「どちらの画面になるか」を見てもらうためのスイッチ。
+  var STAFF_ONLY = ["daily", "paper", "sum", "check", "master"];
+
+  function setRole(role) {
+    document.body.dataset.role = role;
+    Array.prototype.forEach.call($("rolesw").children, function (b) {
+      b.setAttribute("aria-pressed", b.dataset.role === role ? "true" : "false");
+    });
+    // 職員用の画面を開いたままパート職員に切り替えたら、メニューに戻す
+    var cur = document.querySelector(".screen.on");
+    if (role === "part" && cur && STAFF_ONLY.indexOf(cur.id.slice(2)) >= 0) show("menu");
+  }
+  $("rolesw").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-role]");
+    if (b) setRole(b.dataset.role);
+  });
+  setRole("staff");
 
   // ---- テーマ -------------------------------------------------------------
   $("themetog").addEventListener("click", function () {
@@ -1474,6 +1542,13 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
 
   $("p-date").addEventListener("change", function () { renderPaper(this.value); });
   $("p-print").addEventListener("click", function () { window.print(); });
+  // 本番はサーバーが PDF を作って別タブに開く (printpdf.asp)。
+  // このモックアップにはサーバーが無いので、そのことを断ってから印刷画面を出す。
+  $("p-pdf").addEventListener("click", function () {
+    var box = $("p-pdfnote");
+    if (box) box.hidden = false;
+    window.print();
+  });
   $("c-date").addEventListener("change", function () { renderCheck(this.value); });
   $("q-d1").addEventListener("change", renderSum);
   $("q-d2").addEventListener("change", renderSum);

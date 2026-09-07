@@ -5,6 +5,8 @@
 <!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
 <%
+RequireStaff                              ' 職員以外はここで止まる
+
 Dim dt, rs, n
 dt = ParamDate("d", Date())
 PageHead "入力もれチェック", "check.asp"

@@ -51,8 +51,9 @@
 | `dist/*.bas` | 同じものを Shift_JIS + CRLF に変換した配布用 |
 | `data/*.csv` | マスタ初期データ（現行 Excel から機械的に抽出） |
 
-空の `.accdb` に `dist/` を貼り付けて **`Setup_DBOnly`** を実行すると、
-テーブル 11 本・マスタ・クエリ 16 本ができます。
+`dist/データベースを作る.vbs` をダブルクリックすると、Access を裏で開いて
+テーブル 11 本・マスタ・クエリ 16 本を作り、`.accdb` を書き出します
+（VBA を手で貼り付ける必要はありません。`.vbs` は `dist/*.bas` から自動生成しています）。
 
 | モジュール | 役割 |
 |---|---|
@@ -65,21 +66,33 @@
 
 ### 2. 画面（Classic ASP）
 
-| ファイル | 画面 |
-|---|---|
-| `web/default.asp` | メニュー |
-| `web/entry.asp` | 受付入力 |
-| `web/tasks.asp` | その他業務（帳票の ①〜⑬） |
-| `web/daily.asp` | 日報（出勤者・回線数・記述欄・確定） |
-| `web/report.asp` | 帳票印刷（現行「印刷用」シートの体裁・A4 縦 1 枚） |
-| `web/summary.asp` | 集計表 |
-| `web/check.asp` | 入力もれチェック |
-| `web/master.asp` | マスタ保守（担当者／製品／区分／業務項目・担当者専用） |
-| `web/error.asp` | エラー画面 |
-| `web/include/db.asp` | 接続・パラメータ化クエリ・共通関数 |
-| `web/include/auth.asp` | Windows 認証からの利用者特定と権限 |
-| `web/include/layout.asp` | ヘッダ・ナビ・フッタ |
-| `web/web.config` | IIS 設定（Windows 認証・エラー・拡張子ブロック） |
+**入力する人とまとめる人で画面を分けています。**
+どちらになるかは `web/include/auth.asp` の `STAFF_USERS` だけで決まり、
+職員用のページは先頭で `RequireStaff` を呼んで、URL 直打ちでも開けません。
+
+| ファイル | 役割 | 画面 |
+|---|---|---|
+| `web/default.asp` | パート | メニュー（受付入力とその他業務だけ） |
+| `web/entry.asp` | パート | 受付入力 |
+| `web/tasks.asp` | パート | その他業務（帳票の ①〜⑬） |
+| `web/staff.asp` | 職員 | 職員用メニュー（当日の件数・日報の状態・入力もれ） |
+| `web/daily.asp` | 職員 | 日報（出勤者・回線数・記述欄・確定） |
+| `web/report.asp` | 職員 | 帳票プレビュー（現行「印刷用」シートの体裁・A4 縦 1 枚） |
+| `web/printpdf.asp` | 職員 | 帳票を PDF にして返す |
+| `web/summary.asp` | 職員 | 集計表 |
+| `web/check.asp` | 職員 | 入力もれチェック |
+| `web/master.asp` | 職員 | マスタ保守（担当者／製品／区分／業務項目） |
+| `web/error.asp` | 共通 | エラー画面 |
+| `web/include/auth.asp` | 共通 | Windows 認証からの利用者特定と役割の判定 |
+| `web/include/db.asp` | 共通 | 接続・パラメータ化クエリ・共通関数 |
+| `web/include/layout.asp` | 共通 | ヘッダ・ナビ・フッタ（役割でメニューが変わる） |
+| `web/include/sheet.asp` | 共通 | 帳票 1 枚ぶんの HTML（画面と PDF で共用） |
+| `web/include/pdf.asp` | 共通 | PDF 変換（Edge / wkhtmltopdf） |
+| `web/web.config` | 共通 | IIS 設定（Windows 認証・エラー・拡張子ブロック） |
+
+印刷は **サーバーで PDF を作って別タブに開く**方式です。
+ブラウザの印刷は既定で紙に日付と URL を入れてしまい、CSS では消せないためです
+（課内限りの文書なので、設定任せにしていません）。
 
 ### 3. マニュアル・手順書
 
@@ -88,7 +101,7 @@
 | [はじめに](docs/manual/00_はじめに.md) | 全員 |
 | [毎日の入力](docs/manual/01_毎日の入力_パート職員向け.md) | パート職員 |
 | [日報を作る](docs/manual/02_日報を作る_職員向け.md) | 職員 |
-| [マスタ保守](docs/manual/03_マスタ保守_担当者向け.md) | 担当者 |
+| [マスタ保守](docs/manual/03_マスタ保守_担当者向け.md) | 職員 |
 | [困ったときは](docs/manual/04_困ったときは.md) | 全員 |
 | [設置手順](docs/manual/05_設置手順_情報システム担当向け.md) | 情報システム担当 |
 
@@ -118,19 +131,25 @@
 | `tools/lint_vba.py` | VBA の静的チェック（引用符・行継続・行長・未定義呼び出し） |
 | `tools/make_dist.py` | 配布用 Shift_JIS 版を生成 |
 | `tools/verify_migration.py` | 移行の検算（Windows なしで実行可） |
+| `tools/check_asp.py` | IIS なしで ASP の壊れを検出（呼び出し先・配列の添字・`<% %>` の対応） |
 | `tools/render_asp_report.py` | IIS なしで ASP 帳票の印刷結果を検証 |
 | `tools/gen_mockup_data.py` | モックアップ用データを生成 |
+| `tools/build_mockup.py` | モックアップを 1 ファイルに組み立て |
+| `tools/shoot_manual_images.py` | マニュアルの画面写真を撮り直し |
+| `tools/embed_manual_images.py` | 撮った画面写真を操作マニュアルに埋め込み |
+| `tools/make_package.py` / `check_package.py` | 納品用 zip の作成と検査 |
 
 ---
 
 ## 導入の流れ
 
 1. **データベースを作る**（Access のある PC で 1 回だけ）
-   空の `.accdb` に `dist/` を貼り付けて `Setup_DBOnly` を実行 → 共有フォルダへ
+   `dist/データベースを作る.vbs` をダブルクリック → できた `.accdb` を共有フォルダへ
 2. **過去データを取り込む**（任意）
    Access の「Excel から取込」で週次の集計表を読み込む
 3. **IIS に配置する**
-   `web/` を配置し、`db.asp` の `DB_PATH` と `auth.asp` の `ADMIN_USERS` を設定
+   `web/` を配置し、`db.asp` の `DB_PATH`、`auth.asp` の `STAFF_USERS`、
+   `pdf.asp` の `PDF_EDGE_EXE` を設定
 4. **ショートカットを配る**
    利用者のデスクトップに `http://<サーバー>/nippou/` へのショートカット
 
@@ -173,5 +192,7 @@ python3 tools/gen_master_vba.py                                # VBA 再生成
 python3 tools/lint_vba.py                                      # VBA 静的チェック
 python3 tools/make_dist.py                                     # 配布用を再生成
 python3 tools/verify_migration.py --src <xlsm フォルダ>         # 移行の検算
+python3 tools/check_asp.py                                      # ASP の静的チェック
 python3 tools/render_asp_report.py                             # ASP 帳票の印刷検証
+python3 tools/make_package.py                                  # 納品用 zip
 ```

@@ -177,12 +177,12 @@ Access が入っているパソコンで、1 回だけ行う作業です。
 
     # --- 03 Web サイト (ASP) ---
     w = os.path.join(base, "03_Webサイト_ASP")
-    copytree(os.path.join(HERE, "web"), os.path.join(w, "wwwroot"),
-             skip=("_report_preview.html",))
-    pv = os.path.join(w, "wwwroot", "_report_preview.html")
-    if os.path.exists(pv):
-        os.remove(pv)
-    os.remove(os.path.join(w, "wwwroot", "README.md"))
+    copytree(os.path.join(HERE, "web"), os.path.join(w, "wwwroot"))
+    # 検証用に作った静的プレビューは納品物ではないので落とす
+    for f in ("_report_preview.html", "_report_preview_pdf.html", "README.md"):
+        pv = os.path.join(w, "wwwroot", f)
+        if os.path.exists(pv):
+            os.remove(pv)
 
     setup = """電話応対日報 集計システム ― Web サーバー(IIS)への設置
 
@@ -209,18 +209,33 @@ Access が入っているパソコンで、1 回だけ行う作業です。
      ★ 読み取りだけでは動きません。
        ACE がロックファイル (.laccdb) を同じフォルダに作るためです。
 
-5. 次の 2 か所を書き換えます。
+5. 次の 3 か所を書き換えます。
 
    include\\db.asp の先頭
      Const DB_PATH = "D:\\nippou\\data\\日報集計_be.accdb"
        → 実際に置いた場所に直します。
 
    include\\auth.asp の先頭
-     Const ADMIN_USERS = ""
-       → マスタ保守を触れる人のログオン名を「,」区切りで入れます。
-          例) Const ADMIN_USERS = "t-okada,y-fujita"
+     Const STAFF_USERS = ""
+       → 職員のかたのログオン名を「,」区切りで入れます。ドメイン名は書きません。
+          例) Const STAFF_USERS = "t-okada,y-fujita"
 
-     ★ 空のままだと全員がマスタ保守を触れます。運用開始前に必ず設定してください。
+       ここに書いた方だけが、日報・帳票印刷・集計表・入力もれ・マスタ保守を
+       開けます。書かれていない方 (パート職員のかた) は、
+       「受付入力」と「その他業務」だけの画面になります。
+
+     ★ 空のままだと全員が職員扱いです。運用開始前に必ず設定してください。
+
+   include\\pdf.asp の先頭 (帳票を PDF で印刷するため)
+     Const PDF_EDGE_EXE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
+       → サーバーの中で msedge.exe がこの場所にあるか確認します。
+          違う場所にあるときだけ書き換えてください。
+          Edge が入っていないサーバーでは wkhtmltopdf を入れて
+          Const PDF_ENGINE = "wkhtmltopdf" にします。
+
+     ★ 作業用フォルダ (既定は Windows の一時フォルダ) にも、
+       アプリケーションプール ID の「変更」権限が要ります。
+       作った PDF は送った直後に消すので、たまることはありません。
 
 6. http://<サーバー名>/nippou/ を開いて動作を確認します。
 
@@ -271,8 +286,14 @@ Access が入っているパソコンで、1 回だけ行う作業です。
 ・担当者に退職日を入れる
     → 入力候補から消えます。過去のデータは変わりません。
 
-・帳票プレビューで「印刷する」
-    → A4 縦 1 枚で出ます。画面の青い帯やボタンは印刷されません。
+・帳票プレビューで「PDF で印刷する」
+    → 本番ではサーバーが PDF を作って別のタブに開きます。
+      A4 縦 1 枚で、紙に日付や URL は入りません。
+      (モックアップにはサーバーが無いので、ブラウザの印刷画面が出ます)
+
+・右上の「いま見ている立場」を「パート職員」に切り替える
+    → 上の帯が「受付入力」「その他業務」だけになります。
+      本番ではログオン名で自動的に決まります。
 """
     with open(os.path.join(k, "使い方.txt"), "wb") as f:
         f.write(mock.replace("\n", "\r\n").encode("cp932"))
@@ -365,20 +386,26 @@ def write_readme_txt(base):
 
   1. 04_モックアップ を開いて、画面と操作を確認する
   2. 02_データベース_Access の .vbs をダブルクリックする（1 分）
-  3. 03_Webサイト_ASP のファイルを IIS に置き、2 か所だけ書き換える（30 分）
+  3. 03_Webサイト_ASP のファイルを IIS に置き、3 か所だけ書き換える（30 分）
   4. ブラウザで開いて動作を確認する（5 分）
   5. 01_マニュアル を印刷して配り、デスクトップにショートカットを配る
 
 ------------------------------------------------------------
- 設置前に必ず設定する箇所（2 か所）
+ 設置前に必ず設定する箇所（3 か所）
 ------------------------------------------------------------
 
   03_Webサイト_ASP\\wwwroot\\include\\db.asp
       DB_PATH … Access ファイルを置いた実際の場所
 
   03_Webサイト_ASP\\wwwroot\\include\\auth.asp
-      ADMIN_USERS … マスタ保守を触れる人のログオン名
-                    空のままだと全員が触れます
+      STAFF_USERS … 職員のかたのログオン名
+                    ここに書いた方だけが日報・帳票印刷・集計表・
+                    入力もれ・マスタ保守を開けます。
+                    空のままだと全員が職員扱いです。
+
+  03_Webサイト_ASP\\wwwroot\\include\\pdf.asp
+      PDF_EDGE_EXE … サーバーの Edge (msedge.exe) の場所
+                    既定の場所にあれば、そのままで構いません。
 
 ------------------------------------------------------------
  ご注意
@@ -500,17 +527,20 @@ def write_index_html(base):
   <ol>
     <li><b>04</b> モックアップで画面と操作を確認する</li>
     <li><b>02</b> の <code>データベースを作る.vbs</code> をダブルクリックし、できたファイルを共有フォルダに置く</li>
-    <li><b>03</b> の手順で IIS に置き、設定を 2 か所書き換える</li>
+    <li><b>03</b> の手順で IIS に置き、設定を 3 か所書き換える</li>
     <li><b>01</b> のマニュアルを印刷して配る</li>
     <li>利用者のデスクトップにショートカットを配る</li>
   </ol>
 
   <div class="note crit">
-    <b>設置前に必ず設定する箇所が 2 つあります。</b><br>
+    <b>設置前に必ず設定する箇所が 3 つあります。</b><br>
     <code>03_Webサイト_ASP\wwwroot\include\db.asp</code> の <code>DB_PATH</code>
     … Access ファイルを置いた実際の場所<br>
-    <code>03_Webサイト_ASP\wwwroot\include\auth.asp</code> の <code>ADMIN_USERS</code>
-    … マスタ保守を触れる人のログオン名。<b>空のままだと全員が触れます。</b>
+    <code>03_Webサイト_ASP\wwwroot\include\auth.asp</code> の <code>STAFF_USERS</code>
+    … 職員のかたのログオン名。ここに書いた方だけが日報・帳票印刷・集計表・
+    入力もれ・マスタ保守を開けます。<b>空のままだと全員が職員扱いです。</b><br>
+    <code>03_Webサイト_ASP\wwwroot\include\pdf.asp</code> の <code>PDF_EDGE_EXE</code>
+    … サーバーの Edge の場所。既定の場所にあれば、そのままで構いません。
   </div>
 
   <div class="note">
