@@ -17,12 +17,13 @@ Function SheetHtml(dt)
     Dim leftN(7), leftV(7), rightN(7), rightV(7), n, tasks
 
     Ensure日報 dt
-    Set hd = DbQuery("SELECT * FROM [Q_日報_ヘッダ] WHERE [対象日]=?", Array(dt))
+    Set hd = DbQuery("SELECT * FROM (" & SQL_日報_ヘッダ() & ") AS D " & _
+                     "WHERE D.[対象日]=?", Array(dt))
 
     ' 出勤者を 2 列 × 7 行に流し込む (現行 F10:O16 と同じ枠)
     i = 0
-    Set rs = DbQuery("SELECT [氏名] FROM [Q_日報_出勤] WHERE [対象日]=? " & _
-                     "ORDER BY [表示順]", Array(dt))
+    Set rs = DbQuery("SELECT S.[氏名] FROM (" & SQL_日報_出勤() & ") AS S " & _
+                     "WHERE S.[対象日]=? ORDER BY S.[表示順]", Array(dt))
     Do While Not rs.EOF And i < 14
         names(i) = rs("氏名") : i = i + 1
         rs.MoveNext
@@ -33,7 +34,7 @@ Function SheetHtml(dt)
     n = 0
     Set tasks = DbQuery( _
       "SELECT TM.[業務項目ID],TM.[帳票表示名], " & _
-      " (SELECT Nz(Sum(W.[件数]),0) FROM [T_業務実績] AS W " & _
+      " (SELECT IIf(IsNull(Sum(W.[件数])),0,Sum(W.[件数])) FROM [T_業務実績] AS W " & _
       "   WHERE W.[対象日]=? AND W.[業務項目ID]=TM.[業務項目ID]) AS [件数] " & _
       "FROM [M_業務項目] AS TM WHERE TM.[有効]=True ORDER BY TM.[表示順]", Array(dt))
     Do While Not tasks.EOF

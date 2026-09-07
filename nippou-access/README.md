@@ -47,13 +47,20 @@
 
 | 場所 | 内容 |
 |---|---|
+| **`dist/日報集計_be.accdb`** | **できあがったデータベース。共有フォルダに置くだけで使えます** |
+| `dist/データベースを作る.vbs` | 作り直したいとき用（Access のある PC でダブルクリック） |
 | `src/*.bas` | Access に入れる VBA 7 モジュール（UTF-8・GitHub で読む用） |
 | `dist/*.bas` | 同じものを Shift_JIS + CRLF に変換した配布用 |
 | `data/*.csv` | マスタ初期データ（現行 Excel から機械的に抽出） |
 
-`dist/データベースを作る.vbs` をダブルクリックすると、Access を裏で開いて
-テーブル 11 本・マスタ・クエリ 16 本を作り、`.accdb` を書き出します
-（VBA を手で貼り付ける必要はありません。`.vbs` は `dist/*.bas` から自動生成しています）。
+`.accdb` は **`tools/gen_accdb.py`（Jackcess）が Windows も Access も使わずに**
+書き出しています。表 11・マスタ 158 件・つながり 8 本が入った V2016 形式の本物です。
+VBA は入っていないのでマクロの警告も出ません。
+
+**保存クエリ（`Q_…`）は入れていません。** Web 版は SQL を `web/include/sql.asp` に
+持っており、Access 側のクエリに依存しません（[05 Web 版](docs/05_Web版.md) 参照）。
+Access のデスクトップ画面も使いたい場合は、`dist/*.bas` を入れて `Setup_All` を
+実行するとフォームと帳票まで作れます。
 
 | モジュール | 役割 |
 |---|---|
@@ -131,6 +138,9 @@
 | `tools/lint_vba.py` | VBA の静的チェック（引用符・行継続・行長・未定義呼び出し） |
 | `tools/make_dist.py` | 配布用 Shift_JIS 版を生成 |
 | `tools/verify_migration.py` | 移行の検算（Windows なしで実行可） |
+| `tools/gen_accdb.py` | **Windows も Access も使わずに `.accdb` を作る**（Jackcess） |
+| `tools/gen_sql_asp.py` | `modSetupQuery.bas` から `web/include/sql.asp` を生成 |
+| `tools/test_sql.py` | 作った `.accdb` に ASP と同じ SQL を流して検算（UCanAccess） |
 | `tools/check_asp.py` | IIS なしで ASP の壊れを検出（呼び出し先・配列の添字・`<% %>` の対応） |
 | `tools/render_asp_report.py` | IIS なしで ASP 帳票の印刷結果を検証 |
 | `tools/gen_mockup_data.py` | モックアップ用データを生成 |
@@ -143,8 +153,8 @@
 
 ## 導入の流れ
 
-1. **データベースを作る**（Access のある PC で 1 回だけ）
-   `dist/データベースを作る.vbs` をダブルクリック → できた `.accdb` を共有フォルダへ
+1. **データベースを置く**
+   `dist/日報集計_be.accdb` を共有フォルダへコピー（作る作業はありません）
 2. **過去データを取り込む**（任意）
    Access の「Excel から取込」で週次の集計表を読み込む
 3. **IIS に配置する**
@@ -192,7 +202,10 @@ python3 tools/gen_master_vba.py                                # VBA 再生成
 python3 tools/lint_vba.py                                      # VBA 静的チェック
 python3 tools/make_dist.py                                     # 配布用を再生成
 python3 tools/verify_migration.py --src <xlsm フォルダ>         # 移行の検算
-python3 tools/check_asp.py                                      # ASP の静的チェック
+python3 tools/gen_accdb.py dist/日報集計_be.accdb                # .accdb を作り直す
+python3 tools/gen_sql_asp.py                                   # web/include/sql.asp を生成
+python3 tools/test_sql.py                                      # SQL を .accdb に流して検算
+python3 tools/check_asp.py                                     # ASP の静的チェック
 python3 tools/render_asp_report.py                             # ASP 帳票の印刷検証
 python3 tools/make_package.py                                  # 納品用 zip
 ```

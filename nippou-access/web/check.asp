@@ -25,7 +25,8 @@ PageHead "入力もれチェック", "check.asp"
   <tbody>
 <%
 n = 0
-Set rs = DbQuery("SELECT * FROM [Q_未入力チェック] WHERE [対象日]=?", Array(dt))
+Set rs = DbQuery("SELECT * FROM (" & SQL_未入力チェック() & ") AS C " & _
+                 "WHERE C.[対象日]=? ORDER BY C.[表示順]", Array(dt))
 Do While Not rs.EOF
     n = n + 1
 %>

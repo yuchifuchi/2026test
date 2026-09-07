@@ -235,7 +235,7 @@ footer{
       <text x="612" y="48" font-size="13" font-weight="700" fill="var(--brass)" text-anchor="middle">共有フォルダ</text>
       <text x="612" y="98" font-size="15" fill="var(--ink)" text-anchor="middle">データ 1 個</text>
       <text x="612" y="120" font-size="11.5" fill="var(--muted)" text-anchor="middle">日報集計_be.accdb</text>
-      <text x="612" y="140" font-size="11.5" fill="var(--muted)" text-anchor="middle">パート 1 で作ります</text>
+      <text x="612" y="140" font-size="11.5" fill="var(--muted)" text-anchor="middle">パート 1 で置きます</text>
 
       <path d="M198,108 L262,108" stroke="var(--accent)" stroke-width="2" marker-end="url(#a1)"/>
       <path d="M450,108 L514,108" stroke="var(--accent)" stroke-width="2" marker-end="url(#a1)"/>
@@ -283,77 +283,49 @@ footer{
   <!-- ============ パート 1 ============ -->
   <div class="partwrap">
     <div class="no">パート 1</div>
-    <h2 class="part">データの入れ物を作る</h2>
-    <p>Access が入っているパソコンで行います。どのパソコンでもかまいません。</p>
+    <h2 class="part">データの置き場所を決める</h2>
+    <p>データベースは<b>もうできています</b>。共有フォルダに移すだけです。</p>
     <span class="time">かかる時間：1 分</span>
   </div>
 
   <div class="step">
     <div class="num">1</div>
     <div class="do"><code>02_データベース_Access</code> のフォルダを開きます</div>
-    <p class="hint">お渡しした一式の中にあります。</p>
-  </div>
-
-  <div class="step">
-    <div class="num">2</div>
-    <div class="do"><code>データベースを作る.vbs</code> をダブルクリックします</div>
-    <p>それだけです。あとは自動で進みます。</p>
+    <p>お渡しした一式の中にあります。中に、こういうファイルが入っています。</p>
+    <p><code>日報集計_be.accdb</code></p>
     <div class="warnbox">
-      <div class="t">「WindowsによってPCが保護されました」と出たら</div>
+      <div class="t">これが「データの入れ物」です</div>
       <p>
-        「<b>詳細情報</b>」を押し、出てきた「<b>実行</b>」を押してください。
-        よそから来たファイルを実行するときに Windows が出す、いつもの確認画面です。
+        担当者・製品・区分などの一覧まで入った、すぐ使える状態です。
+        <b>Access は 1 台も要りません。</b>作る作業も、開く必要もありません。
+        （このファイルには VBA が入っていないので、開いてもマクロの警告は出ません）
       </p>
     </div>
   </div>
 
   <div class="step">
-    <div class="num">3</div>
-    <div class="do">10 秒ほど待ちます</div>
-    <p>画面が固まったように見えても、待ってください。裏で作業しています。</p>
-
-    <figure>
-      <svg viewBox="0 0 620 200" role="img"
-           aria-label="成功したときに出る小さな窓。データベースを作りました、というメッセージとOKボタンがある。">
-        <rect x="90" y="24" width="440" height="150" rx="7"
-              fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>
-        <rect x="90" y="24" width="440" height="30" rx="7"
-              fill="var(--panel2)" stroke="var(--line)" stroke-width="1.5"/>
-        <text x="106" y="44" font-size="12.5" fill="var(--muted)">電話応対日報</text>
-        <circle cx="130" cy="90" r="15" fill="none" stroke="var(--ok)" stroke-width="2.2"/>
-        <path d="M123,90 l5,6 l10,-13" fill="none" stroke="var(--ok)" stroke-width="2.6"
-              stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="160" y="86" font-size="14.5" font-weight="700" fill="var(--ink)">データベースを作りました。</text>
-        <text x="160" y="108" font-size="12" fill="var(--muted)">…\\日報集計_be.accdb</text>
-        <text x="160" y="126" font-size="12" fill="var(--muted)">このファイルを共有フォルダに置いてください。</text>
-        <rect x="440" y="138" width="72" height="26" rx="5"
-              fill="var(--accent)" stroke="var(--accent)"/>
-        <text x="476" y="156" font-size="13" fill="#fff" text-anchor="middle">OK</text>
-      </svg>
-      <figcaption>この窓が出れば成功です。</figcaption>
-    </figure>
-
-    <div class="check">
-      <div class="t">ここまでできたか確認</div>
-      <p>同じフォルダに <code>日報集計_be.accdb</code> というファイルができていますか。</p>
-      <p>できていれば、パート 1 は終わりです。<b>Access を開く必要すらありません。</b></p>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="num">4</div>
-    <div class="do">できたファイルを共有フォルダに移します</div>
+    <div class="num">2</div>
+    <div class="do">共有フォルダに移します</div>
     <p>
       <code>日報集計_be.accdb</code> を、職場の共有フォルダにコピーします。
-      場所はどこでもかまいませんが、<b class="hl">みんなが読み書きできる場所</b>にしてください。
+      場所はどこでもかまいませんが、次の 2 つを満たす場所にしてください。
     </p>
+    <p>・<b class="hl">毎日バックアップされるフォルダ</b>であること</p>
+    <p>・<b class="hl">みんなが読み書きできる</b>こと（読み取り専用では動きません）</p>
     <div class="check">
       <div class="t">大事：置いた場所をメモしてください</div>
       <p>
         フォルダのアドレス欄をクリックすると、こういう文字が出ます。これをメモしてください。
       </p>
       <p><code>\\fsx.sales.mint.go.jp\share\share_電話オペレータ\日報\日報集計_be.accdb</code></p>
-      <p>パート 2 の <b>手順 9</b> で、この文字をそのまま貼り付けます。</p>
+      <p>パート 2 の <b>手順 7</b> で、この文字をそのまま貼り付けます。</p>
+    </div>
+    <div class="warnbox">
+      <div class="t">同じフォルダに見慣れないファイルができます</div>
+      <p>
+        <code>日報集計_be.laccdb</code> というファイルが自動でできます。
+        誰かが使っている間だけできる目印なので、<b>消さないでください</b>。
+      </p>
     </div>
   </div>
 
@@ -370,7 +342,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">5</div>
+    <div class="num">3</div>
     <div class="do">サーバーのスイッチを 2 つ入れます</div>
     <p>
       Windows のサーバーには、画面を配るしくみ（IIS）が最初から入っています。
@@ -391,7 +363,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">6</div>
+    <div class="num">4</div>
     <div class="do">Access のデータを読むための部品を入れます</div>
     <p>
       <b>Microsoft Access Database Engine 2016 Redistributable</b> という、
@@ -416,7 +388,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">7</div>
+    <div class="num">5</div>
     <div class="do">ファイルをサーバーに置きます</div>
     <p>
       お渡しした一式の <code>03_Webサイト_ASP</code> の中にある
@@ -435,7 +407,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">8</div>
+    <div class="num">6</div>
     <div class="do">データを置いたフォルダに、書き込みの許可を出します</div>
     <p>
       パート 1 で <code>日報集計_be.accdb</code> を置いた<b>フォルダ</b>を右クリックし、
@@ -443,7 +415,7 @@ footer{
     </p>
     <p>
       「追加」を押して、次の名前を入れます（<code>&lt;プール名&gt;</code> は
-      手順 6 で見たアプリケーション プールの名前です）。
+      手順 4 で見たアプリケーション プールの名前です）。
     </p>
     <p><code>IIS AppPool\&lt;プール名&gt;</code></p>
     <p>追加できたら、<b>「変更」</b>にチェックを入れて「OK」を押します。</p>
@@ -460,7 +432,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">9</div>
+    <div class="num">7</div>
     <div class="do">3 か所だけ書き換えます</div>
     <p>
       置いたファイルのうち、<code>include</code> フォルダの中の 3 つを、
@@ -480,7 +452,7 @@ footer{
     <p>上のほうにある、この行を探します。</p>
     <p><code>Const DB_PATH = "D:\nippou\data\日報集計_be.accdb"</code></p>
     <p>
-      引用符（<code>"</code>）の間を、<b>手順 4 でメモした文字</b>に置き換えます。
+      引用符（<code>"</code>）の間を、<b>手順 2 でメモした文字</b>に置き換えます。
       引用符そのものは消さないでください。
     </p>
 
@@ -532,7 +504,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">10</div>
+    <div class="num">8</div>
     <div class="do">ブラウザで開きます</div>
     <p>アドレス欄に、次のように打ちます。</p>
     <p><code>http://&lt;サーバーの名前&gt;/nippou/</code></p>
@@ -549,10 +521,10 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">11</div>
+    <div class="num">9</div>
     <div class="do">みなさんにショートカットを配ります</div>
     <p>
-      デスクトップに、手順 10 のアドレスへのショートカットを作って配ります。
+      デスクトップに、手順 8 のアドレスへのショートカットを作って配ります。
     </p>
     <p class="hint">
       パソコンにくわしくない方も多いので、
@@ -562,7 +534,7 @@ footer{
   </div>
 
   <div class="step">
-    <div class="num">12</div>
+    <div class="num">10</div>
     <div class="do">マニュアルを印刷して配ります</div>
     <p>
       <code>01_マニュアル</code> の <code>操作マニュアル.html</code> を開き、
@@ -584,7 +556,7 @@ footer{
   <dl class="qa">
     <dt>「Provider が見つかりません」と出る</dt>
     <dd>
-      手順 6 の部品が入っていないか、ビット数が合っていません。
+      手順 4 の部品が入っていないか、ビット数が合っていません。
       IIS マネージャーの「アプリケーション プール」→「詳細設定」で
       「32 ビット アプリケーションの有効化」を確認してください。
       64 ビットの部品を入れたなら <b>False</b> です。
@@ -592,14 +564,14 @@ footer{
 
     <dt>「外部データベースを開けません」と出る</dt>
     <dd>
-      手順 8 の書き込み許可が足りていません。
+      手順 6 の書き込み許可が足りていません。
       <code>.accdb</code> を置いた<b>フォルダ</b>に「変更」の権限があるか確認してください。
       ファイルではなくフォルダです。
     </dd>
 
     <dt>画面の文字が「&#xFFFD;」のように化ける</dt>
     <dd>
-      手順 9 で、メモ帳などで保存し直したときに文字コードが変わっています。
+      手順 7 で、メモ帳などで保存し直したときに文字コードが変わっています。
       お渡しした元のファイルに戻し、
       文字コードを選べる編集ソフトで <b>UTF-8（BOM なし）</b>のまま保存し直してください。
     </dd>
@@ -612,7 +584,7 @@ footer{
     </dd>
 
     <dt>全員が「マスタ保守」を開けてしまう</dt>
-    <dd>手順 9 の <code>STAFF_USERS</code> が空のままです。</dd>
+    <dd>手順 7 の <code>STAFF_USERS</code> が空のままです。</dd>
 
     <dt>担当者の一覧に名前が出ない</dt>
     <dd>

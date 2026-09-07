@@ -88,8 +88,9 @@ rs.Close
   <tbody>
 <%
 Set rs = DbQuery( _
-  "SELECT * FROM [Q_受電明細] WHERE [対象日] BETWEEN ? AND ? " & _
-  "ORDER BY [対象日],[氏名],[区分ID]", Array(d1, d2))
+  "SELECT * FROM (" & SQL_受電明細() & ") AS M " & _
+  "WHERE M.[対象日] BETWEEN ? AND ? " & _
+  "ORDER BY M.[対象日],M.[氏名],M.[区分ID]", Array(d1, d2))
 Do While Not rs.EOF
 %>
     <tr>

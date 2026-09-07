@@ -103,7 +103,7 @@ rs.Close
 total = 0
 Set rs = DbQuery( _
   "SELECT TM.[業務項目ID], TM.[番号], TM.[項目名], " & _
-  " (SELECT Nz(Sum(W.[件数]),0) FROM [T_業務実績] AS W " & _
+  " (SELECT IIf(IsNull(Sum(W.[件数])),0,Sum(W.[件数])) FROM [T_業務実績] AS W " & _
   "   WHERE W.[対象日]=? AND W.[担当者ID]=? AND W.[業務項目ID]=TM.[業務項目ID]) AS [件数] " & _
   "FROM [M_業務項目] AS TM WHERE TM.[有効]=True ORDER BY TM.[表示順]", Array(dt, opId))
 Do While Not rs.EOF

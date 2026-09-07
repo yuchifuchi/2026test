@@ -25,7 +25,8 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
         msg = "日報を保存しました。"
 
     Case "fix"
-        missing = DbScalar("SELECT Count(*) FROM [Q_未入力チェック] WHERE [対象日]=?", Array(dt), 0)
+        missing = DbScalar("SELECT Count(*) FROM (" & SQL_未入力チェック() & ") AS C " & _
+                           "WHERE C.[対象日]=?", Array(dt), 0)
         If missing > 0 And ParamText("force") <> "1" Then
             msg = "実績が 1 件も無い担当者が " & missing & " 名います。" & _
                   "確認してから、もう一度「確定する」を押してください。"
@@ -72,8 +73,10 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
     End Select
 End If
 
-Set hd = DbQuery("SELECT * FROM [Q_日報_ヘッダ] WHERE [対象日]=?", Array(dt))
-missing = DbScalar("SELECT Count(*) FROM [Q_未入力チェック] WHERE [対象日]=?", Array(dt), 0)
+Set hd = DbQuery("SELECT * FROM (" & SQL_日報_ヘッダ() & ") AS D " & _
+                 "WHERE D.[対象日]=?", Array(dt))
+missing = DbScalar("SELECT Count(*) FROM (" & SQL_未入力チェック() & ") AS C " & _
+                   "WHERE C.[対象日]=?", Array(dt), 0)
 
 PageHead "日報", "daily.asp"
 %>
@@ -185,7 +188,7 @@ rs.Close
 <%
 Set rs = DbQuery( _
   "SELECT OP.[担当者ID],OP.[担当者コード],OP.[氏名],OP.[職員区分], " & _
-  " (SELECT Nz(Sum(J.[件数]),0) FROM [T_受電] AS J " & _
+  " (SELECT IIf(IsNull(Sum(J.[件数])),0,Sum(J.[件数])) FROM [T_受電] AS J " & _
   "   WHERE J.[対象日]=A.[対象日] AND J.[担当者ID]=A.[担当者ID]) AS [件数] " & _
   "FROM [T_出勤] AS A INNER JOIN [M_担当者] AS OP ON A.[担当者ID]=OP.[担当者ID] " & _
   "WHERE A.[対象日]=? ORDER BY OP.[表示順]", Array(dt))
@@ -226,7 +229,7 @@ ReDim tkN(99) : ReDim tkV(99)
 tn = 0
 Set tk = DbQuery( _
   "SELECT TM.[番号], TM.[項目名], " & _
-  " (SELECT Nz(Sum(W.[件数]),0) FROM [T_業務実績] AS W " & _
+  " (SELECT IIf(IsNull(Sum(W.[件数])),0,Sum(W.[件数])) FROM [T_業務実績] AS W " & _
   "   WHERE W.[対象日]=? AND W.[業務項目ID]=TM.[業務項目ID]) AS [件数] " & _
   "FROM [M_業務項目] AS TM WHERE TM.[有効]=True ORDER BY TM.[表示順]", Array(dt))
 Do While Not tk.EOF

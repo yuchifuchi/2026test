@@ -112,7 +112,8 @@ rs.Close
         <select id="kubun" name="kubun" required>
           <option value="">-- 選択 --</option>
 <%
-Set rs = DbQuery("SELECT [区分ID],[表示名] FROM [Q_選択_区分]", Empty)
+Set rs = DbQuery("SELECT K.[区分ID],K.[表示名] FROM (" & SQL_選択_区分() & ") AS K " & _
+                 "ORDER BY K.[並び順]", Empty)
 Do While Not rs.EOF
     Response.Write "<option value=""" & rs("区分ID") & """>" & H(rs("表示名")) & "</option>"
     rs.MoveNext
@@ -125,7 +126,8 @@ rs.Close
         <label for="prod">製品（不要なら「製品指定なし」のまま）</label>
         <select id="prod" name="prod">
 <%
-Set rs = DbQuery("SELECT [製品ID],[表示名] FROM [Q_選択_製品]", Empty)
+Set rs = DbQuery("SELECT P.[製品ID],P.[表示名] FROM (" & SQL_選択_製品() & ") AS P " & _
+                 "ORDER BY P.[ブロックID], P.[表示順]", Empty)
 Do While Not rs.EOF
     Response.Write "<option value=""" & rs("製品ID") & """>" & H(rs("表示名")) & "</option>"
     rs.MoveNext

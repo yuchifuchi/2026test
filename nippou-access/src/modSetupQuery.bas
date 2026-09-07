@@ -156,7 +156,7 @@ Public Sub Setup_Queries()
     ' 出勤登録があるのに実績が 1 件も無い担当者。
     ' 現行 Excel で「特定の人のデータが出てこない」ことに誰も気付けなかった問題への対策。
     SaveQuery "Q_未入力チェック", _
-        "SELECT A.[対象日], OP.[担当者ID], OP.[担当者コード], OP.[氏名] " & _
+        "SELECT A.[対象日], OP.[担当者ID], OP.[担当者コード], OP.[氏名], OP.[表示順] " & _
         "FROM [T_出勤] AS A INNER JOIN [M_担当者] AS OP ON A.[担当者ID]=OP.[担当者ID] " & _
         "WHERE NOT EXISTS (SELECT 1 FROM [T_受電] AS J " & _
         "                  WHERE J.[対象日]=A.[対象日] AND J.[担当者ID]=A.[担当者ID] AND J.[件数]<>0) " & _

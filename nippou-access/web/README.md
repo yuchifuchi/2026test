@@ -40,6 +40,7 @@ master.asp       マスタ保守（担当者／製品／区分／業務項目）
 error.asp        エラー画面
 include/auth.asp    ログオン名の取得と役割の判定（STAFF_USERS / IsStaff / RequireStaff）
 include/db.asp      接続・パラメータ化クエリ・共通関数
+include/sql.asp     クエリの SQL（自動生成。Access の保存クエリは使わない）
 include/layout.asp  ヘッダ・フッタ・日付ナビ（役割でメニューが変わる）
 include/sheet.asp   帳票 1 枚ぶんの HTML（report.asp と printpdf.asp が共用）
 include/pdf.asp     PDF 変換（Edge / wkhtmltopdf）
@@ -55,14 +56,21 @@ css/style.css       画面と印刷のスタイル
   メニューから消すだけでは、URL を直接打てば開けてしまいます
 - **帳票の中身は `include/sheet.asp` だけを直すこと。**
   画面（report.asp）と PDF（printpdf.asp）が同じ関数を呼んでいます
+- **`include/sql.asp` は手で直さないこと。**
+  `src/modSetupQuery.bas` から `tools/gen_sql_asp.py` が生成しています
+- **Access 専用の関数（`Nz`・`DLookup` など）を SQL に書かないこと。**
+  ACE 経由では使えず、「関数 'Nz' が定義されていません」で落ちます。
+  `Nz(x,0)` の代わりに `IIf(IsNull(x),0,x)` を使ってください
 - 認証は IIS の Windows 認証に任せています。運用前に
   「Windows 認証 = 有効／匿名認証 = 無効」にしてください
 
 ## 直したら実行する
 
 ```bash
-python3 tools/check_asp.py        # <% %> の対応・呼び出し先・配列の添字を見る
+python3 tools/check_asp.py          # <% %> の対応・呼び出し先・配列の添字を見る
+python3 tools/gen_sql_asp.py        # SQL を作り直す (modSetupQuery.bas を直したとき)
+python3 tools/test_sql.py           # その SQL を実際に .accdb に流してみる
 python3 tools/render_asp_report.py  # 帳票を静的 HTML に起こして体裁を見る
 ```
 
-IIS が無くても、この 2 つで「開いた瞬間に落ちる」類の壊れは見つかります。
+IIS が無くても、この 4 つで「開いた瞬間に落ちる」類の壊れは見つかります。

@@ -16,7 +16,8 @@ RequireStaff                              ' パート職員はここで止まる
 Dim today, cntToday, missing, state
 today = Date()
 cntToday = DbScalar("SELECT Sum([件数]) FROM [T_受電] WHERE [対象日]=?", Array(today), 0)
-missing  = DbScalar("SELECT Count(*) FROM [Q_未入力チェック] WHERE [対象日]=?", Array(today), 0)
+missing  = DbScalar("SELECT Count(*) FROM (" & SQL_未入力チェック() & ") AS C " & _
+                    "WHERE C.[対象日]=?", Array(today), 0)
 state    = DbScalar("SELECT [状態] FROM [T_日報] WHERE [対象日]=?", Array(today), "未作成")
 
 PageHead "メニュー", "staff.asp"

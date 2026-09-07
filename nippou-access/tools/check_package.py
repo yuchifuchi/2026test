@@ -78,11 +78,21 @@ def check(root):
     for must in ("00_はじめにお読みください.txt", "はじめに.html",
                  "はじめに読む_やさしい導入手順書.html",
                  "01_マニュアル/操作マニュアル.html",
-                 "02_データベース_Access/データベースを作る.vbs",
+                 "02_データベース_Access/日報集計_be.accdb",
+                 "02_データベース_Access/任意_作り直すとき/データベースを作る.vbs",
                  "03_Webサイト_ASP/wwwroot/default.asp",
                  "04_モックアップ/モックアップ.html"):
         if not os.path.exists(os.path.join(root, must.replace("/", os.sep))):
             bad("見当たらない: %s" % must)
+
+    # Access ファイルが本物か (先頭に ACE の目印があるか)
+    acc = os.path.join(root, "02_データベース_Access", "日報集計_be.accdb")
+    if os.path.exists(acc):
+        head = open(acc, "rb").read(32)
+        if b"Standard ACE DB" not in head:
+            bad("日報集計_be.accdb が Access ファイルに見えない")
+        if os.path.getsize(acc) < 100 * 1024:
+            bad("日報集計_be.accdb が小さすぎる (%d バイト)" % os.path.getsize(acc))
 
     return ng, len(files)
 

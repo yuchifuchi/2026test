@@ -63,10 +63,41 @@ Const STAFF_USERS = "t-okada,y-fujita"   ' この 2 人だけが職員
 | `include/auth.asp` | 共通 | Windows 認証からの利用者特定と役割の判定 |
 | `include/db.asp` | 共通 | 接続・パラメータ化クエリ・和暦などの共通処理 |
 | `include/layout.asp` | 共通 | ヘッダ・フッタ・日付ナビ（役割でメニューが変わる） |
+| `include/sql.asp` | 共通 | クエリの SQL。Access の保存クエリは使わない（自動生成） |
 | `include/sheet.asp` | 共通 | 帳票 1 枚ぶんの HTML。`report.asp` と `printpdf.asp` が共用 |
 | `include/pdf.asp` | 共通 | PDF 変換（Edge / wkhtmltopdf） |
 | `web.config` | 共通 | IIS 設定（Windows 認証・既定ページ・拡張子ブロック） |
 | `css/style.css` | 共通 | 画面と印刷のスタイル |
+
+### Access の保存クエリを使わない
+
+SQL は Access 側の保存クエリ（`Q_…`）ではなく、**`include/sql.asp` が持っています**。
+理由は 2 つあります。
+
+1. **Access を 1 台も使わずに `.accdb` を配れるようにするため。**
+   納品する `日報集計_be.accdb` は `tools/gen_accdb.py`（Jackcess）が作っており、
+   表・マスタ・つながりは作れますが、保存クエリは作れません。
+2. **ACE では Access 専用の関数が使えないため。**
+   とくに `Nz()` は Web から呼ぶと「関数 'Nz' が定義されていません」で失敗します。
+   Access の中では動くのに Web からだけ落ちる、という分かりにくい形を避けています。
+
+`include/sql.asp` は **`src/modSetupQuery.bas` から自動生成**しています
+（`tools/gen_sql_asp.py`）。Access 版と Web 版で SQL がずれることはありません。
+生成時に次の 3 つを機械的に行っています。
+
+- 末尾の `ORDER BY` と `;` を外す（副問い合わせとして埋め込むため）
+- `Nz(x,0)` を `IIf(IsNull(x),0,x)` に置き換える
+- クエリの中の `[Q_…]` を、その中身に展開する（入れ子の解決）
+
+呼ぶ側はこう書きます。並び順は呼ぶ側で付けます。
+
+```vbscript
+Set rs = DbQuery("SELECT * FROM (" & SQL_未入力チェック() & ") AS C " & _
+                 "WHERE C.[対象日]=? ORDER BY C.[表示順]", Array(dt))
+```
+
+この SQL は、Windows が無くても `tools/test_sql.py` で実際に流して確かめられます
+（UCanAccess で `.accdb` に接続し、日報の集計値が手計算と合うかまで見ています）。
 
 ### 印刷は PDF で出す
 
