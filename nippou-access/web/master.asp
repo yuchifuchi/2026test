@@ -72,10 +72,11 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
         Else
             id = DbScalar("SELECT Max([担当者ID]) FROM [M_担当者]", Empty, 0) + 1
             DbExec "INSERT INTO [M_担当者] " & _
-                   "([担当者ID],[担当者コード],[姓],[名],[氏名],[カナ],[職員区分]," & _
-                   " [在籍開始日],[表示順],[有効]) VALUES (?,?,?,?,?,?,?,?,?,True)", _
+                   "([担当者ID],[担当者コード],[姓],[名],[氏名],[カナ],[ログオン名],[職員区分]," & _
+                   " [在籍開始日],[表示順],[有効]) VALUES (?,?,?,?,?,?,?,?,?,?,True)", _
                    Array(id, ParamText("code"), ParamText("sei"), ParamText("mei"), _
                          Trim(ParamText("sei") & " " & ParamText("mei")), ParamText("kana"), _
+                         ParamText("logon"), _
                          IIfS(ParamText("kbn") = "職員", "職員", "パート"), _
                          ParamDate("start", today), _
                          DbScalar("SELECT Max([表示順]) FROM [M_担当者]", Empty, 0) + 1)
@@ -86,9 +87,11 @@ If UCase(Request.ServerVariables("REQUEST_METHOD")) = "POST" Then
         id = ParamLong("id", 0)
         If id > 0 Then
             DbExec "UPDATE [M_担当者] SET [担当者コード]=?,[姓]=?,[名]=?,[氏名]=?,[カナ]=?," & _
-                   "[職員区分]=?,[在籍開始日]=?,[在籍終了日]=?,[表示順]=?,[有効]=? WHERE [担当者ID]=?", _
+                   "[ログオン名]=?,[職員区分]=?,[在籍開始日]=?,[在籍終了日]=?," & _
+                   "[表示順]=?,[有効]=? WHERE [担当者ID]=?", _
                    Array(ParamText("code"), ParamText("sei"), ParamText("mei"), _
                          Trim(ParamText("sei") & " " & ParamText("mei")), ParamText("kana"), _
+                         ParamText("logon"), _
                          IIfS(ParamText("kbn") = "職員", "職員", "パート"), _
                          ParamDate("start", Null), ParamDate("end", Null), _
                          ParamLong("ord", 99), IIfS(ParamText("act2") = "on", -1, 0), id)
@@ -260,6 +263,8 @@ PageHead "マスタ保守", "master.asp"
       <div class="field"><label>姓</label><input type="text" name="sei" required></div>
       <div class="field"><label>名</label><input type="text" name="mei"></div>
       <div class="field"><label>カナ</label><input type="text" name="kana"></div>
+      <div class="field"><label>ログオン名</label>
+        <input type="text" name="logon" size="10" placeholder="例) t-okada"></div>
       <div class="field"><label>区分</label>
         <select name="kbn"><option>パート</option><option>職員</option></select></div>
       <div class="field"><label>在籍開始日</label>
@@ -274,10 +279,20 @@ PageHead "マスタ保守", "master.asp"
   退職する方は「退職日」を入れてください。<b>行は消さないでください。</b>
   消すと過去の日報・集計表からその方の名前が失われます。
 </p>
+<p class="notice">
+  <b>「ログオン名」と「区分」が、この画面を開ける人を決めます。</b>
+  ログオン名を入れた方が「職員」なら、日報・帳票印刷・集計表・入力もれ・マスタ保守が使えます。
+  「パート」なら受付入力とその他業務だけになります。<br>
+  ログオン名は Windows にログオンするときの名前です
+  （その方のパソコンでコマンド プロンプトに <code>whoami</code> と打つと出ます。
+  <code>\</code> より後ろだけを入れてください）。
+  いまこの画面を開いているかたのログオン名は <b><%= H(CurrentUser()) %></b> です。<br>
+  ログオン名が 1 件も入っていない間は、<b>全員が職員</b>として扱われます。
+</p>
 <div class="table-wrap">
 <table>
   <thead><tr>
-    <th>コード</th><th>姓</th><th>名</th><th>カナ</th><th>区分</th>
+    <th>コード</th><th>姓</th><th>名</th><th>カナ</th><th>ログオン名</th><th>区分</th>
     <th>在籍開始</th><th>退職日</th><th class="num">順</th><th>有効</th><th>状態</th>
     <th>保存</th><th>削除</th>
   </tr></thead>
@@ -294,6 +309,7 @@ Do While Not rs.EOF
       <td><input form="<%= fid %>" type="text" name="sei" size="6" value="<%= H(rs("姓")) %>"></td>
       <td><input form="<%= fid %>" type="text" name="mei" size="6" value="<%= H(rs("名")) %>"></td>
       <td><input form="<%= fid %>" type="text" name="kana" size="8" value="<%= H(rs("カナ")) %>"></td>
+      <td><input form="<%= fid %>" type="text" name="logon" size="9" value="<%= H(rs("ログオン名")) %>"></td>
       <td><select form="<%= fid %>" name="kbn">
         <option<%= IIfS(rs("職員区分")="パート"," selected","") %>>パート</option>
         <option<%= IIfS(rs("職員区分")="職員"," selected","") %>>職員</option>
@@ -324,7 +340,7 @@ Do While Not rs.EOF
 <%
   If Len("" & rs("備考")) > 0 Then
 %>
-    <tr><td colspan="12" style="background:#fdf3e0; font-size:13px">
+    <tr><td colspan="13" style="background:#fdf3e0; font-size:13px">
       <b>移行メモ：</b><%= H(rs("備考")) %></td></tr>
 <%
   End If

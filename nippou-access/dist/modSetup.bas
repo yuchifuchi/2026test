@@ -134,6 +134,9 @@ Public Sub CreateTables()
         "CONSTRAINT [FK_区分_ブロック] FOREIGN KEY ([ブロックID]) REFERENCES [M_ブロック]([ブロックID])," & _
         "CONSTRAINT [FK_区分_集計列] FOREIGN KEY ([集計列ID]) REFERENCES [M_集計列]([集計列ID]))"
 
+    ' [ログオン名] は Windows のログオン名 (ドメイン名は含めない)。
+    ' Web 版はこれを見て「この人は職員か」を決める。空でも構わない
+    ' (その場合は include/auth.asp の STAFF_USERS が使われる)。
     ' 職員の入れ替わりが多いので、担当者は「削除」せず在籍期間で管理する。
     ' 過去データは退職後も正しい担当者に紐づいたまま残り、入力画面の候補には出なくなる。
     ' 担当者コードは席番号なので再利用されうる。よって UNIQUE は張らない。
@@ -144,6 +147,7 @@ Public Sub CreateTables()
         "[名] TEXT(50)," & _
         "[氏名] TEXT(100) NOT NULL," & _
         "[カナ] TEXT(100)," & _
+        "[ログオン名] TEXT(50)," & _
         "[職員区分] TEXT(10) NOT NULL," & _
         "[在籍開始日] DATETIME," & _
         "[在籍終了日] DATETIME," & _
@@ -151,6 +155,8 @@ Public Sub CreateTables()
         "[有効] BIT NOT NULL," & _
         "[備考] MEMO)"
     ExecDDL "CREATE INDEX [IX_担当者_コード] ON [M_担当者] ([担当者コード])"
+    ' Web 版が「この人は職員か」を毎ページ引くので、ログオン名にも索引を張る
+    ExecDDL "CREATE INDEX [IX_担当者_ログオン名] ON [M_担当者] ([ログオン名])"
 
     ExecDDL "CREATE TABLE [M_業務項目] (" & _
         "[業務項目ID] LONG NOT NULL CONSTRAINT [PK_業務項目] PRIMARY KEY," & _

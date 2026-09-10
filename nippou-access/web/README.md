@@ -19,7 +19,8 @@ Access の `.accdb` をそのまま DB として使うイントラ Web サイト
 ## ファイル
 
 画面は**役割で分かれています**。誰がどれを開けるかは `include/auth.asp` の
-`STAFF_USERS` だけで決まります。
+`M_担当者.ログオン名` と `職員区分`（マスタ保守の画面）で決まります。
+マスタに無いときだけ `include/auth.asp` の `STAFF_USERS` を見ます。
 
 ```
 【パート職員が使う画面】
@@ -38,7 +39,7 @@ master.asp       マスタ保守（担当者／製品／区分／業務項目）
 
 【共通】
 error.asp        エラー画面
-include/auth.asp    ログオン名の取得と役割の判定（STAFF_USERS / IsStaff / RequireStaff）
+include/auth.asp    ログオン名の取得と役割の判定（M_担当者 → STAFF_USERS の順に見る）
 include/db.asp      接続・パラメータ化クエリ・共通関数
 include/sql.asp     クエリの SQL（自動生成。Access の保存クエリは使わない）
 include/layout.asp  ヘッダ・フッタ・日付ナビ（役割でメニューが変わる）

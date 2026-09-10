@@ -14,6 +14,7 @@
     nippou: JSON.parse(JSON.stringify(D.nippou)),
     attend: {},
     retired: {},
+    logon: {},                    // 担当者ID → Windows のログオン名
     // 業務実績。キーは "日付|担当者ID|業務項目ID"
     tasks: { "2026-08-25|1|1": 12, "2026-08-25|1|5": 3, "2026-08-25|10|2": 8,
              "2026-08-25|11|7": 5, "2026-08-25|17|10": 21, "2026-08-25|17|11": 6 },
@@ -702,7 +703,27 @@
         tdn.appendChild(w);
       }
       tr.appendChild(tdn);
-      tr.appendChild(el("td", null, o.kbn));
+
+      // ログオン名。本番ではこの欄が「職員かパートか」を決める (include/auth.asp)
+      var tdl = el("td");
+      var lg = el("input");
+      lg.type = "text"; lg.value = S.logon[o.id] || ""; lg.placeholder = "例) t-okada";
+      lg.style.maxWidth = "110px";
+      lg.addEventListener("change", function () { S.logon[o.id] = lg.value.trim(); });
+      tdl.appendChild(lg);
+      tr.appendChild(tdl);
+
+      var tdk = el("td");
+      var kb = el("select");
+      ["パート", "職員"].forEach(function (v) {
+        var op = el("option", null, v);
+        if (o.kbn === v) op.selected = true;
+        kb.appendChild(op);
+      });
+      kb.style.minWidth = "92px";
+      kb.addEventListener("change", function () { o.kbn = kb.value; render(); });
+      tdk.appendChild(kb);
+      tr.appendChild(tdk);
 
       var tde = el("td");
       var inp = el("input");

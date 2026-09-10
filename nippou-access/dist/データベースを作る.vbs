@@ -53,14 +53,14 @@ acc.NewCurrentDatabase dbPath
 Set db = acc.CurrentDb
 
 done = 0
-total = 192
+total = 193
 
 ' --- 表を作る ---
 Run "CREATE TABLE [M_集計列] ([集計列ID] LONG NOT NULL CONSTRAINT [PK_集計列] PRIMARY KEY,[集計列名] TEXT(50) NOT NULL,[表示順] LONG NOT NULL)"
 Run "CREATE TABLE [M_ブロック] ([ブロックID] LONG NOT NULL CONSTRAINT [PK_ブロック] PRIMARY KEY,[ブロック名] TEXT(50) NOT NULL,[製品別] BIT NOT NULL,[表示順] LONG NOT NULL)"
 Run "CREATE TABLE [M_製品] ([製品ID] LONG NOT NULL CONSTRAINT [PK_製品] PRIMARY KEY,[ブロックID] LONG NOT NULL,[製品名] TEXT(100) NOT NULL,[適用開始日] DATETIME,[適用終了日] DATETIME,[表示順] LONG NOT NULL,[有効] BIT NOT NULL)"
 Run "CREATE TABLE [M_区分] ([区分ID] LONG NOT NULL CONSTRAINT [PK_区分] PRIMARY KEY,[ブロックID] LONG NOT NULL,[区分名] TEXT(100) NOT NULL,[集計列ID] LONG NOT NULL,[内訳区分] TEXT(20),[表示順] LONG NOT NULL,[有効] BIT NOT NULL,[旧転記名] TEXT(100),CONSTRAINT [FK_区分_ブロック] FOREIGN KEY ([ブロックID]) REFERENCES [M_ブロック]([ブロックID]),CONSTRAINT [FK_区分_集計列] FOREIGN KEY ([集計列ID]) REFERENCES [M_集計列]([集計列ID]))"
-Run "CREATE TABLE [M_担当者] ([担当者ID] LONG NOT NULL CONSTRAINT [PK_担当者] PRIMARY KEY,[担当者コード] TEXT(10) NOT NULL,[姓] TEXT(50) NOT NULL,[名] TEXT(50),[氏名] TEXT(100) NOT NULL,[カナ] TEXT(100),[職員区分] TEXT(10) NOT NULL,[在籍開始日] DATETIME,[在籍終了日] DATETIME,[表示順] LONG NOT NULL,[有効] BIT NOT NULL,[備考] MEMO)"
+Run "CREATE TABLE [M_担当者] ([担当者ID] LONG NOT NULL CONSTRAINT [PK_担当者] PRIMARY KEY,[担当者コード] TEXT(10) NOT NULL,[姓] TEXT(50) NOT NULL,[名] TEXT(50),[氏名] TEXT(100) NOT NULL,[カナ] TEXT(100),[ログオン名] TEXT(50),[職員区分] TEXT(10) NOT NULL,[在籍開始日] DATETIME,[在籍終了日] DATETIME,[表示順] LONG NOT NULL,[有効] BIT NOT NULL,[備考] MEMO)"
 Run "CREATE TABLE [M_業務項目] ([業務項目ID] LONG NOT NULL CONSTRAINT [PK_業務項目] PRIMARY KEY,[番号] TEXT(4) NOT NULL,[項目名] TEXT(100) NOT NULL,[帳票表示名] TEXT(100) NOT NULL,[表示順] LONG NOT NULL,[有効] BIT NOT NULL)"
 Run "CREATE TABLE [T_日報] ([対象日] DATETIME NOT NULL CONSTRAINT [PK_日報] PRIMARY KEY,[回線数] LONG,[特記事項] MEMO,[職員代替案件] MEMO,[要望] MEMO,[状態] TEXT(10) NOT NULL,[確定日時] DATETIME,[更新日時] DATETIME)"
 Run "CREATE TABLE [T_出勤] ([出勤ID] COUNTER NOT NULL CONSTRAINT [PK_出勤] PRIMARY KEY,[対象日] DATETIME NOT NULL,[担当者ID] LONG NOT NULL,[勤務時間] TEXT(50),[備考] TEXT(255),CONSTRAINT [UQ_出勤] UNIQUE ([対象日],[担当者ID]))"
@@ -68,6 +68,7 @@ Run "CREATE TABLE [T_受電] ([受電ID] COUNTER NOT NULL CONSTRAINT [PK_受電] PRIMA
 Run "CREATE TABLE [T_業務実績] ([実績ID] COUNTER NOT NULL CONSTRAINT [PK_業務実績] PRIMARY KEY,[対象日] DATETIME NOT NULL,[担当者ID] LONG NOT NULL,[業務項目ID] LONG NOT NULL,[件数] LONG NOT NULL,CONSTRAINT [UQ_業務実績] UNIQUE ([対象日],[担当者ID],[業務項目ID]))"
 Run "CREATE TABLE [T_取込ログ] ([ログID] COUNTER NOT NULL CONSTRAINT [PK_取込ログ] PRIMARY KEY,[取込日時] DATETIME,[取込元] TEXT(255),[行番号] LONG,[日付] TEXT(50),[担当者] TEXT(100),[製品名] TEXT(100),[区分名] TEXT(100),[件数] LONG,[理由] MEMO)"
 Run "CREATE INDEX [IX_担当者_コード] ON [M_担当者] ([担当者コード])"
+Run "CREATE INDEX [IX_担当者_ログオン名] ON [M_担当者] ([ログオン名])"
 Run "CREATE INDEX [IX_受電_日付] ON [T_受電] ([対象日])"
 
 ' --- 選択肢のもとになるデータを入れる ---

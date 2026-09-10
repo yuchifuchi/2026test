@@ -74,7 +74,9 @@ Access のデスクトップ画面も使いたい場合は、`dist/*.bas` を入
 ### 2. 画面（Classic ASP）
 
 **入力する人とまとめる人で画面を分けています。**
-どちらになるかは `web/include/auth.asp` の `STAFF_USERS` だけで決まり、
+どちらになるかは **マスタ保守の担当者一覧**（`M_担当者.ログオン名` と `職員区分`）で決まります。
+職員のかたが画面から変更でき、ファイルを直す必要はありません
+（`web/include/auth.asp` の `STAFF_USERS` は、まだ誰も登録していないときの予備）。
 職員用のページは先頭で `RequireStaff` を呼んで、URL 直打ちでも開けません。
 
 | ファイル | 役割 | 画面 |
@@ -158,8 +160,8 @@ Access のデスクトップ画面も使いたい場合は、`dist/*.bas` を入
 2. **過去データを取り込む**（任意）
    Access の「Excel から取込」で週次の集計表を読み込む
 3. **IIS に配置する**
-   `web/` を配置し、`db.asp` の `DB_PATH`、`auth.asp` の `STAFF_USERS`、
-   `pdf.asp` の `PDF_EDGE_EXE` を設定
+   `web/` を配置し、`db.asp` の `DB_PATH` と `pdf.asp` の `PDF_EDGE_EXE` を設定
+   （誰が職員かはマスタ保守の画面から。`auth.asp` の `STAFF_USERS` は最初の 1 人だけ）
 4. **ショートカットを配る**
    利用者のデスクトップに `http://<サーバー>/nippou/` へのショートカット
 

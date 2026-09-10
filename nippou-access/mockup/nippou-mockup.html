@@ -641,10 +641,18 @@ footer a{color:var(--accent)}
     <!-- 担当者 -->
     <div id="mt-op">
       <div class="tw"><table>
-        <thead><tr><th>コード</th><th>氏名</th><th>区分</th>
+        <thead><tr><th>コード</th><th>氏名</th><th>ログオン名</th><th>区分</th>
           <th>退職日</th><th>状態</th><th class="n">使用件数</th><th>削除</th></tr></thead>
         <tbody id="ms-rows"></tbody>
       </table></div>
+      <p class="legend">
+        <b>「ログオン名」と「区分」が、その人に出る画面を決めます。</b>
+        ログオン名を入れた方が「職員」なら、日報・帳票印刷・集計表・入力もれ・マスタ保守まで
+        使えます。「パート」なら受付入力とその他業務だけになります。<br>
+        ログオン名は Windows にログオンするときの名前です
+        （その方のパソコンでコマンド プロンプトに <code>whoami</code> と打つと出ます）。
+        本番ではこの欄だけで切り替わるので、ファイルを直す必要はありません。
+      </p>
 
       <h2>移行時に手当てが必要なもの</h2>
       <div class="tw"><table>
@@ -770,6 +778,7 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
     nippou: JSON.parse(JSON.stringify(D.nippou)),
     attend: {},
     retired: {},
+    logon: {},                    // 担当者ID → Windows のログオン名
     // 業務実績。キーは "日付|担当者ID|業務項目ID"
     tasks: { "2026-08-25|1|1": 12, "2026-08-25|1|5": 3, "2026-08-25|10|2": 8,
              "2026-08-25|11|7": 5, "2026-08-25|17|10": 21, "2026-08-25|17|11": 6 },
@@ -1458,7 +1467,27 @@ var D = {"cols":{"3":"申込方法","4":"抽選結果","5":"納付書発送","6"
         tdn.appendChild(w);
       }
       tr.appendChild(tdn);
-      tr.appendChild(el("td", null, o.kbn));
+
+      // ログオン名。本番ではこの欄が「職員かパートか」を決める (include/auth.asp)
+      var tdl = el("td");
+      var lg = el("input");
+      lg.type = "text"; lg.value = S.logon[o.id] || ""; lg.placeholder = "例) t-okada";
+      lg.style.maxWidth = "110px";
+      lg.addEventListener("change", function () { S.logon[o.id] = lg.value.trim(); });
+      tdl.appendChild(lg);
+      tr.appendChild(tdl);
+
+      var tdk = el("td");
+      var kb = el("select");
+      ["パート", "職員"].forEach(function (v) {
+        var op = el("option", null, v);
+        if (o.kbn === v) op.selected = true;
+        kb.appendChild(op);
+      });
+      kb.style.minWidth = "92px";
+      kb.addEventListener("change", function () { o.kbn = kb.value; render(); });
+      tdk.appendChild(kb);
+      tr.appendChild(tdk);
 
       var tde = el("td");
       var inp = el("input");

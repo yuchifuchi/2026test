@@ -66,6 +66,8 @@ def build(out_root):
     copy(accdb, os.path.join(d, "日報集計_be.accdb"))
     copy(os.path.join(HERE, "dist", "データベースを作る.vbs"),
          os.path.join(d, "任意_作り直すとき", "データベースを作る.vbs"))
+    copy(os.path.join(HERE, "dist", "ログオン名の欄を足す.vbs"),
+         os.path.join(d, "任意_すでに使い始めている場合", "ログオン名の欄を足す.vbs"))
     for f in sorted(os.listdir(os.path.join(HERE, "dist"))):
         if f.endswith(".bas"):
             copy(os.path.join(HERE, "dist", f),
@@ -135,6 +137,21 @@ def build(out_root):
  同じ内容の 日報集計_be.accdb をその場に作ります（10 秒ほど）。
 
  ★ 作り直すと、入力済みのデータはすべて消えます。
+
+
+------------------------------------------------------------
+ 任意_すでに使い始めている場合
+------------------------------------------------------------
+
+ すでに受付入力を始めたあとで、新しい版をお渡しした場合に使います。
+ データベースを差し替えると入力済みのデータが消えるので、
+ 代わりに「足りない欄だけを足す」ためのものです。
+
+ ログオン名の欄を足す.vbs
+     マスタ保守で「ログオン名」を入れられるようにします。
+     日報集計_be.accdb をこのファイルの上にドラッグして落とすか、
+     ダブルクリックして、出てきた窓に場所を貼り付けてください。
+     Access は要りません。何度実行しても大丈夫です。
 
 
 ------------------------------------------------------------
@@ -210,14 +227,16 @@ def build(out_root):
 
    include\\auth.asp の先頭
      Const STAFF_USERS = ""
-       → 職員のかたのログオン名を「,」区切りで入れます。ドメイン名は書きません。
-          例) Const STAFF_USERS = "t-okada,y-fujita"
+       → 最初にマスタ保守を開くかた 1 人のログオン名を入れます。
+          ドメイン名は書きません。例) Const STAFF_USERS = "t-okada"
 
-       ここに書いた方だけが、日報・帳票印刷・集計表・入力もれ・マスタ保守を
-       開けます。書かれていない方 (パート職員のかた) は、
-       「受付入力」と「その他業務」だけの画面になります。
+       誰が職員かは、ふだんは「マスタ保守」の画面で決めます。
+       担当者一覧の「ログオン名」に Windows のログオン名を入れ、
+       区分を「職員」にすると、その方に日報・帳票印刷・集計表・入力もれ・
+       マスタ保守が出るようになります。ファイルを直す必要はありません。
 
-     ★ 空のままだと全員が職員扱いです。運用開始前に必ず設定してください。
+     ★ マスタのログオン名が 1 件も入っておらず、ここも空のままだと
+       全員が職員扱いです。運用開始前に必ずどちらかを設定してください。
 
    include\\pdf.asp の先頭 (帳票を PDF で印刷するため)
      Const PDF_EDGE_EXE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
@@ -391,10 +410,10 @@ def write_readme_txt(base):
       DB_PATH … Access ファイルを置いた実際の場所
 
   03_Webサイト_ASP\\wwwroot\\include\\auth.asp
-      STAFF_USERS … 職員のかたのログオン名
-                    ここに書いた方だけが日報・帳票印刷・集計表・
-                    入力もれ・マスタ保守を開けます。
-                    空のままだと全員が職員扱いです。
+      STAFF_USERS … 最初にマスタ保守を開くかた 1 人のログオン名
+                    ふだんは「マスタ保守」の担当者一覧にある
+                    「ログオン名」と「区分」で決めます (画面から変更できます)。
+                    どちらも空のままだと全員が職員扱いです。
 
   03_Webサイト_ASP\\wwwroot\\include\\pdf.asp
       PDF_EDGE_EXE … サーバーの Edge (msedge.exe) の場所
@@ -530,8 +549,9 @@ def write_index_html(base):
     <code>03_Webサイト_ASP\wwwroot\include\db.asp</code> の <code>DB_PATH</code>
     … Access ファイルを置いた実際の場所<br>
     <code>03_Webサイト_ASP\wwwroot\include\auth.asp</code> の <code>STAFF_USERS</code>
-    … 職員のかたのログオン名。ここに書いた方だけが日報・帳票印刷・集計表・
-    入力もれ・マスタ保守を開けます。<b>空のままだと全員が職員扱いです。</b><br>
+    … 最初にマスタ保守を開くかた 1 人のログオン名。
+    ふだんは「マスタ保守」の担当者一覧（ログオン名・区分）で決めます。
+    <b>どちらも空のままだと全員が職員扱いです。</b><br>
     <code>03_Webサイト_ASP\wwwroot\include\pdf.asp</code> の <code>PDF_EDGE_EXE</code>
     … サーバーの Edge の場所。既定の場所にあれば、そのままで構いません。
   </div>
