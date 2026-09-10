@@ -91,6 +91,19 @@ Row "ASP が動いている", True, "" & Request.ServerVariables("SERVER_SOFTWAR
 Row "日本語が化けていない", Null, "あいうえお 漢字 ①②③", _
     "ここが化けていたら、.asp を Shift_JIS で保存し直してしまっています。"
 Row "置き場所", Null, appPath, "web/ の中身をここに置いています。"
+
+' ファイルを触るときのアカウント。フォルダの権限をどれに与えるかの手がかり。
+Dim acct
+acct = ""
+On Error Resume Next
+Set sh = Server.CreateObject("WScript.Shell")
+If Err.Number = 0 Then acct = sh.ExpandEnvironmentStrings("%USERDOMAIN%\%USERNAME%")
+Err.Clear
+On Error GoTo 0
+Row "サーバー側で動いているアカウント", Null, _
+    IIf2(Len(acct) > 0, acct, "(取得できませんでした)"), _
+    "アプリケーション プールの ID です。共有フォルダの権限は、" & _
+    "このアカウント（匿名認証で別のアカウントを指定しているならそちら）に与えます。"
 Row "URL", Null, "" & Request.ServerVariables("URL"), ""
 %>
 </table>
@@ -104,8 +117,12 @@ who = Trim("" & Request.ServerVariables("LOGON_USER"))
 If Len(who) = 0 Then who = Trim("" & Request.ServerVariables("AUTH_USER"))
 Row "Windows 認証", (Len(who) > 0), _
     IIf2(Len(who) > 0, who, "(空。匿名で開いています)"), _
-    "IIS マネージャー →「認証」で、<b>Windows 認証 = 有効</b>／<b>匿名認証 = 無効</b> に" & _
-    "してください。空のままだと、誰が入力したかを記録できません。"
+    "<b>空のままでも動きます。</b>ただし次の 2 つができません。<br>" & _
+    "・誰が入力したかの記録（T_受電 の登録者が「(未認証)」になります）<br>" & _
+    "・パート職員と職員で画面を分けること（<b>全員が職員として全画面を開けます</b>）<br>" & _
+    "使い分けたいときは IIS マネージャー →「認証」で" & _
+    " <b>Windows 認証 = 有効</b>／<b>匿名認証 = 無効</b> にしてください。" & _
+    "あとから切り替えても、入力済みのデータには影響しません。"
 Row "認証の種類", Null, "" & Request.ServerVariables("AUTH_TYPE"), ""
 %>
 </table>
@@ -257,7 +274,7 @@ Row "変換プログラム (Edge) がある", fso.FileExists(edgePath), _
     "（PDF が作れなくても、ブラウザからの印刷はできます）"
 
 Err.Clear
-Set sh = Server.CreateObject("WScript.Shell")
+If Not IsObject(sh) Then Set sh = Server.CreateObject("WScript.Shell")
 Row "外部プログラムを呼び出せる", (Err.Number = 0), _
     IIf2(Err.Number = 0, "呼び出せます", Err.Description), _
     "呼び出せない場合、PDF 印刷は使えません。ブラウザからの印刷をお使いください。"
