@@ -147,13 +147,20 @@ textarea{min-height:76px; resize:vertical; line-height:1.6}
 /* --- 表 --- */
 .tw{overflow-x:auto; border:1px solid var(--line); border-radius:var(--r); background:var(--panel)}
 table{border-collapse:collapse; width:100%; font-size:14px}
-th,td{padding:8px 12px; text-align:left; border-bottom:1px solid var(--line2); vertical-align:middle}
+/* 罫線は縦横とも引く。本番 (ASP) の画面と同じ「閉じた」表にする。
+   いちばん外側だけは .tw の枠が代わりになるので、二重線にならないよう抜く。 */
+th,td{padding:8px 12px; text-align:left; border:1px solid var(--line2); vertical-align:middle}
+tr > *:first-child{border-left:0}
+tr > *:last-child{border-right:0}
+thead tr:first-child > *{border-top:0}
 th{
   background:var(--panel2); font-size:12px; color:var(--muted); font-weight:700;
   letter-spacing:.06em; white-space:nowrap; border-bottom:1px solid var(--line);
 }
 td.n,th.n{text-align:right; font-variant-numeric:tabular-nums}
-tbody tr:last-child td{border-bottom:0}
+/* いちばん下の行だけ罫線を抜く。.tw の枠が下線の代わりになるため。
+   帳票 (.paper) には枠が無いので、この規則を効かせてはいけない (罫線が閉じない)。 */
+.tw tbody tr:last-child td{border-bottom:0}
 tfoot td{background:var(--panel2); font-weight:700; border-top:1px solid var(--line)}
 .empty{color:var(--muted); padding:22px 12px; text-align:center; font-size:14px}
 
@@ -216,7 +223,10 @@ tfoot td{background:var(--panel2); font-weight:700; border-top:1px solid var(--l
 .paper table{width:100%; border-collapse:collapse; font-size:13px; color:#000}
 .paper th,.paper td{border:1px solid #000; padding:3px 6px; color:#000; background:#fff}
 .paper th{font-weight:600; letter-spacing:.04em}
-.paper td.blank{border:none; background:#fff}
+/* 帳票の罫線は上下左右すべて閉じる。Excel の印刷用シートと同じ見た目にする。
+   空欄でも枠は残す (セルの罫線を消すと表の外枠まで切れてしまう)。 */
+.paper table{border:1px solid #000}
+.paper tbody tr:last-child td,.paper tbody tr:last-child th{border-bottom:1px solid #000}
 .paper .memo{
   border:1px solid #000; min-height:19mm; padding:5px 8px; white-space:pre-wrap;
   font-size:13px; margin-bottom:9px;
