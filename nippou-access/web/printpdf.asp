@@ -14,18 +14,15 @@
 '  利用者はいつもどおり Ctrl+P で印刷する。
 '  ブラウザが勝手に入れる日付や URL は紙に載らない。
 ' -----------------------------------------------------------------------------
-Dim dt, css, html, pdfPath, fso
+Dim dt, css, html, pdfPath
 
 RequireStaff                              ' 職員以外はここで止まる
 
 dt = ParamDate("d", Date())
 
 ' 帳票のスタイルは画面と同じものを使う。二重管理にしない。
-On Error Resume Next
-Set fso = Server.CreateObject("Scripting.FileSystemObject")
-css = fso.OpenTextFile(Server.MapPath("css/style.css"), 1, False, -1).ReadAll()
-If Err.Number <> 0 Then css = "" : Err.Clear
-On Error GoTo 0
+' .css は UTF-8 なので ADODB.Stream で読む (FileSystemObject では化ける)。
+css = ReadTextUtf8(Server.MapPath("css/style.css"))
 
 ' 変換プログラムに渡す、単独で完結した HTML を組み立てる。
 ' 画面まわりは入れない。@media print ではなく、最初から帳票だけの紙にする。

@@ -39,6 +39,7 @@ master.asp       マスタ保守（担当者／製品／区分／業務項目）
 
 【共通】
 error.asp        エラー画面
+setup_check.asp  設置チェック（ほかのファイルを読み込まないので単体で開ける）
 include/auth.asp    ログオン名の取得と役割の判定（M_担当者 → STAFF_USERS の順に見る）
 include/db.asp      接続・パラメータ化クエリ・共通関数
 include/sql.asp     クエリの SQL（自動生成。Access の保存クエリは使わない）

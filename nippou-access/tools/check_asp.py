@@ -3,7 +3,7 @@
 
 見るもの
   ・<% %> の対応
-  ・Function / Sub の対応
+  ・Function / Sub と If / For / Do / Select の対応
   ・#include で読んでいるファイルが実在するか
   ・呼んでいる自前の関数が、そのページで読み込まれる範囲に定義されているか
     (RequireStaff を消したのに呼び出しが残っている、等)
@@ -76,6 +76,59 @@ def code_lines(text):
         for k, ln in enumerate(m.group(1).split("\n")):
             out.append((base + k, strip_strings(ln)))
     return out
+
+
+def logical_lines(f):
+    """行継続 (_) をつないだ、1 文ずつの (行番号, 文)。"""
+    out, buf, start = [], "", None
+    for no, ln in code_lines(read(f)):
+        t = ln.rstrip()
+        if start is None:
+            start = no
+        if t.endswith(" _"):
+            buf += t[:-2] + " "
+            continue
+        out.append((start, buf + t))
+        buf, start = "", None
+    if buf:
+        out.append((start or 0, buf))
+    return out
+
+
+BLOCKS = (
+    ("If",     re.compile(r"^if\b.*\bthen\b(.*)$", re.I),  re.compile(r"^end\s+if\b", re.I)),
+    ("For",    re.compile(r"^for\b", re.I),                  re.compile(r"^next\b", re.I)),
+    ("Do",     re.compile(r"^do\b", re.I),                   re.compile(r"^loop\b", re.I)),
+    ("Select", re.compile(r"^select\s+case\b", re.I),       re.compile(r"^end\s+select\b", re.I)),
+)
+
+
+def check_blocks(f, problems):
+    """If / For / Do / Select の対応を見る。
+
+    VBScript は 1 つ閉じ忘れただけで、そのページ全体が 500 になる。
+    IIS が無いとそれが実行時まで分からないので、ここで見ておく。
+    """
+    depth = dict((name, 0) for name, _o, _c in BLOCKS)
+    rel = os.path.relpath(f, HERE)
+    for no, ln in logical_lines(f):
+        t = ln.strip()
+        if not t:
+            continue
+        for name, opener, closer in BLOCKS:
+            m = opener.match(t)
+            if m:
+                # 1 行で完結する If ... Then <文> は数えない
+                if name != "If" or not (m.lastindex and m.group(1).strip()):
+                    depth[name] += 1
+            elif closer.match(t):
+                depth[name] -= 1
+                if depth[name] < 0:
+                    problems.append("%s(%d): %s を閉じすぎています" % (rel, no, name))
+                    depth[name] = 0
+    for name, n in depth.items():
+        if n:
+            problems.append("%s: %s が %d 個閉じていません" % (rel, name, n))
 
 
 def include_tree(page, problems, name):
@@ -158,6 +211,7 @@ def check_page(page, problems):
     files = include_tree(page, problems, name)
     defs, variables, calls = {}, set(), []
     for f in files:
+        check_blocks(f, problems)
         d, v, c, _a = scan(f)
         defs.update(d)
         variables |= v

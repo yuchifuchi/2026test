@@ -29,11 +29,71 @@ Sub OpenDb()
     If IsObject(gConn) Then
         If Not gConn Is Nothing Then Exit Sub
     End If
+
+    ' つながらないときに真っ白な画面 (HTTP 500) にしない。
+    ' 設置でつまずくのはほぼこの 1 行なので、原因の候補まで出す。
+    On Error Resume Next
     Set gConn = Server.CreateObject("ADODB.Connection")
+    If Err.Number <> 0 Then
+        DbFatal "サーバーでデータベース機能を呼び出せませんでした。", Err.Description
+    End If
     gConn.CursorLocation = 3            ' adUseClient
     gConn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & DB_PATH & _
                ";Persist Security Info=False;"
+    If Err.Number <> 0 Then
+        DbFatal "データベースに接続できませんでした。", Err.Description
+    End If
+    On Error GoTo 0
 End Sub
+
+' 接続できないときの画面。ここで処理を打ち切る。
+Sub DbFatal(what, detail)
+    On Error Resume Next
+    Response.Clear
+    Response.Status = "500 Internal Server Error"
+    Response.ContentType = "text/html"
+    Response.Write "<!doctype html><html lang=""ja""><head><meta charset=""utf-8"">" & _
+        "<meta name=""viewport"" content=""width=device-width, initial-scale=1"">" & _
+        "<title>データベースにつながりません</title>" & _
+        "<link rel=""stylesheet"" href=""css/style.css""></head><body><main>" & _
+        "<h1>データベースにつながりません</h1>" & _
+        "<p class=""notice err"">" & H(what) & "<br>" & _
+        "入力した内容は保存されていません。少し時間をおいて開き直してください。" & _
+        "直らないときは、下の内容を情報システム担当にお伝えください。</p>" & _
+        "<div class=""panel""><h2 style=""margin-top:0"">担当者のかたへ</h2>" & _
+        "<pre style=""white-space:pre-wrap; background:#f4f2ee; padding:12px 14px;" & _
+        " border-radius:6px; font-size:13px"">" & H(detail) & vbCrLf & vbCrLf & _
+        "接続先: " & H(DB_PATH) & "</pre>" & _
+        "<p class=""lead"">よくある原因は次の 4 つです。</p><ul>" & _
+        "<li><b>Microsoft Access Database Engine が入っていない</b>" & _
+        "（「プロバイダーが見つかりません」と出ます）</li>" & _
+        "<li><b>アプリケーション プールのビット数が合っていない</b>" & _
+        "（64bit の ACE なら「32 ビット アプリケーションの有効化」は False）</li>" & _
+        "<li><b>接続先の場所が違う</b>（include\db.asp の DB_PATH）</li>" & _
+        "<li><b>フォルダに書き込めない</b>" & _
+        "（.accdb を置いたフォルダに、アプリケーション プール ID の変更権限が要ります）</li>" & _
+        "</ul><p class=""lead"">" & _
+        "<a class=""btn"" href=""setup_check.asp"">設置チェックの画面を開く</a></p></div>" & _
+        "</main></body></html>"
+    Response.End
+End Sub
+
+' テキストファイルを UTF-8 として読む。
+' FileSystemObject の OpenTextFile は UTF-8 を読めない (Shift_JIS か UTF-16 のみ)。
+' このシステムのファイルはすべて UTF-8 なので、ADODB.Stream を使う。
+Function ReadTextUtf8(path)
+    Dim st
+    ReadTextUtf8 = ""
+    On Error Resume Next
+    Set st = Server.CreateObject("ADODB.Stream")
+    st.Type = 2                       ' テキスト
+    st.Charset = "utf-8"
+    st.Open
+    st.LoadFromFile path
+    If Err.Number = 0 Then ReadTextUtf8 = st.ReadText
+    st.Close
+    Err.Clear
+End Function
 
 Sub CloseDb()
     On Error Resume Next
