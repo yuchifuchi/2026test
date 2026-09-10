@@ -73,6 +73,7 @@ Const STAFF_USERS = ""
 | `check.asp` | 職員 | 入力もれチェック |
 | `master.asp` | 職員 | マスタ保守（担当者／製品／区分／業務項目）。**追加・修正・削除がすべて画面から行えます** |
 | `error.asp` | 共通 | エラー画面。詳細は出さず、担当者への連絡内容を案内する |
+| `include/config.asp` | 共通 | **設置ごとの設定はこの 1 ファイルだけ**（DB の場所・PDF の設定など） |
 | `include/auth.asp` | 共通 | Windows 認証からの利用者特定と役割の判定 |
 | `include/db.asp` | 共通 | 接続・パラメータ化クエリ・和暦などの共通処理 |
 | `include/layout.asp` | 共通 | ヘッダ・フッタ・日付ナビ（役割でメニューが変わる） |
@@ -198,7 +199,7 @@ D:\nippou\data\日報集計_be.accdb ← バックエンド
 
 ### 4. 設定
 
-`include/db.asp` の先頭:
+`include/config.asp`（設置ごとの設定はこの 1 ファイルだけ）:
 
 ```vbscript
 Const DB_PATH = "D:\nippou\data\日報集計_be.accdb"
@@ -249,7 +250,7 @@ IIS は既定で、次の 2 つを `web.config` から上書きすることを�
 
 - ASP が動いているか／日本語が化けていないか
 - Windows 認証が効いているか（ログオン名が取れているか）
-- `DB_PATH` の場所・ファイルの有無・そのフォルダに書き込めるか
+- `DB_PATH`（`include/config.asp`）の場所・ファイルの有無・そのフォルダに書き込めるか
 - ACE でつながるか／担当者マスタが読めるか／`ログオン名` 欄があるか
 - PDF 変換に使う Edge があるか／作業用フォルダに書けるか
 - 必要なファイルがそろっているか

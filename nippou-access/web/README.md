@@ -11,7 +11,7 @@ Access の `.accdb` をそのまま DB として使うイントラ Web サイト
 2. Microsoft Access Database Engine 2016 Redistributable を入れ、
    アプリケーションプールのビット数を合わせる
 3. このフォルダの中身を `C:\inetpub\wwwroot\nippou\` に置く
-4. `include/db.asp` の `DB_PATH` をバックエンドの実際のパスに書き換える
+4. `include/config.asp` の `DB_PATH` をバックエンドの実際のパスに書き換える
 5. `.accdb` を置いた**フォルダ**にアプリケーションプール ID の変更権限を与える
    （ロックファイル `.laccdb` を作るため、読み取りだけでは動きません）
 6. `http://<サーバー>/nippou/` を開く
@@ -40,6 +40,7 @@ master.asp       マスタ保守（担当者／製品／区分／業務項目）
 【共通】
 error.asp        エラー画面
 setup_check.asp  設置チェック（ほかのファイルを読み込まないので単体で開ける）
+include/config.asp  設置ごとの設定（DB の場所・職員の予備一覧・PDF）※ここだけ環境依存
 include/auth.asp    ログオン名の取得と役割の判定（M_担当者 → STAFF_USERS の順に見る）
 include/db.asp      接続・パラメータ化クエリ・共通関数
 include/sql.asp     クエリの SQL（自動生成。Access の保存クエリは使わない）

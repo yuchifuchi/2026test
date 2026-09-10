@@ -93,6 +93,7 @@ Access のデスクトップ画面も使いたい場合は、`dist/*.bas` を入
 | `web/master.asp` | 職員 | マスタ保守（担当者／製品／区分／業務項目） |
 | `web/error.asp` | 共通 | エラー画面 |
 | `web/include/auth.asp` | 共通 | Windows 認証からの利用者特定と役割の判定 |
+| `web/include/config.asp` | 共通 | **設置ごとの設定（DB の場所・PDF）はこの 1 ファイルだけ** |
 | `web/include/db.asp` | 共通 | 接続・パラメータ化クエリ・共通関数 |
 | `web/include/layout.asp` | 共通 | ヘッダ・ナビ・フッタ（役割でメニューが変わる） |
 | `web/include/sheet.asp` | 共通 | 帳票 1 枚ぶんの HTML（画面と PDF で共用） |
@@ -160,7 +161,7 @@ Access のデスクトップ画面も使いたい場合は、`dist/*.bas` を入
 2. **過去データを取り込む**（任意）
    Access の「Excel から取込」で週次の集計表を読み込む
 3. **IIS に配置する**
-   `web/` を配置し、`db.asp` の `DB_PATH` と `pdf.asp` の `PDF_EDGE_EXE` を設定
+   `web/` を配置し、**`include/config.asp` の 1 ファイルだけ**を環境に合わせて書き換え
    （誰が職員かはマスタ保守の画面から。`auth.asp` の `STAFF_USERS` は最初の 1 人だけ）
 4. **ショートカットを配る**
    利用者のデスクトップに `http://<サーバー>/nippou/` へのショートカット

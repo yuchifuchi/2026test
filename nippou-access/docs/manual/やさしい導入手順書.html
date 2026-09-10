@@ -443,10 +443,12 @@ footer{
 
   <div class="step">
     <div class="num">7</div>
-    <div class="do">3 か所だけ書き換えます</div>
+    <div class="do">1 つのファイルを書き換えます</div>
     <p>
-      置いたファイルのうち、<code>include</code> フォルダの中の 3 つを、
+      設定を書くのは <b><code>include\config.asp</code> ただ 1 つ</b>です。
       メモ帳ではなく <b>「メモ帳」以外の編集ソフト</b>で開いて直します。
+      （このファイルだけは、あとで直しをお渡ししても上書きしないでください。
+      設定が残ります）
     </p>
     <div class="warnbox">
       <div class="t">なぜメモ帳ではないのか</div>
@@ -458,7 +460,7 @@ footer{
       </p>
     </div>
 
-    <p style="margin-top:18px"><b>1 つめ：<code>include\db.asp</code></b></p>
+    <p style="margin-top:18px"><b>1 つめ：<code>include\config.asp</code></b></p>
     <p>上のほうにある、この行を探します。</p>
     <p><code>Const DB_PATH = "D:\nippou\data\日報集計_be.accdb"</code></p>
     <p>
@@ -466,7 +468,7 @@ footer{
       引用符そのものは消さないでください。
     </p>
 
-    <p style="margin-top:18px"><b>2 つめ：<code>include\auth.asp</code></b></p>
+    <p style="margin-top:18px"><b>2 つめ：同じ <code>include\config.asp</code> の中</b></p>
     <p>上のほうにある、この行を探します。</p>
     <p><code>Const STAFF_USERS = ""</code></p>
     <p>
@@ -494,7 +496,7 @@ footer{
       </p>
     </div>
 
-    <p style="margin-top:18px"><b>3 つめ：<code>include\pdf.asp</code></b>（日報を PDF で印刷するため）</p>
+    <p style="margin-top:18px"><b>3 つめ：同じ <code>include\config.asp</code> の中</b>（日報を PDF で印刷するため）</p>
     <p>上のほうにある、この行を探します。</p>
     <p><code>Const PDF_EDGE_EXE = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"</code></p>
     <p>

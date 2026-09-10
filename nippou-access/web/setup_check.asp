@@ -1,6 +1,6 @@
 <%@ LANGUAGE="VBScript" CODEPAGE="65001" %>
 <% Option Explicit %>
-<% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
+<% Response.CharSet = "utf-8" : Response.CodePage = 65001 %>
 <%
 ' -----------------------------------------------------------------------------
 '  設置チェック
@@ -144,12 +144,13 @@ If Err.Number <> 0 Then
 Else
     hasFso = True
     txt = ""
-    If Not fso.FileExists(Server.MapPath("include/db.asp")) Then
-        Row "include\db.asp がある", False, "ありません", _
-            "include フォルダごと置けているか確認してください。"
+    If Not fso.FileExists(Server.MapPath("include/config.asp")) Then
+        Row "include\config.asp がある", False, "ありません", _
+            "include フォルダごと置けているか確認してください。" & _
+            "（古い版をお使いの場合、設定は include\db.asp の中にあります）"
     Else
-        txt = ReadUtf8(Server.MapPath("include/db.asp"))
-        Row "include\db.asp がある", True, "見つかりました", ""
+        txt = ReadUtf8(Server.MapPath("include/config.asp"))
+        Row "include\config.asp がある", True, "見つかりました", ""
         i = InStr(txt, "Const DB_PATH")
         If i > 0 Then
             txt = Mid(txt, i)
@@ -166,7 +167,8 @@ On Error GoTo 0
 
 Row "接続先の設定 (DB_PATH)", (Len(dbPath) > 0), _
     IIf2(Len(dbPath) > 0, dbPath, "(読み取れませんでした)"), _
-    "include\db.asp の先頭にある <code>Const DB_PATH</code> です。"
+    "<b>include\config.asp</b> の <code>Const DB_PATH</code> です。" & _
+    "ここを、実際に .accdb を置いた場所に書き換えてください。"
 
 If Len(dbPath) > 0 Then
     On Error Resume Next
@@ -252,7 +254,7 @@ If Not hasFso Then
     Row "ファイルを扱う部品", False, "使えません", _
         "上の「3. データベース」の 1 行目をご覧ください。ここも確かめられません。"
 End If
-txt = ReadUtf8(Server.MapPath("include/pdf.asp"))
+txt = ReadUtf8(Server.MapPath("include/config.asp"))
 If Len(txt) > 0 Then
     i = InStr(txt, "Const PDF_EDGE_EXE")
     If i > 0 Then
@@ -269,7 +271,7 @@ Err.Clear
 
 Row "変換プログラム (Edge) がある", fso.FileExists(edgePath), _
     IIf2(Len(edgePath) > 0, edgePath, "(読み取れませんでした)"), _
-    "無い場合は include\pdf.asp の <code>PDF_EDGE_EXE</code> を実際の場所に直すか、" & _
+    "無い場合は include\config.asp の <code>PDF_EDGE_EXE</code> を実際の場所に直すか、" & _
     "wkhtmltopdf を入れて <code>PDF_ENGINE</code> を <code>""wkhtmltopdf""</code> にしてください。" & _
     "（PDF が作れなくても、ブラウザからの印刷はできます）"
 
@@ -292,7 +294,7 @@ If Err.Number = 0 Then
 Else
     Row "作業用フォルダに書ける", False, Err.Description, _
         "そのフォルダに、アプリケーション プール ID の「変更」権限を与えてください。" & _
-        "または include\pdf.asp の <code>PDF_WORK_DIR</code> に別のフォルダを指定してください。"
+        "または include\config.asp の <code>PDF_WORK_DIR</code> に別のフォルダを指定してください。"
 End If
 Err.Clear
 On Error GoTo 0
@@ -306,7 +308,8 @@ On Error GoTo 0
 Dim need, nm
 need = Array("default.asp", "staff.asp", "entry.asp", "tasks.asp", "daily.asp", _
              "report.asp", "printpdf.asp", "summary.asp", "check.asp", "master.asp", _
-             "error.asp", "css/style.css", "include/db.asp", "include/auth.asp", _
+             "error.asp", "css/style.css", "include/config.asp", "include/db.asp", _
+             "include/auth.asp", _
              "include/layout.asp", "include/sheet.asp", "include/sql.asp", "include/pdf.asp")
 On Error Resume Next
 If Not hasFso Then
@@ -320,6 +323,63 @@ For i = 0 To UBound(need)
         "wwwroot フォルダの中身を、フォルダの形のまま置いてください。"
 Next
 Err.Clear
+On Error GoTo 0
+%>
+</table>
+
+<h2>6. 各ページを開いてみる</h2>
+<p class="lead" style="margin:0 0 10px">
+  このサーバー自身から各ページを呼んで、返ってきた結果を見ます。
+  <b>500</b> が出たページが、止まっている場所です。
+  （<b>401</b> は Windows 認証が有効なときに出ます。異常ではありません）
+</p>
+<table>
+<tr><th>結果</th><th>ページ</th><th>いまの値</th><th>直しかた</th></tr>
+<%
+Dim http, pages, base, u, st
+base = "http://127.0.0.1"
+If "" & Request.ServerVariables("SERVER_PORT") <> "80" Then
+    base = base & ":" & Request.ServerVariables("SERVER_PORT")
+End If
+u = "" & Request.ServerVariables("URL")
+If InStrRev(u, "/") > 0 Then u = Left(u, InStrRev(u, "/"))
+base = base & u
+
+pages = Array("default.asp", "entry.asp", "tasks.asp", "staff.asp", "daily.asp", _
+              "report.asp", "summary.asp", "check.asp", "master.asp")
+On Error Resume Next
+Set http = Server.CreateObject("MSXML2.ServerXMLHTTP.6.0")
+If Err.Number <> 0 Then
+    Row "ページの呼び出し", Null, "できません", _
+        "この確認だけができません。ほかの結果をご覧ください。"
+    Err.Clear
+Else
+    http.setTimeouts 3000, 3000, 8000, 8000
+    Dim okPage, hint, code
+    For i = 0 To UBound(pages)
+        st = "" : hint = "" : okPage = False : code = 0
+        Err.Clear
+        http.open "GET", base & pages(i), False
+        http.send
+        If Err.Number <> 0 Then
+            st = "呼び出せませんでした（" & Err.Description & "）"
+            hint = "この確認だけができません。ほかの結果をご覧ください。"
+            Err.Clear
+        Else
+            code = http.status
+            st = code & " " & http.statusText
+            okPage = (code < 500)
+            If code = 500 Then
+                hint = "<b>このページで止まっています。</b>IIS マネージャー →「ASP」→" & _
+                       "「デバッグのプロパティ」→ <b>ブラウザーにエラーを送信する = True</b>" & _
+                       " にしてから、このページを直接開くと理由が出ます。"
+            ElseIf code = 401 Then
+                hint = "Windows 認証が有効なので、この確認からは開けません（異常ではありません）。"
+            End If
+        End If
+        Row pages(i), okPage, st, hint
+    Next
+End If
 On Error GoTo 0
 %>
 </table>

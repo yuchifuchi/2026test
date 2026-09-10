@@ -232,11 +232,15 @@ def build(out_root):
 
 5. 次の 3 か所を書き換えます。
 
-   include\\db.asp の先頭
+   ★ 設置ごとの設定は include\\config.asp の 1 ファイルにまとまっています。
+     次回以降、直しをお渡ししたときも、このファイルだけ上書きしなければ
+     設定は残ります。
+
+   include\\config.asp
      Const DB_PATH = "D:\\nippou\\data\\日報集計_be.accdb"
        → 実際に置いた場所に直します。
 
-   include\\auth.asp の先頭
+   同じ include\\config.asp の中
      Const STAFF_USERS = ""
        → 最初にマスタ保守を開くかた 1 人のログオン名を入れます。
           ドメイン名は書きません。例) Const STAFF_USERS = "t-okada"
@@ -249,7 +253,7 @@ def build(out_root):
      ★ マスタのログオン名が 1 件も入っておらず、ここも空のままだと
        全員が職員扱いです。運用開始前に必ずどちらかを設定してください。
 
-   include\\pdf.asp の先頭 (帳票を PDF で印刷するため)
+   同じ include\\config.asp の中 (帳票を PDF で印刷するため)
      Const PDF_EDGE_EXE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
        → サーバーの中で msedge.exe がこの場所にあるか確認します。
           違う場所にあるときだけ書き換えてください。
@@ -426,19 +430,19 @@ def write_readme_txt(base):
   5. 01_マニュアル を印刷して配り、デスクトップにショートカットを配る
 
 ------------------------------------------------------------
- 設置前に必ず設定する箇所（3 か所）
+ 設置前に必ず設定する箇所（include\\config.asp の中）
 ------------------------------------------------------------
 
-  03_Webサイト_ASP\\wwwroot\\include\\db.asp
+  03_Webサイト_ASP\\wwwroot\\include\\config.asp
       DB_PATH … Access ファイルを置いた実際の場所
 
-  03_Webサイト_ASP\\wwwroot\\include\\auth.asp
+  同じ config.asp の中
       STAFF_USERS … 最初にマスタ保守を開くかた 1 人のログオン名
                     ふだんは「マスタ保守」の担当者一覧にある
                     「ログオン名」と「区分」で決めます (画面から変更できます)。
                     どちらも空のままだと全員が職員扱いです。
 
-  03_Webサイト_ASP\\wwwroot\\include\\pdf.asp
+  同じ config.asp の中
       PDF_EDGE_EXE … サーバーの Edge (msedge.exe) の場所
                     既定の場所にあれば、そのままで構いません。
 
@@ -568,14 +572,14 @@ def write_index_html(base):
   </ol>
 
   <div class="note crit">
-    <b>設置前に必ず設定する箇所が 3 つあります。</b><br>
-    <code>03_Webサイト_ASP\wwwroot\include\db.asp</code> の <code>DB_PATH</code>
+    <b>設置前に設定するのは <code>include\config.asp</code> の 1 ファイルだけです。</b><br>
+    <code>03_Webサイト_ASP\wwwroot\include\config.asp</code> の <code>DB_PATH</code>
     … Access ファイルを置いた実際の場所<br>
-    <code>03_Webサイト_ASP\wwwroot\include\auth.asp</code> の <code>STAFF_USERS</code>
+    同じ <code>config.asp</code> の <code>STAFF_USERS</code>
     … 最初にマスタ保守を開くかた 1 人のログオン名。
     ふだんは「マスタ保守」の担当者一覧（ログオン名・区分）で決めます。
     <b>どちらも空のままだと全員が職員扱いです。</b><br>
-    <code>03_Webサイト_ASP\wwwroot\include\pdf.asp</code> の <code>PDF_EDGE_EXE</code>
+    同じ <code>config.asp</code> の <code>PDF_EDGE_EXE</code>
     … サーバーの Edge の場所。既定の場所にあれば、そのままで構いません。
   </div>
 

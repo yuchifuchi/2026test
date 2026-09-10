@@ -15,13 +15,11 @@
 '  頼らない。ここから読み込んでおけば、どのページからも 1 回だけ読まれる。
 ' =============================================================================
 %>
+<!--#include file="config.asp"-->
 <!--#include file="sql.asp"-->
 <%
-
-' --- 設定 --------------------------------------------------------------------
-Const DB_PATH = "D:\nippou\data\日報集計_be.accdb"   ' 環境に合わせて変更する
-Const APP_NAME = "電話応対日報 集計システム"
-Const APP_VERSION = "1.0 (Web モックアップ)"
+' 設置した環境ごとの設定 (DB の場所など) は config.asp にまとめてあります。
+' 直しをお渡ししたときも、config.asp だけ上書きしなければ設定は残ります。
 
 Dim gConn
 
@@ -50,7 +48,8 @@ End Sub
 Sub DbFatal(what, detail)
     On Error Resume Next
     Response.Clear
-    Response.Status = "500 Internal Server Error"
+    ' 状態は 200 のままにする。500 を返すと IIS が自前のエラー画面に
+    ' 差し替えてしまい、せっかくの原因説明が利用者に届かない。
     Response.ContentType = "text/html"
     Response.Write "<!doctype html><html lang=""ja""><head><meta charset=""utf-8"">" & _
         "<meta name=""viewport"" content=""width=device-width, initial-scale=1"">" & _

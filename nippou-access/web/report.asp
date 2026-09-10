@@ -1,6 +1,6 @@
 <%@ LANGUAGE="VBScript" CODEPAGE="65001" %>
 <% Option Explicit %>
-<% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
+<% Response.CharSet = "utf-8" : Response.CodePage = 65001 %>
 <!--#include file="include/db.asp"-->
 <!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->

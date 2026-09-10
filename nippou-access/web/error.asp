@@ -1,5 +1,5 @@
 <%@ LANGUAGE="VBScript" CODEPAGE="65001" %>
-<% Response.CharSet = "utf-8" : Session.CodePage = 65001 %>
+<% Response.CharSet = "utf-8" : Response.CodePage = 65001 %>
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
 <title>エラーが発生しました</title>

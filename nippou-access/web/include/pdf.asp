@@ -11,28 +11,7 @@
 '  それでも消し残った古いファイルは、次に誰かが印刷したときに掃除する。
 ' =============================================================================
 
-' --- 設定 --------------------------------------------------------------------
-
-' 変換に使うもの。"edge" か "wkhtmltopdf"。
-'   edge        … サーバーに Edge が入っていれば追加インストール不要
-'   wkhtmltopdf … Edge で動かないときはこちら (別途インストールが必要)
-Const PDF_ENGINE = "edge"
-
-' Edge の場所。64bit 版 Windows の既定はこちら。
-Const PDF_EDGE_EXE = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-
-' wkhtmltopdf の場所 (PDF_ENGINE を "wkhtmltopdf" にしたときだけ使う)
-Const PDF_WKHTML_EXE = "C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-
-' 作業用フォルダ。空なら Windows の一時フォルダを使う。
-' アプリケーションプール ID に「変更」権限が要る。
-Const PDF_WORK_DIR = ""
-
-' 待ち時間の上限 (秒)。これを過ぎたら ASP 側でエラーにする。
-Const PDF_TIMEOUT = 60
-
-' 消し残しをこの時間より古ければ掃除する (時間)
-Const PDF_KEEP_HOURS = 24
+' 設定 (変換に使うプログラム・作業用フォルダ) は config.asp にあります。
 
 
 ' --- ここから下は通常さわらない ----------------------------------------------
