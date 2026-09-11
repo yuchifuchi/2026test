@@ -131,6 +131,44 @@ def check_blocks(f, problems):
             problems.append("%s: %s が %d 個閉じていません" % (rel, name, n))
 
 
+# ページを終わらせる呼び出し。これらが On Error Resume Next の中にあると、
+# 終わらずに先へ進んでしまう (VBScript は Response.End の中断もエラー扱いにする)。
+ENDERS = ("response.end", "dbfatal", "requirestaff", "pdfsendanddelete")
+
+
+def check_response_end(f, problems):
+    """On Error Resume Next を効かせたまま Response.End を呼んでいないか。
+
+    効かせたままだと画面が終わらず、そのあと別のエラーになって
+    ASP の「サーバーでエラーが発生しました」に化ける。実際にこれで詰まった。
+    """
+    rel = os.path.relpath(f, HERE)
+    trapping = False
+    for no, ln in logical_lines(f):
+        t = ln.strip()
+        low = t.lower()
+        if not t:
+            continue
+        if re.match(r"^(function|sub)\b", low) or re.match(r"^end\s+(function|sub)\b", low):
+            trapping = False                  # 手続きが変われば効力も切れる
+            continue
+        if re.match(r"^on\s+error\s+resume\s+next\b", low):
+            trapping = True
+            continue
+        if re.match(r"^on\s+error\s+goto\s+0\b", low):
+            trapping = False
+            continue
+        if not trapping:
+            continue
+        for nm in ENDERS:
+            if re.search(r"(?<![\w.])" + nm.replace(".", r"\.") + r"\b", low):
+                problems.append(
+                    "%s(%d): On Error Resume Next のまま %s を呼んでいます"
+                    " (先に On Error GoTo 0 を書いてください)"
+                    % (rel, no, t.split("(")[0].strip()))
+                break
+
+
 def include_tree(page, problems, name):
     """page が読み込むファイル一式を、include の順に返す。"""
     files, stack = [], [page]
@@ -212,6 +250,7 @@ def check_page(page, problems):
     defs, variables, calls = {}, set(), []
     for f in files:
         check_blocks(f, problems)
+        check_response_end(f, problems)
         d, v, c, _a = scan(f)
         defs.update(d)
         variables |= v

@@ -24,34 +24,48 @@
 Dim gConn
 
 Sub OpenDb()
+    Dim desc
     If IsObject(gConn) Then
         If Not gConn Is Nothing Then Exit Sub
     End If
 
-    ' つながらないときに真っ白な画面 (HTTP 500) にしない。
-    ' 設置でつまずくのはほぼこの 1 行なので、原因の候補まで出す。
+    ' つながらないときに真っ白な画面にせず、原因の候補まで出す。
+    '
+    ' ここで大事なのは「エラーを捕まえたら、必ず On Error GoTo 0 で
+    ' 捕まえるのをやめてから DbFatal を呼ぶ」こと。
+    ' On Error Resume Next のままだと、DbFatal の中の Response.End が効かず、
+    ' そのまま先に進んでしまい、結局 ASP のエラー画面になる。
     On Error Resume Next
     Set gConn = Server.CreateObject("ADODB.Connection")
-    If Err.Number <> 0 Then
-        DbFatal "サーバーでデータベース機能を呼び出せませんでした。", Err.Description
+    desc = ""
+    If Err.Number <> 0 Then desc = Err.Description
+    On Error GoTo 0
+    If Len(desc) > 0 Then
+        DbFatal "サーバーでデータベース機能を呼び出せませんでした。", desc
     End If
+
+    On Error Resume Next
     gConn.CursorLocation = 3            ' adUseClient
     gConn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & DB_PATH & _
                ";Persist Security Info=False;"
-    If Err.Number <> 0 Then
-        DbFatal "データベースに接続できませんでした。", Err.Description
-    End If
+    desc = ""
+    If Err.Number <> 0 Then desc = Err.Description
     On Error GoTo 0
+    If Len(desc) > 0 Then
+        DbFatal "データベースに接続できませんでした。", desc
+    End If
 End Sub
 
 ' 接続できないときの画面。ここで処理を打ち切る。
 Sub DbFatal(what, detail)
     On Error Resume Next
     Response.Clear
+    On Error GoTo 0           ' Response.End を効かせるため、ここで捕まえるのをやめる
     ' 状態は 200 のままにする。500 を返すと IIS が自前のエラー画面に
     ' 差し替えてしまい、せっかくの原因説明が利用者に届かない。
     Response.ContentType = "text/html"
-    Response.Write "<!doctype html><html lang=""ja""><head><meta charset=""utf-8"">" & _
+    Response.Write "<!--NIPPOU-DB-NG-->" & _
+        "<!doctype html><html lang=""ja""><head><meta charset=""utf-8"">" & _
         "<meta name=""viewport"" content=""width=device-width, initial-scale=1"">" & _
         "<title>データベースにつながりません</title>" & _
         "<link rel=""stylesheet"" href=""css/style.css""></head><body><main>" & _

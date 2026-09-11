@@ -61,6 +61,11 @@ css/style.css       画面と印刷のスタイル
   画面（report.asp）と PDF（printpdf.asp）が同じ関数を呼んでいます
 - **`include/sql.asp` は手で直さないこと。**
   `src/modSetupQuery.bas` から `tools/gen_sql_asp.py` が生成しています
+- **`On Error Resume Next` を効かせたまま、ページを終わらせる処理を呼ばないこと。**
+  VBScript は `Response.End` の中断もエラー扱いにするため、
+  エラーを捕まえたままだと**終わらずに先へ進み**、結局 ASP のエラー画面になります。
+  DB を触る前に `OpenDb` を呼び、捕まえるのは「その後の 1 文だけ」にしてください。
+  `tools/check_asp.py` がこの形を見張っています。
 - **Access 専用の関数（`Nz`・`DLookup` など）を SQL に書かないこと。**
   ACE 経由では使えず、「関数 'Nz' が定義されていません」で落ちます。
   `Nz(x,0)` の代わりに `IIf(IsNull(x),0,x)` を使ってください

@@ -330,7 +330,9 @@ On Error GoTo 0
 <h2>6. 各ページを開いてみる</h2>
 <p class="lead" style="margin:0 0 10px">
   このサーバー自身から各ページを呼んで、返ってきた結果を見ます。
-  <b>500</b> が出たページが、止まっている場所です。
+  <b>probe1 〜 probe7</b> は、読み込むものを 1 つずつ増やした切り分け用のページです。
+  <b>最初に NG になった行が、止まっている場所</b>です。<br>
+  そのページ（例 <code>probe5.asp</code>）をブラウザで直接開くと、もう少し詳しく出ます。
   （<b>401</b> は Windows 認証が有効なときに出ます。異常ではありません）
 </p>
 <table>
@@ -345,7 +347,11 @@ u = "" & Request.ServerVariables("URL")
 If InStrRev(u, "/") > 0 Then u = Left(u, InStrRev(u, "/"))
 base = base & u
 
-pages = Array("default.asp", "entry.asp", "tasks.asp", "staff.asp", "daily.asp", _
+' 上から順に、読み込むものを 1 つずつ増やしていく。
+' 最初に NG になったところが、止まっている場所。
+pages = Array("probe1.asp", "probe2.asp", "probe3.asp", "probe4.asp", _
+              "probe5.asp", "probe6.asp", "probe7.asp", _
+              "default.asp", "entry.asp", "tasks.asp", "staff.asp", "daily.asp", _
               "report.asp", "summary.asp", "check.asp", "master.asp")
 On Error Resume Next
 Set http = Server.CreateObject("MSXML2.ServerXMLHTTP.6.0")
@@ -369,7 +375,13 @@ Else
             code = http.status
             st = code & " " & http.statusText
             okPage = (code < 500)
-            If code = 500 Then
+            If code = 200 And InStr(http.responseText, "NIPPOU-DB-NG") > 0 Then
+                okPage = False
+                st = "200 だが、データベースにつながっていない"
+                hint = "そのページを直接開くと、つながらない理由が出ます。" & _
+                       "まず <b>include\config.asp</b> の <code>DB_PATH</code> を" & _
+                       "確かめてください。"
+            ElseIf code = 500 Then
                 hint = "<b>このページで止まっています。</b>IIS マネージャー →「ASP」→" & _
                        "「デバッグのプロパティ」→ <b>ブラウザーにエラーを送信する = True</b>" & _
                        " にしてから、このページを直接開くと理由が出ます。"

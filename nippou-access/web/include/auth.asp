@@ -51,8 +51,14 @@ Function IsStaff()
 
     ' --- 1) マスタで決める ---------------------------------------------------
     ' 退職日を過ぎた人・「有効」を外した人は、ここでは見つからない。
+    '
+    ' 先に接続だけ済ませておく。つながらない場合はここで画面を出して終わる。
+    ' 下の On Error Resume Next の中で接続に失敗すると、その「終わる」が
+    ' 効かなくなり、結局 ASP のエラー画面になってしまうため。
+    OpenDb
+
     kbn = ""
-    On Error Resume Next
+    On Error Resume Next                     ' [ログオン名] が無い古い .accdb 対策
     kbn = DbScalar("SELECT [職員区分] FROM [M_担当者] " & _
                    "WHERE [ログオン名]=? AND [有効]=True " & _
                    "  AND ([在籍終了日] Is Null Or [在籍終了日]>=?)", _
