@@ -154,7 +154,15 @@ public class BuildAccdb {
         }
         out.getParentFile().mkdirs();
 
-        Database db = DatabaseBuilder.create(Database.FileFormat.V2016, out);
+        // 形式は V2007 (Access 2007〜2016 と同じ「既定の .accdb」)。
+        // V2016 で作ると、少し古い ACE では
+        //   「このデータベースを開くには、Microsoft Access のより新しい
+        //     バージョンが必要です」
+        // になって開けない。新しい機能は何も使っていないので、
+        // いちばん広く読める形にしておく。
+        String fmt = System.getProperty("accdb.format", "V2007");
+        Database db = DatabaseBuilder.create(
+                Database.FileFormat.valueOf(fmt), out);
 
         // --- テーブル ---
         Map<String, List<Map<String, Object>>> colsOf = new LinkedHashMap<>();

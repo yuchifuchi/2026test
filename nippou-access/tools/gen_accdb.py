@@ -262,7 +262,12 @@ def main():
                           stderr=subprocess.STDOUT)
     if os.path.exists(out):
         os.remove(out)
+    # 形式は V2007 (Access 2007〜2016 で使われている既定の .accdb)。
+    # V2016 形式は、少し古い ACE だと
+    # 「より新しいバージョンの Access が必要です」と言われて開けない。
+    fmt = os.environ.get("ACCDB_FORMAT", "V2007")
     subprocess.check_call(["java", "-Dfile.encoding=UTF-8",
+                           "-Daccdb.format=" + fmt,
                            "-cp", cp + os.pathsep + classes,
                            "BuildAccdb", sfile, out])
     print("出力: %s (%.0f KB)" % (out, os.path.getsize(out) / 1024.0))

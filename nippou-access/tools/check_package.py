@@ -93,6 +93,12 @@ def check(root):
             bad("日報集計_be.accdb が Access ファイルに見えない")
         if os.path.getsize(acc) < 100 * 1024:
             bad("日報集計_be.accdb が小さすぎる (%d バイト)" % os.path.getsize(acc))
+        # 形式は Access 2007〜2016 の既定 (0x02)。新しい形式で作ると、
+        # 少し古い ACE で「より新しい Access が必要です」と言われて開けない。
+        ver = open(acc, "rb").read(0x18)[0x14]
+        if ver != 0x02:
+            bad("日報集計_be.accdb の形式が新しすぎる (0x%02x)。"
+                "古い ACE で開けません。ACCDB_FORMAT=V2007 で作り直してください" % ver)
 
     return ng, len(files)
 
