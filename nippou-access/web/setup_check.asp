@@ -36,6 +36,38 @@ Function ReadUtf8(path)
     Err.Clear
 End Function
 
+ ' 設定ファイル (config.asp) の中身。先に読んでおく。
+' このページは config.asp を #include しない。壊れていても開けるようにするため。
+Dim gCfg
+
+' config.asp の中の Const から、引用符の中身を取り出す。
+Function CfgConst(nm)
+    Dim t, i
+    CfgConst = ""
+    t = gCfg
+    i = InStr(t, "Const " & nm)
+    If i = 0 Then Exit Function
+    t = Mid(t, i)
+    i = InStr(t, """")
+    If i = 0 Then Exit Function
+    t = Mid(t, i + 1)
+    i = InStr(t, """")
+    If i > 0 Then CfgConst = Left(t, i - 1)
+End Function
+
+' 職員用アドレスから開かれているか (auth.asp の IsStaffUrl と同じ規則)
+Function IsStaffPath(pth)
+    Dim u, q
+    IsStaffPath = False
+    q = Trim("" & pth)
+    If Len(q) = 0 Then Exit Function
+    If Left(q, 1) <> "/" Then q = "/" & q
+    If Right(q, 1) = "/" Then q = Left(q, Len(q) - 1)
+    q = LCase(q)
+    u = LCase(Trim("" & Request.ServerVariables("SCRIPT_NAME")))
+    IsStaffPath = (u = q) Or (Left(u, Len(q) + 1) = q & "/")
+End Function
+
 ' 1 行ぶんの結果を出す。ok = True/False/Null(参考情報)
 Sub Row(name, ok, value, hint)
     Dim mark, cls
@@ -50,10 +82,11 @@ Sub Row(name, ok, value, hint)
         E(name) & "</td><td>" & E(value) & "</td><td>" & hint & "</td></tr>" & vbCrLf
 End Sub
 
-Dim fso, sh, conn, rs, f, txt, i, p, hasFso
+Dim fso, sh, conn, rs, f, i, p, hasFso
 Dim appPath, dbPath, edgePath, tmpDir, probe, n, hasLogon
 gOK = 0 : gNG = 0
 appPath = Server.MapPath(".")
+gCfg = ReadUtf8(Server.MapPath("include/config.asp"))
 %>
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8">
@@ -124,6 +157,25 @@ Row "Windows 認証", (Len(who) > 0), _
     " <b>Windows 認証 = 有効</b>／<b>匿名認証 = 無効</b> にしてください。" & _
     "あとから切り替えても、入力済みのデータには影響しません。"
 Row "認証の種類", Null, "" & Request.ServerVariables("AUTH_TYPE"), ""
+
+' アドレスで分ける方式を使っているか
+Dim sp, isStaffHere
+sp = CfgConst("STAFF_PATH")
+If Len(sp) > 0 Then
+    isStaffHere = IsStaffPath(sp)
+    Row "職員用アドレスの設定 (STAFF_PATH)", Null, sp, _
+        "この設定があるときは、<b>このアドレスから開いたかどうか</b>だけで" & _
+        "職員かパート職員かが決まります。Windows 認証は要りません。"
+    Row "いま開いているアドレス", Null, "" & Request.ServerVariables("SCRIPT_NAME"), _
+        IIf2(isStaffHere, "<b>職員用</b>として扱われます。", _
+             "<b>パート職員用</b>として扱われます。" & _
+             "職員用の画面は、設定したもう 1 つのアドレスから開いてください。")
+Else
+    Row "職員用アドレスの設定 (STAFF_PATH)", Null, "(空)", _
+        "同じフォルダに 2 つのアドレスを割り当てて役割を分けるときは、" & _
+        "include\config.asp の <code>STAFF_PATH</code> に" & _
+        " 職員用アドレス（例 <code>/nippou-staff</code>）を書きます。"
+End If
 %>
 </table>
 
@@ -143,24 +195,12 @@ If Err.Number <> 0 Then
     Err.Clear
 Else
     hasFso = True
-    txt = ""
-    If Not fso.FileExists(Server.MapPath("include/config.asp")) Then
-        Row "include\config.asp がある", False, "ありません", _
-            "include フォルダごと置けているか確認してください。" & _
-            "（古い版をお使いの場合、設定は include\db.asp の中にあります）"
+    If Len(gCfg) = 0 Then
+        Row "include\config.asp がある", False, "読めません", _
+            "include フォルダごと置けているか確認してください。"
     Else
-        txt = ReadUtf8(Server.MapPath("include/config.asp"))
         Row "include\config.asp がある", True, "見つかりました", ""
-        i = InStr(txt, "Const DB_PATH")
-        If i > 0 Then
-            txt = Mid(txt, i)
-            i = InStr(txt, """")
-            If i > 0 Then
-                txt = Mid(txt, i + 1)
-                i = InStr(txt, """")
-                If i > 0 Then dbPath = Left(txt, i - 1)
-            End If
-        End If
+        dbPath = CfgConst("DB_PATH")
     End If
 End If
 On Error GoTo 0
@@ -265,19 +305,7 @@ If Not hasFso Then
     Row "ファイルを扱う部品", False, "使えません", _
         "上の「3. データベース」の 1 行目をご覧ください。ここも確かめられません。"
 End If
-txt = ReadUtf8(Server.MapPath("include/config.asp"))
-If Len(txt) > 0 Then
-    i = InStr(txt, "Const PDF_EDGE_EXE")
-    If i > 0 Then
-        txt = Mid(txt, i)
-        i = InStr(txt, """")
-        If i > 0 Then
-            txt = Mid(txt, i + 1)
-            i = InStr(txt, """")
-            If i > 0 Then edgePath = Left(txt, i - 1)
-        End If
-    End If
-End If
+edgePath = CfgConst("PDF_EDGE_EXE")
 Err.Clear
 
 Row "変換プログラム (Edge) がある", fso.FileExists(edgePath), _
