@@ -55,19 +55,6 @@ Function CfgConst(nm)
     If i > 0 Then CfgConst = Left(t, i - 1)
 End Function
 
-' 職員用アドレスから開かれているか (auth.asp の IsStaffUrl と同じ規則)
-Function IsStaffPath(pth)
-    Dim u, q
-    IsStaffPath = False
-    q = Trim("" & pth)
-    If Len(q) = 0 Then Exit Function
-    If Left(q, 1) <> "/" Then q = "/" & q
-    If Right(q, 1) = "/" Then q = Left(q, Len(q) - 1)
-    q = LCase(q)
-    u = LCase(Trim("" & Request.ServerVariables("SCRIPT_NAME")))
-    IsStaffPath = (u = q) Or (Left(u, Len(q) + 1) = q & "/")
-End Function
-
 ' 1 行ぶんの結果を出す。ok = True/False/Null(参考情報)
 Sub Row(name, ok, value, hint)
     Dim mark, cls
@@ -158,23 +145,25 @@ Row "Windows 認証", (Len(who) > 0), _
     "あとから切り替えても、入力済みのデータには影響しません。"
 Row "認証の種類", Null, "" & Request.ServerVariables("AUTH_TYPE"), ""
 
-' アドレスで分ける方式を使っているか
-Dim sp, isStaffHere
-sp = CfgConst("STAFF_PATH")
-If Len(sp) > 0 Then
-    isStaffHere = IsStaffPath(sp)
-    Row "職員用アドレスの設定 (STAFF_PATH)", Null, sp, _
-        "この設定があるときは、<b>このアドレスから開いたかどうか</b>だけで" & _
-        "職員かパート職員かが決まります。Windows 認証は要りません。"
-    Row "いま開いているアドレス", Null, "" & Request.ServerVariables("SCRIPT_NAME"), _
-        IIf2(isStaffHere, "<b>職員用</b>として扱われます。", _
-             "<b>パート職員用</b>として扱われます。" & _
-             "職員用の画面は、設定したもう 1 つのアドレスから開いてください。")
+' フォルダで分ける方式を使っているか (config.asp の ROLE)
+Dim role
+role = LCase(Trim(CfgConst("ROLE")))
+If role = "staff" Then
+    Row "このフォルダは誰用か (ROLE)", Null, "staff（正規職員用）", _
+        "この画面は <b>正規職員用</b>として動いています。" & _
+        "日報・帳票印刷・集計表・入力もれ・マスタ保守が使えます。<br>" & _
+        "<b>このフォルダのアドレスに、IIS で IP 制限をかけてください。</b>" & _
+        "入れる人を決めているのは、この設定ではなく IP 制限です。"
+ElseIf role = "part" Then
+    Row "このフォルダは誰用か (ROLE)", Null, "part（パート職員用）", _
+        "この画面は <b>パート職員用</b>として動いています。" & _
+        "受付入力とその他業務だけが使えます。" & _
+        "日報などは staff フォルダのアドレスから開いてください。"
 Else
-    Row "職員用アドレスの設定 (STAFF_PATH)", Null, "(空)", _
-        "同じフォルダに 2 つのアドレスを割り当てて役割を分けるときは、" & _
-        "include\config.asp の <code>STAFF_PATH</code> に" & _
-        " 職員用アドレス（例 <code>/nippou-staff</code>）を書きます。"
+    Row "このフォルダは誰用か (ROLE)", Null, "(空)", _
+        "フォルダで役割を分けるときは、include\config.asp の" & _
+        " <code>ROLE</code> に <code>part</code> か <code>staff</code> を書きます。" & _
+        "空のままだと、Windows 認証とマスタの「ログオン名」で判定します。"
 End If
 %>
 </table>
