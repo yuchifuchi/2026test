@@ -168,7 +168,18 @@ On Error GoTo 0
 Row "接続先の設定 (DB_PATH)", (Len(dbPath) > 0), _
     IIf2(Len(dbPath) > 0, dbPath, "(読み取れませんでした)"), _
     "<b>include\config.asp</b> の <code>Const DB_PATH</code> です。" & _
-    "ここを、実際に .accdb を置いた場所に書き換えてください。"
+    ".accdb をこの画面ファイルと同じフォルダに置いたなら、" & _
+    "<code>日報集計_be.accdb</code> のようにファイル名だけで構いません。"
+
+' ファイル名だけなら、この画面ファイルと同じフォルダとして解決する
+Dim isAbs
+If Len(dbPath) > 0 Then
+    isAbs = (Left(dbPath, 2) = "\\" Or Mid(dbPath, 2, 2) = ":\")
+    If isAbs = False Then
+        dbPath = Server.MapPath(dbPath)
+        Row "実際に開く場所", Null, dbPath, "ファイル名だけの指定なので、ここを見ます。"
+    End If
+End If
 
 If Len(dbPath) > 0 Then
     On Error Resume Next

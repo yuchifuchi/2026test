@@ -11,7 +11,8 @@ p{line-height:1.9} code{background:#eef2f6;padding:2px 6px;border-radius:4px}
 a{color:#155a8f}</style></head><body><main>
 <h1>切り分け 2 ― 設定ファイル (config.asp)</h1>
 <p class="ok">OK ― include\config.asp を読み込めました。</p>
-<p>いまの接続先 (DB_PATH)：<code><%= Server.HTMLEncode(DB_PATH) %></code></p>
-<p>この場所に 日報集計_be.accdb が置いてあるか確かめてください。</p>
+<p>設定の値 (DB_PATH)：<code><%= Server.HTMLEncode(DB_PATH) %></code></p>
+<p>この場所に 日報集計_be.accdb が置いてあるか確かめてください。
+（ファイル名だけを書いた場合は、この画面ファイルと同じフォルダを見ます）</p>
 <p style="margin-top:26px"><a href="setup_check.asp">設置チェックに戻る</a></p>
 </main></body></html>

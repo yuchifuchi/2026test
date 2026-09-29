@@ -23,6 +23,21 @@
 
 Dim gConn
 
+' 設定の DB_PATH を、実際に開く場所に直す。
+'   "\\サーバー\共有\..." や "D:\..." は、そのまま使う。
+'   "日報集計_be.accdb" のようなファイル名だけなら、この画面ファイルと
+'   同じフォルダにあるものとして解決する (置き場所を書き間違えないため)。
+Function DbFile()
+    Dim p
+    p = Trim("" & DB_PATH)
+    If Len(p) = 0 Then p = "日報集計_be.accdb"
+    If Left(p, 2) = "\\" Or Mid(p, 2, 2) = ":\" Then
+        DbFile = p
+    Else
+        DbFile = Server.MapPath(p)
+    End If
+End Function
+
 Sub OpenDb()
     Dim desc
     If IsObject(gConn) Then
@@ -46,7 +61,7 @@ Sub OpenDb()
 
     On Error Resume Next
     gConn.CursorLocation = 3            ' adUseClient
-    gConn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & DB_PATH & _
+    gConn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & DbFile() & _
                ";Persist Security Info=False;"
     desc = ""
     If Err.Number <> 0 Then desc = Err.Description
@@ -76,13 +91,16 @@ Sub DbFatal(what, detail)
         "<div class=""panel""><h2 style=""margin-top:0"">担当者のかたへ</h2>" & _
         "<pre style=""white-space:pre-wrap; background:#f4f2ee; padding:12px 14px;" & _
         " border-radius:6px; font-size:13px"">" & H(detail) & vbCrLf & vbCrLf & _
-        "接続先: " & H(DB_PATH) & "</pre>" & _
+        "設定の値: " & H(DB_PATH) & vbCrLf & _
+        "実際に開こうとした場所: " & H(DbFile()) & "</pre>" & _
         "<p class=""lead"">よくある原因は次の 4 つです。</p><ul>" & _
         "<li><b>Microsoft Access Database Engine が入っていない</b>" & _
         "（「プロバイダーが見つかりません」と出ます）</li>" & _
         "<li><b>アプリケーション プールのビット数が合っていない</b>" & _
         "（64bit の ACE なら「32 ビット アプリケーションの有効化」は False）</li>" & _
-        "<li><b>接続先の場所が違う</b>（include\db.asp の DB_PATH）</li>" & _
+        "<li><b>接続先の場所が違う</b>（include\config.asp の DB_PATH）。" & _
+        ".accdb をこの画面ファイルと同じフォルダに置いたなら、" & _
+        "ファイル名だけ（日報集計_be.accdb）を書けば足ります</li>" & _
         "<li><b>フォルダに書き込めない</b>" & _
         "（.accdb を置いたフォルダに、アプリケーション プール ID の変更権限が要ります）</li>" & _
         "</ul><p class=""lead"">" & _

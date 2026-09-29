@@ -33,6 +33,8 @@ timevalue trim typename ubound ucase unescape vartype weekday weekdayname year
 
 # 組み込みオブジェクト (Response.Write などの受け側)
 OBJECTS = set("response request server session application err".split())
+# 演算子や構文。うしろに ( が続いても呼び出しではない。
+OPS = set("not and or xor eqv imp mod is new to step then else case".split())
 
 DEF = re.compile(r"^\s*(?:public\s+|private\s+)?(?:function|sub)\s+([^\s(]+)", re.I)
 END = re.compile(r"^\s*end\s+(?:function|sub)\b", re.I)
@@ -256,7 +258,7 @@ def check_page(page, problems):
         variables |= v
         calls += [(f, no, nm, fn) for no, nm, fn in c]
 
-    known = set(defs) | BUILTIN | OBJECTS | variables
+    known = set(defs) | BUILTIN | OBJECTS | OPS | variables
     for f, no, nm, _fn in calls:
         if nm.lower() not in known:
             problems.append("%s(%d): 定義の無い呼び出し %s()"
