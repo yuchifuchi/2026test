@@ -5,3 +5,4 @@ dist_pkg/
 tools/accdb/_classes/
 tools/accdb/_schema*.json
 tools/accdb/_cases.json
+dist_web/

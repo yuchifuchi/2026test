@@ -68,6 +68,15 @@ def build(out, name, pages, role):
     s = s.replace(old, 'Const ROLE = "%s"' % role, 1)
     io.open(cfg, "w", encoding="utf-8", newline="\n").write(s)
 
+    # web.config の「エラー画面の場所」を、このフォルダ用に書き換える
+    wc = os.path.join(base, "web.config")
+    t = io.open(wc, encoding="utf-8").read()
+    old = 'path="/nippou/part/error.asp"'
+    if old not in t:
+        raise SystemExit("web.config の error.asp の場所が見つかりません")
+    t = t.replace(old, 'path="/nippou/%s/error.asp"' % name, 1)
+    io.open(wc, "w", encoding="utf-8", newline="\r\n").write(t)
+
     n = sum(len(f) for _r, _d, f in os.walk(base))
     print("%-14s %2d ファイル  (ROLE = %s)" % (name, n, role))
     return base
