@@ -205,9 +205,17 @@ def build_schema():
                                   "parentColumn": fk["parentColumn"],
                                   "childColumn": fk["column"]})
 
+    # 担当者は入れない。現行 Excel から取り出した 18 名は、名前の設定ミスを
+    # そのまま含んでいる。使い始める側で登録し直してもらうほうが確実なので、
+    # 納品する .accdb では空にしておく (中身は data/M_担当者.csv に残してある)。
+    # 過去データを取り込む場合だけ SEED_OPERATORS=1 で入れられる。
+    seed_ops = os.environ.get("SEED_OPERATORS", "") == "1"
+
     data = {}
     for sql in master:
         tbl, row = parse_insert(sql)
+        if tbl == "M_担当者" and not seed_ops:
+            continue
         data.setdefault(tbl, []).append(row)
 
     return {"tables": [tables[n] for n in order],

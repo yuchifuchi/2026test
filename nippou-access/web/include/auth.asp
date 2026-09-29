@@ -14,30 +14,20 @@
 '
 '  どちらになるかは、次の順に見て決める。
 '
-'      0) config.asp の STAFF_PATH が設定されていれば、
-'         「職員用のアドレスから開いたかどうか」だけで決まる。
-'         同じフォルダに 2 つのアドレスを割り当て、職員用のほうに
+'      0) config.asp の ROLE が "part" か "staff" なら、それで決まる。
+'         フォルダを 2 つに分けて置き、職員用フォルダのアドレスにだけ
 '         IIS で IP 制限をかける使い方。Windows 認証が無くても分けられる。
 '
-'      STAFF_PATH が空のときは、従来どおり次の順に見る。
+'      ROLE が空のときは、従来どおり次の順に見る。
 '      1) M_担当者 に、そのログオン名の行があれば その [職員区分]
 '         → マスタ保守の画面から、職員のかたが変更できる
 '      2) 無ければ config.asp の STAFF_USERS の一覧
 '      3) それも空なら 全員が職員 (導入直後の既定)
 ' =============================================================================
 
-' 職員用のアドレスで開かれたか。
-Function IsStaffUrl()
-    Dim p, u
-    IsStaffUrl = False
-    p = LCase(Trim("" & STAFF_PATH))
-    If Len(p) = 0 Then Exit Function
-    If Left(p, 1) <> "/" Then p = "/" & p
-    If Right(p, 1) = "/" Then p = Left(p, Len(p) - 1)
-
-    u = LCase(Trim("" & Request.ServerVariables("SCRIPT_NAME")))
-    If Len(u) = 0 Then u = LCase(Trim("" & Request.ServerVariables("URL")))
-    IsStaffUrl = (u = p) Or (Left(u, Len(p) + 1) = p & "/")
+ ' このフォルダが職員用と決められているか。config.asp の ROLE を見る。
+Function RoleSet()
+    RoleSet = (LCase(Trim("" & ROLE)) = "part" Or LCase(Trim("" & ROLE)) = "staff")
 End Function
 
 ' 予備の一覧 STAFF_USERS は config.asp にあります。
@@ -68,9 +58,9 @@ Function IsStaff()
     End If
     gIsStaffKnown = True
 
-    ' --- 0) アドレスで決める (STAFF_PATH を設定しているとき) -----------------
-    If Len(Trim("" & STAFF_PATH)) > 0 Then
-        gIsStaff = IsStaffUrl()
+    ' --- 0) フォルダで決める (config.asp の ROLE) ----------------------------
+    If RoleSet() Then
+        gIsStaff = (LCase(Trim("" & ROLE)) = "staff")
         IsStaff = gIsStaff
         Exit Function
     End If
@@ -130,7 +120,7 @@ Sub RequireStaff()
     Dim guide
     If IsStaff() Then Exit Sub
 
-    If Len(Trim("" & STAFF_PATH)) > 0 Then
+    If RoleSet() Then
         guide = "職員のかたは、<b>職員用のアドレス</b>から開いてください。" & _
                 "（いま開いているアドレスではなく、担当者からお伝えしている" & _
                 "もう 1 つのアドレスです）"

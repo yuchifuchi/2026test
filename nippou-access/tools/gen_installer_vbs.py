@@ -101,6 +101,10 @@ def collect():
             sql = concat_after(s, "ExecSQL ")
             if sql.upper().startswith("DELETE FROM"):
                 continue                   # 新規作成なので消す対象が無い
+            # 担当者は入れない (使い始める側で登録してもらう)。
+            # tools/gen_accdb.py と同じ扱いにして、どちらで作っても同じにする。
+            if "[M_担当者]" in sql and os.environ.get("SEED_OPERATORS", "") != "1":
+                continue
             master.append(sql)
 
     # --- クエリ (modSetupQuery) ---
