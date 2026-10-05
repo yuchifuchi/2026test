@@ -250,17 +250,13 @@ def build(out_root):
              nippou\\staff\\   正規職員用の画面
              nippou\\data\\    日報集計_be.accdb
 
-          正規職員の席だけに絞るには、IIS マネージャーで
-          staff フォルダを選び、
+          パート職員と正規職員は、お知らせするアドレスで分かれます。
 
-             「IP アドレスおよびドメインの制限」
-                 機能設定の編集 → 未指定のクライアントのアクセス = 拒否
-                 許可エントリの追加 → 正規職員の PC の IP を追加
+             パート職員のかた … http://<サーバー>/nippou/part/
+             正規職員のかた   … http://<サーバー>/nippou/staff/
 
-          を設定してください。
-
-       ★ IP 制限は web.config に書けません。IIS マネージャーから
-         設定してください (書くと HTTP 500.19 になります)。
+          part フォルダには職員用の画面ファイルそのものが入っていません。
+          IIS 側の設定 (認証・IP 制限) は要りません。
 
    同じ include\\config.asp の中
      Const STAFF_USERS = ""
