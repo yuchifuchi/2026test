@@ -15,6 +15,17 @@ BASE = "https://repo1.maven.org/maven2"
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "lib")
 
+# 照合値（Maven Central の .sha1 と同じもの）。手元のファイルがこれと一致すればネットワークに出ない。
+PINNED_SHA1 = {
+    "commons-lang3-3.10.jar": "e155460aaf5b464062a09c3923f089ce99128a17",
+    "commons-lang3-3.8.1.jar": "6505a72a097d9270f7a9e7bf42c4238283247755",
+    "commons-logging-1.2.jar": "4bfc12adfe4842bf07b657f0369c4cb522955686",
+    "hsqldb-2.5.0.jar": "59298fcd77faf01e02b405def2f80cccbf582508",
+    "jackcess-3.0.1.jar": "e753ed760d06a0b6849c02d3d4c603ae6c8e05c8",
+    "jackcess-4.0.5.jar": "78e71fb55d742715b7a2dc8e0a6c2dce218c8e17",
+    "ucanaccess-5.0.1.jar": "1a362db0e8f4bfa727b033f20c52542ea6416259",
+}
+
 SETS = {
     "builder": [
         ("com.healthmarketscience.jackcess", "jackcess", "4.0.5"),
@@ -44,10 +55,11 @@ def main():
             fn = f"{a}-{v}.jar"
             path = os.path.join(d, fn)
             url = f"{BASE}/{g.replace('.', '/')}/{a}/{v}/{fn}"
-            want = fetch(url + ".sha1").decode().split()[0].strip()
-            if os.path.exists(path):
-                if hashlib.sha1(open(path, "rb").read()).hexdigest() == want:
-                    continue
+            want = PINNED_SHA1.get(fn)
+            if os.path.exists(path) and want and hashlib.sha1(open(path, "rb").read()).hexdigest() == want:
+                continue
+            if want is None:
+                want = fetch(url + ".sha1").decode().split()[0].strip()
             data = fetch(url)
             got = hashlib.sha1(data).hexdigest()
             if got != want:

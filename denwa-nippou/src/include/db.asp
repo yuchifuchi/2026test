@@ -131,7 +131,7 @@ Function DbCountMarks(sql)
     DbCountMarks = n
 End Function
 
-' 値の種類から ADO のパラメータを作る
+' 値の種類（数・日付・文字など）に合わせて、ADO に渡す「値の入れ物」を作る
 Function DbParam(cmd, v)
     Dim t, n
     t = VarType(v)

@@ -36,6 +36,7 @@ ZIP_NAME = "電話応対日報_納品一式.zip"
 DOCS = os.path.join(ROOT, "docs")
 RELEASE = os.path.join(ROOT, "release")
 
+STAMP = datetime.datetime.now().timetuple()[:6]
 UTF8_EXT = {".asp", ".html", ".css", ".md"}
 CP932_EXT = {".txt", ".vbs", ".bas"}
 BINARY_EXT = {".accdb", ".pdf", ".png"}
@@ -164,20 +165,25 @@ def write_zip(base, files, zpath):
             for i in range(1, len(parts) + 1):
                 dirs.add("/".join(parts[:i]) + "/")
         for d in sorted(dirs):
-            zi = zipfile.ZipInfo(d, date_time=(2026, 10, 5, 9, 0, 0))
+            zi = zipfile.ZipInfo(d, date_time=STAMP)
             zi.flag_bits |= 0x800
             zi.external_attr = 0x10
             z.writestr(zi, b"")
         for rel in files:
-            zi = zipfile.ZipInfo(rel.replace("\\", "/"), date_time=(2026, 10, 5, 9, 0, 0))
+            zi = zipfile.ZipInfo(rel.replace("\\", "/"), date_time=STAMP)
             zi.flag_bits |= 0x800      # 日本語のファイル名を UTF-8 と明示（エクスプローラーで化けないように）
             zi.compress_type = zipfile.ZIP_DEFLATED
             z.writestr(zi, open(os.path.join(base, *rel.split("\\")), "rb").read())
     # 書いたものを読み直して確かめる
     with zipfile.ZipFile(zpath) as z:
+        jp = 0
         for info in z.infolist():
-            if not info.flag_bits & 0x800:
-                raise SystemExit(f"NG: zip の {info.filename} に UTF-8 フラグがありません")
+            if not info.filename.isascii():
+                jp += 1
+                if not info.flag_bits & 0x800:
+                    raise SystemExit(f"NG: zip の {info.filename} に UTF-8 フラグがありません（エクスプローラーで名前が化けます）")
+        if jp == 0:
+            raise SystemExit("NG: 日本語の名前のファイルが zip にありません（組み立てが違う）")
         if z.testzip() is not None:
             raise SystemExit("NG: zip が壊れています")
         return len(z.infolist())
@@ -196,6 +202,17 @@ def run_checks():
     return probs
 
 
+def never_update(rel):
+    """更新に決して入れないもの。
+      include\\config.asp … 現地で書き換えた設定（DB_PATH など）が消える
+      data\\*.accdb       … 現地の実データが、空のデータベースで上書きされて消える"""
+    return rel.endswith("include\\config.asp") or (rel.startswith("nippou\\data\\") and rel.lower().endswith(".accdb"))
+
+
+def update_files(old, new):
+    return [r for r, h in new.items() if old.get(r) != h and not never_update(r)]
+
+
 def placement_table(changed, old, new):
     lines = ["電話応対日報 集計システム　更新ファイルの置き場所", "",
              "下の表のファイルを、表の「置く場所」に上書きしてください。", "表に無いファイルは、今のままにしてください。",
@@ -205,6 +222,9 @@ def placement_table(changed, old, new):
         tag = "（新しいファイル）" if rel not in old else ""
         lines.append(f"  {rel}{tag}")
     lines.append("")
+    lines += ["■ 上書きしないもの",
+              "  nippou\\data\\日報集計_be.accdb（今までのデータが入っています。更新には入っていません）",
+              "  nippou\\part\\include\\config.asp と nippou\\staff\\include\\config.asp（置き場所の設定）", ""]
     diff_pairs = [r for r in changed if r.endswith("web.config") and ("\\part\\" in r or "\\staff\\" in r)]
     if diff_pairs:
         lines += ["■ part 用と staff 用で中身が違うファイル",
@@ -238,7 +258,14 @@ def main():
         print(f"OK: {os.path.join(PKG, ZIP_NAME)}（{n} 項目・UTF-8 フラグ付き）")
         return
     old = json.load(open(since, encoding="utf-8"))
-    changed = [r for r, h in new.items() if old.get(r) != h and not r.endswith("include\\config.asp")]
+    changed = update_files(old, new)
+    db_changed = [r for r, h in new.items() if r.lower().endswith(".accdb") and old.get(r) != h]
+    if db_changed:
+        print("注意: データベースの形（db/schema.sql）が前回と違います。更新には入れません。"
+              "現地のデータを残したまま形を変える手順（列の追加など）を、別に用意してください:", db_changed)
+    if not changed:
+        print("OK: 前回から変わったファイルはありません（更新用の zip は作りません）")
+        return
     cfg_changed = [r for r, h in new.items() if r.endswith("include\\config.asp") and old.get(r) != h]
     if cfg_changed:
         print("注意: config.asp の中身（設定の項目）が変わっています。更新には入れないので、置き場所の表に書き足す手順を手順書に用意してください:", cfg_changed)

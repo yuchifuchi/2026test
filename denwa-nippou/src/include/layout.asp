@@ -7,7 +7,7 @@
 ' ============================================================
 
 Sub PageHead(title)
-    ' 古い画面が出ないように（IE モードは同じ URL の画面を強くキャッシュする）
+    ' 古い画面が出ないように（IE モードは、同じアドレスの画面を前に見たまま出し直すことがある）
     Response.Expires = -1
     Response.AddHeader "Cache-Control", "no-cache, no-store"
     Response.AddHeader "Pragma", "no-cache"

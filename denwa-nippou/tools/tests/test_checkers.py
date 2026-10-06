@@ -88,6 +88,22 @@ def run():
     # ---- CSS ----
     expect("CSS: 囲まない表の規則で罫線を消す", csscheck.check("tbody tr:last-child td { border-bottom: 0 }"), ".tw / .sheet")
     expect("CSS: 帳票の中で罫線を消す", csscheck.check(".sheet td { border-bottom: none }"), "罫線を消して")
+    # ---- 更新用の zip に、現地のデータと設定を入れない ----
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    import package
+    old = {"nippou\\data\\日報集計_be.accdb": "a", "nippou\\part\\include\\config.asp": "a", "nippou\\part\\error.asp": "a",
+           "nippou\\staff\\include\\config.asp": "a"}
+    new = {"nippou\\data\\日報集計_be.accdb": "b", "nippou\\part\\include\\config.asp": "b", "nippou\\part\\error.asp": "b",
+           "nippou\\staff\\include\\config.asp": "b", "nippou\\staff\\new.asp": "b"}
+    got = package.update_files(old, new)
+    if got != ["nippou\\part\\error.asp", "nippou\\staff\\new.asp"]:
+        raise Fail(f"更新用の zip の中身の選び方が違います: {got}")
+    CHECKS.append("更新用の zip には、データベース（.accdb）と config.asp を決して入れない")
+    t = package.placement_table(got, old, new)
+    if "nippou\\staff\\new.asp（新しいファイル）" not in t or "上書きしないもの" not in t:
+        raise Fail("置き場所の表の書き方が違います:\n" + t)
+    CHECKS.append("置き場所の表に、置くフォルダと「上書きしないもの」を書く")
+
     # ---- 模擬実行でも Response.End の握りつぶしを見つける ----
     site = os.path.join(WORK, "site2", "nippou", "part")
     os.makedirs(site)
