@@ -76,13 +76,14 @@ PEOPLE = [  # 担当者ID, コード, 姓, 名, 氏名, 職員区分, 表示順,
 DAY = D(2026, 8, 25)
 NEXT = D(2026, 8, 26)
 # (日時, 担当者ID, 区分ID, 製品ID, 件数)
+# 区分・製品は db/schema.sql の初期データ（現行 Excel の記入用フォームから写したもの）
 CALLS = [
-    (DAY, 1, 1, 1, 5), (DAY, 1, 1, 2, 3), (DAY, 1, 3, 3, 2), (DAY, 1, 11, 0, 2),
-    (DAY, 2, 4, 1, 1), (DAY, 2, 8, 2, 1), (DAY, 2, 6, 1, 1), (DAY, 2, 14, 0, 1),
-    (D(2026, 8, 25, 15, 30), 2, 15, 0, 1),          # 時刻が入っていても、その日に数える
-    (DAY, 3, 2, 4, 1), (DAY, 3, 12, 0, 1), (DAY, 3, 17, 0, 1),
+    (DAY, 1, 1, 1, 5), (DAY, 1, 1, 2, 3), (DAY, 1, 3, 3, 2), (DAY, 1, 2, 17, 2),      # 申込 10・抽選 2
+    (DAY, 2, 4, 1, 1), (DAY, 2, 9, 2, 1), (DAY, 2, 6, 1, 1), (DAY, 2, 50, 0, 1),      # 払込 2・商品発送 1・その他（返金）1
+    (D(2026, 8, 25, 15, 30), 2, 11, 3, 1),          # 製品交換（その他・内 交換）。時刻が入っていても、その日に数える
+    (DAY, 3, 2, 4, 1), (DAY, 3, 1, 5, 1), (DAY, 3, 17, 0, 1),                         # 職員：申込 2・その他 1
     (NEXT, 1, 1, 1, 7), (NEXT, 4, 9, 5, 2),          # 翌日の分は 8/25 に混ざらない
-    (D(2026, 8, 24), 4, 10, 0, 3),                   # 前の日
+    (D(2026, 8, 24), 4, 27, 0, 3),                   # 前の日
 ]
 TASKS = [(DAY, 1, 1, 10), (DAY, 1, 3, 4), (DAY, 2, 1, 5), (DAY, 2, 13, 2), (NEXT, 1, 1, 9)]
 ATT = [(DAY, 1, "9:00-13:00", None), (DAY, 2, None, "午後のみ"), (DAY, 3, None, None), (NEXT, 1, None, None)]
@@ -117,8 +118,10 @@ def fixture():
 
 
 # ---------------- 期待値（Python で別に数える） ----------------
-KUBUN_COL = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 1, 11: 1, 12: 1, 13: 5, 14: 5, 15: 5, 16: 5, 17: 5}
-KUBUN_UCHI = {6: "返金", 8: "交換"}
+# 区分ID → 日報の列（現行 Excel の転記用シート 2 行目の番号: 3 申込・4 抽選・5 払込用紙・6 商品発送・7/8 その他）
+KUBUN_COL = {1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3, 8: 5, 9: 4, 10: 4, 11: 5}
+KUBUN_COL.update({k: 5 for k in range(12, 58)})
+KUBUN_UCHI = {11: "交換", 50: "返金"}
 STAFF = {p[0] for p in PEOPLE if p[5] == "職員"}
 
 
@@ -251,6 +254,11 @@ def run():
     x("SqlCallUpdate", [i(8), iso(DAY), s("検査"), i(new_id)])
     _, rows = br.query("SELECT J.[件数] FROM [T_受電] AS J WHERE J.[受電ID] = ?", [i(new_id)])
     eq("SqlCallUpdate", rows, [[8]])
+    x("SqlCallAddDelta", [i(1), iso(DAY), s("検査"), i(new_id)])
+    x("SqlCallAddDelta", [i(1), iso(DAY), s("検査"), i(new_id)])
+    x("SqlCallAddDelta", [i(-1), iso(DAY), s("検査"), i(new_id)])
+    _, rows = br.query("SELECT J.[件数] FROM [T_受電] AS J WHERE J.[受電ID] = ?", [i(new_id)])
+    eq("SqlCallAddDelta（8 に +1 +1 -1 → 9）", rows, [[9]])
     n = x("SqlCallDelete", [i(new_id)])
     eq("SqlCallDelete（1 行）", n, 1)
     try:
@@ -285,6 +293,27 @@ def run():
     _, rows = br.query("SELECT R.[件数] FROM [T_業務実績] AS R WHERE R.[実績ID] = ?", [i(tid)])
     eq("SqlTaskUpdate", rows, [[9]])
     eq("SqlTaskDelete", x("SqlTaskDelete", [i(tid)]), 1)
+
+    # ---- 受付メモ（特殊な問合せの内容） ----
+    x("SqlMemoInsert", [iso(DAY), i(2), s("見学の団体予約の問合せ"), iso(DAY)])
+    x("SqlMemoInsert", [iso(DAY), i(1), s("A"), iso(DAY)])
+    x("SqlMemoInsert", [iso(NEXT), i(1), s("翌日の分"), iso(NEXT)])
+    _, rows = q("SqlMemoOnePerson", day + [i(1)])
+    eq("SqlMemoOnePerson", rows[0][1], "A")
+    x("SqlMemoUpdate", [s("記念貨幣の在庫"), iso(DAY), i(rows[0][0])])
+    _, rows = q("SqlMemosDay", day)
+    eq("SqlMemosDay（その日だけ・表示順）", [(r[0], r[1]) for r in rows], [(2, "見学の団体予約の問合せ"), (1, "記念貨幣の在庫")])
+    try:
+        x("SqlMemoInsert", [iso(DAY), i(1), s("二つ目"), iso(DAY)])
+        raise Fail("同じ日・同じ人のメモを 2 つ入れられてしまいました（UNIQUE が効いていない）")
+    except Exception as e:
+        if isinstance(e, Fail):
+            raise
+        results.append("UQ_受付メモ：1 日・1 人に 1 つ")
+    _, rows = q("SqlMemoOnePerson", day + [i(2)])
+    eq("SqlMemoDelete", x("SqlMemoDelete", [i(rows[0][0])]), 1)
+    _, rows = q("SqlPeopleWithInput", day + day + day)
+    eq("SqlPeopleWithInput（受付入力・その他業務・メモのある人。表示順）", [r[0] for r in rows], [2, 1, 3])
 
     # ---- 出勤 ----
     cols, rows = q("SqlAttendance", day)
@@ -330,32 +359,32 @@ def run():
     _, rows = q("SqlColumnsAll", [])
     eq("SqlColumnRename", rows[0][1], "申込み")
     _, rows = q("SqlBlocksAll", [])
-    eq("SqlBlocksAll", [(r[0], r[2]) for r in rows], [(1, True), (2, False), (3, False)])
+    eq("SqlBlocksAll", [(r[0], r[2]) for r in rows], [(1, True), (2, True), (3, False), (4, False), (5, False), (6, False), (7, False)])
     _, rows = q("SqlBlockMaxId", [])
-    eq("SqlBlockMaxId", int(rows[0][0]), 3)
-    x("SqlBlockInsert", [i(4), s("新しいまとまり"), b(False), i(4)])
-    x("SqlBlockUpdate", [s("新しいまとまり2"), b(True), i(4), i(4)])
+    eq("SqlBlockMaxId", int(rows[0][0]), 7)
+    x("SqlBlockInsert", [i(8), s("新しいまとまり"), b(False), i(8)])
+    x("SqlBlockUpdate", [s("新しいまとまり2"), b(True), i(8), i(8)])
     _, rows = q("SqlBlocksAll", [])
-    eq("SqlBlockInsert / SqlBlockUpdate", (rows[3][1], rows[3][2]), ("新しいまとまり2", True))
+    eq("SqlBlockInsert / SqlBlockUpdate", (rows[7][1], rows[7][2]), ("新しいまとまり2", True))
     _, rows = q("SqlBlockProductRows", [i(1)])
-    eq("SqlBlockProductRows（ブロック 1 の製品つきの行）", int(rows[0][0]), len([c for c in CALLS if c[3] != 0 and c[2] <= 9]))
+    eq("SqlBlockProductRows（ブロック 1 の製品つきの行）", int(rows[0][0]), len([c for c in CALLS if c[3] != 0 and c[2] <= 11]))
     _, rows = q("SqlKubunAll", [])
-    eq("SqlKubunAll", len(rows), 17)
+    eq("SqlKubunAll", len(rows), 57)
     _, rows = q("SqlKubunMaxId", [])
-    eq("SqlKubunMaxId", int(rows[0][0]), 17)
-    x("SqlKubunInsert", [i(18), i(4), s("新しい区分"), i(5), NULL, i(1), b(True), s("旧")])
-    x("SqlKubunUpdate", [i(4), s("新しい区分2"), i(2), s("交換"), i(1), b(False), NULL, i(18)])
-    _, rows = br.query("SELECT K.[区分名], K.[集計列ID], K.[内訳区分], K.[有効] FROM [M_区分] AS K WHERE K.[区分ID] = 18", [])
+    eq("SqlKubunMaxId", int(rows[0][0]), 57)
+    x("SqlKubunInsert", [i(58), i(4), s("新しい区分"), i(5), NULL, i(1), b(True), s("旧")])
+    x("SqlKubunUpdate", [i(4), s("新しい区分2"), i(2), s("交換"), i(1), b(False), NULL, i(58)])
+    _, rows = br.query("SELECT K.[区分名], K.[集計列ID], K.[内訳区分], K.[有効] FROM [M_区分] AS K WHERE K.[区分ID] = 58", [])
     eq("SqlKubunInsert / SqlKubunUpdate", rows[0], ["新しい区分2", 2, "交換", False])
     _, rows = q("SqlKubunUseCount", [i(1)])
     eq("SqlKubunUseCount", int(rows[0][0]), len([c for c in CALLS if c[2] == 1]))
     _, rows = q("SqlProductsAll", [])
-    eq("SqlProductsAll（製品ID 0 は出さない）", [r[0] for r in rows], [1, 2, 3, 4, 5])
+    eq("SqlProductsAll（製品ID 0 は出さない）", [r[0] for r in rows], list(range(1, 33)))
     _, rows = q("SqlProductMaxId", [])
-    eq("SqlProductMaxId", int(rows[0][0]), 5)
-    x("SqlProductInsert", [i(6), i(1), s("新製品"), iso(DAY), NULL, i(6), b(True)])
-    x("SqlProductUpdate", [i(1), s("新製品2"), iso(DAY), iso(NEXT), i(6), b(True), i(6)])
-    _, rows = br.query("SELECT P.[製品名], P.[適用終了日] FROM [M_製品] AS P WHERE P.[製品ID] = 6", [])
+    eq("SqlProductMaxId", int(rows[0][0]), 32)
+    x("SqlProductInsert", [i(33), i(1), s("新製品"), iso(DAY), NULL, i(33), b(True)])
+    x("SqlProductUpdate", [i(1), s("新製品2"), iso(DAY), iso(NEXT), i(33), b(True), i(33)])
+    _, rows = br.query("SELECT P.[製品名], P.[適用終了日] FROM [M_製品] AS P WHERE P.[製品ID] = 33", [])
     eq("SqlProductInsert / SqlProductUpdate", (rows[0][0], rows[0][1][:10]), ("新製品2", "2026-08-26"))
     _, rows = q("SqlProductUseCount", [i(1)])
     eq("SqlProductUseCount", int(rows[0][0]), len([c for c in CALLS if c[3] == 1]))

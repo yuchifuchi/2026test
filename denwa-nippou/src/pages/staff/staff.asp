@@ -29,8 +29,9 @@ PageHead "職員メニュー"
   <div class="menu-col">
     <h2>集計</h2>
     <a class="btn" href="summary.asp">週の集計表<small>月曜～日曜</small></a>
-    <h2>代わりに入力する</h2>
-    <a class="btn btn-sub" href="entry.asp">受付入力<small>電話の件数</small></a>
+    <a class="btn btn-sub" href="detail.asp">個人別の受付表<small>入力のあった人を 1 人 1 枚で</small></a>
+    <h2>職員の分・代わりに入力する</h2>
+    <a class="btn btn-sub" href="entry.asp">受付入力<small>製品ごと・お問合せ内容ごとの件数</small></a>
     <a class="btn btn-sub" href="tasks.asp">その他業務<small>①～⑬</small></a>
   </div>
   <div class="menu-col">

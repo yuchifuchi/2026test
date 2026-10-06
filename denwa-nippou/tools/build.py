@@ -24,8 +24,8 @@ from vbsim.sqlbridge import java_cmd  # noqa: E402
 
 COMMON_PAGES = ["default.asp", "entry.asp", "tasks.asp", "error.asp", "setup_check.asp"] + \
                [f"probe{i}.asp" for i in range(1, 8)]
-STAFF_PAGES = ["staff.asp", "daily.asp", "report.asp", "printpdf.asp", "summary.asp", "check.asp", "master.asp"]
-INCLUDES = ["auth.asp", "config.asp", "db.asp", "layout.asp", "sheet.asp", "sql.asp", "pdf.asp"]
+STAFF_PAGES = ["staff.asp", "daily.asp", "report.asp", "detail.asp", "printpdf.asp", "summary.asp", "check.asp", "master.asp"]
+INCLUDES = ["auth.asp", "config.asp", "db.asp", "layout.asp", "sheet.asp", "grid.asp", "sql.asp", "pdf.asp"]
 
 
 def build_accdb(out_dir=None):

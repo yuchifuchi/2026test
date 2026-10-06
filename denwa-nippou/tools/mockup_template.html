@@ -103,6 +103,7 @@ main { display: grid; gap: 16px; min-width: 0; }
 .view { overflow: auto; background: var(--app-bg); max-height: 82vh; }
 .view.is-paper { background: var(--pdf); padding: 20px 12px; display: flex; justify-content: center; }
 .paper { margin: 0; width: 100%; max-width: 794px; }
+.paper { display: grid; gap: 18px; }
 .paper img { display: block; width: 100%; height: auto; background: var(--paper); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); }
 #screen-host { width: 1240px; }
 
@@ -133,7 +134,7 @@ main { display: grid; gap: 16px; min-width: 0; }
     <p class="eyebrow">造幣局 販売・顧客サービス課　電話応対報告書 日報集計システム</p>
     <h1>電話応対日報 画面の見本</h1>
     <p class="lead">本物の画面を、試しのデータを入れて動かし、そのまま写したものです。画面の中のリンクやボタンを押すと、つながる画面に移ります（保存はされません）。</p>
-    <p class="sample">試しのデータ：2026 年 8 月 25 日（火）、パート職員 6 人・職員 1 人。人の名前と数は、見本のためのもので本物ではありません。</p>
+    <p class="sample">試しのデータ：2026 年 8 月 25 日（火）、パート職員 6 人と職員の分（顧客Ｇ）。人の名前と数は、見本のためのもので本物ではありません。区分（お問合せ内容）と製品は、今の Excel の記入用フォームから写したものです。</p>
   </header>
   <div class="layout">
     <nav class="side" id="side" aria-label="画面の一覧"></nav>
@@ -153,7 +154,7 @@ main { display: grid; gap: 16px; min-width: 0; }
         </div>
         <div class="view" id="view">
           <div id="screen-host"></div>
-          <figure class="paper" id="pg-paper" hidden><img id="pg-paper-img" alt="印刷される帳票（A4 縦 1 枚）"></figure>
+          <figure class="paper" id="pg-paper" hidden></figure>
         </div>
       </div>
     </main>
@@ -250,7 +251,13 @@ main { display: grid; gap: 16px; min-width: 0; }
       root.innerHTML = "";
       host.hidden = true;
       paper.hidden = false;
-      document.getElementById("pg-paper-img").src = s.img;
+      paper.textContent = "";
+      s.imgs.forEach(function (src, i) {
+        var im = document.createElement("img");
+        im.src = src;
+        im.alt = s.title + "（" + (i + 1) + " 枚目）";
+        paper.appendChild(im);
+      });
       view.classList.add("is-paper");
       fitBtn.hidden = true;
     } else {
@@ -348,6 +355,19 @@ main { display: grid; gap: 16px; min-width: 0; }
     var sub = e.submitter;
     var actInput = f.querySelector('input[name="act"]');
     var act = (sub && sub.name === "act") ? sub.value : (actInput ? actInput.value : "");
+    if (f.classList.contains("countform")) {
+      // 1 件ずつ数える：押した欄の数をその場で 1 つ増やして見せる（本物では、サーバーに保存して画面を出し直す）
+      if (sub && sub.name === "undo") {
+        toast("見本なので、戻していません。本物では、押した欄が 1 件減ります。");
+      } else if (sub && sub.name === "k") {
+        var n = parseInt(sub.textContent.replace(/[^0-9]/g, ""), 10) || 0;
+        sub.textContent = String(n + 1);
+        Array.prototype.forEach.call(f.querySelectorAll("button.cnt.last"), function (b) { b.classList.remove("last"); });
+        sub.classList.add("last");
+        toast("「" + (sub.title || "").replace(/ を 1 件数える$/, "") + "」を 1 件数えました（いま " + (n + 1) + " 件）。見本なので、保存はしていません。");
+      }
+      return;
+    }
     var r = resolve(f.getAttribute("action") || cur.file);
     var file = r ? r.file : cur.file;
     if (act === "go" || f.classList.contains("bar")) {
@@ -370,6 +390,7 @@ main { display: grid; gap: 16px; min-width: 0; }
       return;
     }
     if (file === "tasks.asp" && act === "save") { show("tasks_saved", false); toast(saved); return; }
+    if (file === "entry.asp" && act === "memo") { toast(saved); return; }
     if (file === "daily.asp" && act === "fix") { show("daily_fixed", false); toast(saved); return; }
     if (file === "daily.asp" && act === "unfix") { show("daily", false); toast("見本なので、確定は取り消していません。本物では、日報が確定の前に戻ります。"); return; }
     toast(saved);

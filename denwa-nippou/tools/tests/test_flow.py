@@ -20,11 +20,13 @@ PEOPLE = [
     {"code": "003", "sei": "鈴木", "mei": "一郎", "kind": "職員"},
     {"code": "004", "sei": "田中", "mei": "美咲", "kind": "パート"},
 ]
-# 区分ID_製品ID → 件数（区分と集計列は db/schema.sql の初期データ）
+# 区分ID_製品ID → 件数（区分・製品・集計列は db/schema.sql の初期データ。現行 Excel の記入用フォームから写したもの）
+#   区分 1 申込関係・2 受注 → 申込／3 抽選結果 → 抽選／4～7 払込用紙／9・10 商品発送照会 → 商品発送／
+#   8 入金関係・11 製品交換（内 交換）・12～ のまとまり（50 返金 は内 返金）→ その他
 CALLS = {
-    "山田": {"1_1": 5, "1_2": 3, "3_3": 2, "11_0": 2},                       # 申込 10・抽選 2
-    "佐藤": {"4_1": 1, "8_2": 1, "6_1": 1, "14_0": 1, "15_0": 1},            # 払込 2（内 返金 1）・発送 1（内 交換 1）・その他 2
-    "鈴木": {"2_4": 1, "12_0": 1, "17_0": 1},                               # 職員：申込 2・その他 1
+    "山田": {"1_1": 5, "2_4": 3, "3_4": 2, "1_17": 2},                       # 申込 10・抽選 2
+    "佐藤": {"4_1": 1, "5_1": 1, "9_2": 1, "11_3": 1, "50_0": 1},            # 払込 2・発送 1・その他 2（内 交換 1・内 返金 1）
+    "鈴木": {"1_4": 1, "2_6": 1, "12_19": 1},                               # 職員：申込 2・その他 1（【その他】の製品）
 }
 EXPECT_COLS = {"申込": (12, 2), "抽選": (2, 0), "払込用紙": (2, 0), "商品発送": (1, 0), "その他": (3, 1)}
 EXPECT_TOTAL = (20, 3)
@@ -154,7 +156,7 @@ def run():
     # ---- 不具合 2：入力が減った日に前の数が残らない（取り消してから減らす） ----
     r = post(sim, "/nippou/staff/daily.asp", {"act": "unfix", "d": DAY})
     ok(r.code == 302, "確定を取り消せる")
-    entry(sim, "part", pid["山田"], {"1_1": 2, "1_2": 0})      # 5→2、3→0（行を消す）
+    entry(sim, "part", pid["山田"], {"1_1": 2, "2_4": 0})      # 5→2、3→0（行を消す）
     nums = sheet_numbers(get(sim, f"/nippou/staff/report.asp?d={DAY}").text)
     ok(nums["total"] == (14, 3), f"減らした数がそのまま帳票に出る（20→14）: 実際 {nums['total']}")
     ok(nums[cid["申込"]] == (6, 2), f"申込も減る（12→6）: 実際 {nums[cid['申込']]}")
@@ -171,7 +173,7 @@ def run():
     ok(rows == [[3]], "古い画面からの保存は反映されない")
 
     # ---- 数字でない入力は 1 つでもあれば何も保存しない ----
-    r = entry(sim, "part", pid["佐藤"], {"4_1": "5", "14_0": "abc"}, expect_redirect=False)
+    r = entry(sim, "part", pid["佐藤"], {"4_1": "5", "16_0": "abc"}, expect_redirect=False)
     ok('class="num ng"' in r.text and "まだ保存していません" in r.text, "数字でない欄を赤くして、保存しない")
     _, rows = sim.bridge.query("SELECT J.[件数] FROM [T_受電] AS J WHERE J.[区分ID] = 4", [])
     ok(rows == [[3]], "誤りのあるときは、正しい欄も保存しない（全部か無しか）")
@@ -212,12 +214,85 @@ def run():
     r = post(sim, "/nippou/staff/daily.asp", long_form)
     ok(r.code == 200 and "特記事項が 5 行になります" in r.text, "特記事項が帳票の罫線（4 行）に入りきらないときは、理由を出して保存しない")
 
+    # ---- 1 件ずつ数える（現行 Excel の「欄を選んでボタンを押す」にあたる） ----
+    D2 = "2026-08-27"
+
+    def cnt_on(k, prod):
+        _, rows = sim.bridge.query("SELECT J.[対象日], J.[件数] FROM [T_受電] AS J WHERE J.[区分ID] = ? AND J.[製品ID] = ?", [{"t": "int", "v": k}, {"t": "int", "v": prod}])
+        return [row[1] for row in rows if str(row[0]).startswith(D2)]
+    url = f"/nippou/part/entry.asp?d={D2}&t={pid['山田']}"
+    r = get(sim, url)
+    ok('name="k" value="3_4"' in r.text and '<th class="kg" colspan="4">払込用紙</th>' in r.text and '<th class="pname" rowspan="2">製品</th>' in r.text,
+       "受付入力は Excel の記入用フォームと同じ並び（行が製品・列がお問合せ内容・払込用紙は 2 段の見出し）")
+    ok(r.text.count('<section class="gb"') == 8, "まとまり 7 つ（製品別 2・顧客情報・イベント・その他①②・特殊な問合せ）と、特殊な問合せの内容の欄が出る")
+    v0 = ver_of(r.text)
+    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": v0, "k": "3_4"})
+    ok(r.code == 302 and "op=add" in r.headers["Location"] and r.headers["Location"].endswith("#b1"), "欄を押すと 1 件数え、押した欄のまとまりへ戻る")
+    r = follow(sim, r)
+    ok('value="3_4" class="cnt last"' in r.text and "を 1 件数えました（いま 1 件）" in r.text, "押した欄が目立ち、「1 件数えました（いま 1 件）」と出る")
+    r2 = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": v0, "k": "3_4"})
+    ok(r2.code == 302 and "op=dup" in r2.headers["Location"], "続けて 2 回押された（古い画面からの 2 回目）は数えない")
+    r2 = follow(sim, r2)
+    ok("いま押した分は数えていません" in r2.text, "2 回目を数えなかったことを、押した欄の近くで知らせる")
+    ok(cnt_on(3, 4) == [1], "2 回押しても 1 件のまま")
+    for _ in range(2):
+        r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "3_4"}))
+    r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "50_0"}))
+    ok(cnt_on(3, 4) == [3], "押した回数だけ数える（3 回 → 3 件）")
+    r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "undo": "50_0", "k": ""}))
+    ok("を 1 件戻しました（いま 0 件）" in r.text, "押し間違いは「1 件戻す」で戻せる")
+    ok(cnt_on(50, 0) == [], "0 件に戻した欄は行ごと消える")
+    nums = sheet_numbers(get(sim, f"/nippou/staff/report.asp?d={D2}").text)
+    ok(nums[cid["抽選"]] == (3, 0) and nums["total"] == (3, 0), "数えた数がそのまま帳票に出る（抽選 3）")
+    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "99_1"})
+    ok(r.code == 200 and "押された欄が見つかりません" in r.text, "無い欄を送られても数えない")
+    r = get(sim, url + "&m=edit")
+    ok('name="c_3_4" value="3"' in r.text, "「数をまとめて入れる・直す」では、数えた数が入力欄に出る")
+
+    # ---- 特殊な問合せの内容（Excel の記入用フォームの「下記のとおり」の欄） ----
+    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": D2, "t": str(pid["山田"]), "memo": "見学の団体予約の問合せ（3 件）"})
+    ok(r.code == 302 and "op=memo" in r.headers["Location"], "特殊な問合せの内容を保存できる")
+    r = get(sim, f"/nippou/staff/daily.asp?d={D2}")
+    ok("見学の団体予約の問合せ（3 件）" in r.text, "書いた内容は、日報の画面で職員が読める")
+    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": D2, "t": str(pid["山田"]), "memo": "あ" * 401})
+    ok(r.code == 200 and "400 文字まで" in r.text, "長すぎる内容は保存しない")
+
+    # ---- 個人別の受付表（Excel の「印刷」マクロにあたる。入力のあった人を 1 人 1 枚） ----
+    r = get(sim, f"/nippou/staff/detail.asp?d={D2}")
+    ok(r.text.count('<div class="psheet">') == 1 and "見学の団体予約の問合せ（3 件）" in r.text and f'data-total="{pid["山田"]}">3<' in r.text,
+       "個人別の受付表に、入力のあった人だけが出る（数とメモつき）")
+    r = get(sim, f"/nippou/staff/detail.asp?d={DAY}")
+    ok(r.text.count('<div class="psheet">') == 3, "個人別の受付表：8/25 は入力のあった 3 人ぶん")
+    r = get(sim, "/nippou/part/detail.asp")
+    ok(r.code == 404, "part には個人別の受付表の画面も無い")
+
+    # ---- 確定した日は数えられない ----
+    form = {"act": "fix", "d": D2, "lines": "5", "t1": "", "t2": "", "t3": "", f"att_{pid['山田']}": "1"}
+    ok(follow(sim, post(sim, "/nippou/staff/daily.asp", form)).text.count("確定しました") == 1, "8/27 を確定できる")
+    r = get(sim, url)
+    ok('name="k"' not in r.text, "確定した日は、欄がボタンにならない")
+    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "3_4"})
+    ok(r.code == 200 and "確定済み" in r.text, "確定した日に数えようとしても数えない")
+
+    # ---- 職員の分（Excel の「顧客Ｇ」）は、出勤者に印を付けず、もれとも言わない ----
+    D3 = "2026-08-28"
+    entry_day = lambda who, cells: post(sim, "/nippou/staff/entry.asp", dict({"act": "save", "d": D3, "t": str(pid[who]),
+                                                                              "ver": ver_of(get(sim, f"/nippou/staff/entry.asp?d={D3}&t={pid[who]}").text)},
+                                                                             **{"c_" + k: str(v) for k, v in cells.items()}))
+    entry_day("鈴木", {"1_4": 2})
+    entry_day("山田", {"1_1": 1})
+    r = get(sim, f"/nippou/staff/daily.asp?d={D3}")
+    ok(f'name="att_{pid["山田"]}" value="1" checked' in r.text and f'name="att_{pid["鈴木"]}" value="1" checked' not in r.text,
+       "日報の出勤者は、入力のあったパート職員にだけ初めから印が付く（職員の分には付けない）")
+    r = get(sim, f"/nippou/staff/check.asp?d={D3}")
+    ok("（職員の分）" in r.text, "入力もれチェック：出勤者に入っていない職員の分は、もれとして扱わない")
+
     # ---- 入力もれ：出勤なのに入力なし ----
     form = {"act": "save", "d": DAY, "lines": "5", "t1": "", "t2": "", "t3": ""}
     for name in ("山田", "佐藤", "鈴木"):
         form[f"att_{pid[name]}"] = "1"
     post(sim, "/nippou/staff/daily.asp", form)
-    entry(sim, "staff", pid["鈴木"], {"2_4": 0, "12_0": 0, "17_0": 0})
+    entry(sim, "staff", pid["鈴木"], {"1_4": 0, "2_6": 0, "12_19": 0})
     r = get(sim, f"/nippou/staff/check.asp?d={DAY}")
     ok("出勤しているのに、入力がありません" in r.text, "入力もれチェック：出勤しているのに入力が無い人を赤で出す")
 

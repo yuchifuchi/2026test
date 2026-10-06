@@ -161,10 +161,18 @@ def build(scenario):
         if r.code != 302:
             raise Fail("業務項目を直せません: " + strip_tags(r.text)[:500])
     for t in pid:
-        test_flow.entry(sim, "part", t, {"1_1": 9999, "3_3": 9999, "4_1": 9999, "7_2": 9999, "14_0": 9999, "8_2": 9999, "6_1": 9999})
+        test_flow.entry(sim, "part", t, {"1_1": 9999, "3_3": 9999, "4_1": 9999, "9_2": 9999, "16_0": 9999, "11_2": 9999, "50_0": 9999})
         form = {"act": "save", "d": DAY, "t": str(t)}
         form.update({f"g_{g}": "9999" for g in range(1, 14)})
         post(sim, "/nippou/part/tasks.asp", form)
+    # 1 人目は、受付の表のすべての欄を 4 けたにし、特殊な問合せの内容も上限いっぱいに（個人別の受付表が 1 枚に収まるかを見る）
+    r = sim.request("GET", f"/nippou/part/entry.asp?d={DAY}&t={pid[0]}&m=edit")
+    cells = {k: 9999 for k in re.findall(r'name="c_(\d+_\d+)"', r.text)}
+    test_flow.entry(sim, "part", pid[0], cells)
+    memo_max = int(re.search(r"Const MEMO_MAX = (\d+)", open(os.path.join(ROOT, "src", "pages", "common", "entry.asp"), encoding="utf-8").read()).group(1))
+    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": DAY, "t": str(pid[0]), "memo": "う" * memo_max})
+    if r.code != 302:
+        raise Fail("特殊な問合せの内容を保存できません: " + strip_tags(r.text)[:500])
     # 回覧の欄の名前も上限いっぱいに
     for k in range(1, 9):
         r = post(sim, "/nippou/staff/master.asp?t=stamp", {"id": str(k), "name": "藤本課長補佐"[:sheet_const("SHEET_STAMP_NAME_MAX")]})
@@ -219,6 +227,82 @@ def check_html(html_path):
     return json.loads(m.group(1).replace("&quot;", '"').replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
 
 
+PSHEET_JS = r"""
+<script>
+(function(){
+  var out = {sheets: 0, problems: [], heights: []};
+  var mm = 96 / 25.4;
+  var sheets = document.querySelectorAll('.psheet');
+  out.sheets = sheets.length;
+  for (var i = 0; i < sheets.length; i++) {
+    var sh = sheets[i];
+    out.heights.push(sh.getBoundingClientRect().height / mm);
+    if (sh.scrollWidth > sh.clientWidth + 1) out.problems.push((i + 1) + ' 人目: 横にはみ出しています');
+    var cells = sh.querySelectorAll('th, td');
+    for (var j = 0; j < cells.length; j++) {
+      var c = cells[j];
+      if (c.scrollWidth > c.clientWidth + 1) { out.problems.push((i + 1) + ' 人目: 欄の文字がはみ出しています「' + c.textContent.slice(0, 20) + '」'); break; }
+      var cs = getComputedStyle(c);
+      if (cs.borderTopStyle === 'none' || cs.borderLeftStyle === 'none') { out.problems.push((i + 1) + ' 人目: 罫線の無い欄があります「' + c.textContent.slice(0, 20) + '」'); break; }
+    }
+  }
+  var pre = document.createElement('pre'); pre.id = '__result'; pre.textContent = JSON.stringify(out); document.body.appendChild(pre);
+})();
+</script>
+"""
+
+
+def check_psheets(html_path):
+    html = open(html_path, encoding="utf-8-sig").read()
+    probe = html_path.replace(".html", "_check.html")
+    open(probe, "w", encoding="utf-8").write(html.replace("</body>", PSHEET_JS + "</body>"))
+    r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--virtual-time-budget=5000",
+                        "--dump-dom", "file://" + probe], capture_output=True, text=True, timeout=120)
+    m = re.search(r'<pre id="__result">(.*?)</pre>', r.stdout, re.S)
+    if not m:
+        raise Fail("検査用のスクリプトが結果を返しませんでした: " + r.stderr[-500:])
+    return json.loads(m.group(1).replace("&quot;", '"').replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
+
+
+def detail_pdf(sim, scenario):
+    """個人別の受付表（1 人 1 枚）。入力のあった人の数だけ、A4 が 1 枚ずつ"""
+    probs = []
+    r = sim.request("GET", f"/nippou/staff/printpdf.asp?d={DAY}&kind=detail")
+    if r.error or r.strict or r.warnings:
+        raise Fail(f"{scenario}: 個人別の受付表の PDF で問題: {r.error} {r.strict} {r.warnings}")
+    if scenario == "empty":
+        if r.body.startswith(b"%PDF") or "入力のあった人がいない" not in r.text:
+            probs.append("入力の無い日に、個人別の受付表の PDF を作ろうとしました")
+        return 0, 0, [], probs
+    if not r.body.startswith(b"%PDF"):
+        raise Fail(f"{scenario}: 個人別の受付表の PDF ができませんでした: " + strip_tags(r.text)[:800])
+    pdf = os.path.join(OUT, f"{scenario}_detail.pdf")
+    open(pdf, "wb").write(r.body)
+    work = sim.winfs.to_local("C:\\inetpub\\wwwroot\\nippou\\data\\pdfwork")
+    jobs = sorted(os.listdir(work), key=lambda j: os.path.getmtime(os.path.join(work, j)))   # 一番新しい作業
+    html = os.path.join(OUT, f"{scenario}_detail.html")
+    shutil.copyfile(os.path.join(work, jobs[-1], "sheet.html"), html)
+    res = check_psheets(html)
+    pages, size = pdf_pages(pdf)
+    persons = len(people_with_input(sim))
+    probs += res["problems"]
+    if res["sheets"] != persons:
+        probs.append(f"個人別の受付表が {res['sheets']} 人ぶんです（入力のあった人は {persons} 人）")
+    if pages != persons:
+        probs.append(f"個人別の受付表の PDF が {pages} 枚です（1 人 1 枚で {persons} 枚のはず。1 人ぶんが 2 枚に分かれていないか）")
+    if abs(size[0] - 595.3) > 2 or abs(size[1] - 841.9) > 2:
+        probs.append(f"個人別の受付表の用紙が A4 縦ではありません（{size}）")
+    subprocess.run(["pdftoppm", "-r", "80", "-png", "-f", "1", "-l", "1", "-singlefile", pdf, os.path.join(OUT, scenario + "_detail")], check=True)
+    return persons, pages, res["heights"], probs
+
+
+def people_with_input(sim):
+    _, rows = sim.bridge.query("SELECT J.[担当者ID] FROM [T_受電] AS J", [])
+    _, rows2 = sim.bridge.query("SELECT R.[担当者ID] FROM [T_業務実績] AS R", [])
+    _, rows3 = sim.bridge.query("SELECT M.[担当者ID] FROM [T_受付メモ] AS M", [])
+    return {r[0] for r in rows + rows2 + rows3}
+
+
 def form_problems(g):
     """様式（課の印刷用シート）の寸法と、作った帳票の寸法を mm で突き合わせる。"""
     p = []
@@ -256,7 +340,7 @@ def run():
         open(pdf, "wb").write(r.body)
         # Edge に渡した HTML（sheet.asp が組み立てたもの）をそのまま取り出す
         work = sim.winfs.to_local("C:\\inetpub\\wwwroot\\nippou\\data\\pdfwork")
-        jobs = sorted(os.listdir(work))
+        jobs = sorted(os.listdir(work), key=lambda j: os.path.getmtime(os.path.join(work, j)))   # 一番新しい作業
         html = os.path.join(OUT, f"{scenario}.html")
         shutil.copyfile(os.path.join(work, jobs[-1], "sheet.html"), html)
         pages, size = pdf_pages(pdf)
@@ -267,6 +351,10 @@ def run():
             probs.append(f"PDF が {pages} 枚です（A4 1 枚でなければならない）")
         if abs(size[0] - 595.3) > 2 or abs(size[1] - 841.9) > 2:
             probs.append(f"用紙が A4 縦ではありません（{size}）")
+        persons, dpages, heights, dprobs = detail_pdf(sim, scenario)
+        probs += dprobs
+        if persons:
+            print(f"{scenario}: 個人別の受付表 {persons} 人ぶん・PDF {dpages} 枚・1 人ぶんの高さ 最大 {max(heights):.1f}mm（上限 279mm）")
         results.append((scenario, pages, res["height_mm"], res["tables"], probs))
     ok = True
     for scenario, pages, h, tables, probs in results:
@@ -277,7 +365,7 @@ def run():
     bridge().shutdown()
     if not ok:
         sys.exit(1)
-    print("OK: 帳票（課の様式と寸法が一致・枠が閉じている・はみ出し無し・A4 1 枚）")
+    print("OK: 帳票（課の様式と寸法が一致・枠が閉じている・はみ出し無し・A4 1 枚）と個人別の受付表（1 人 1 枚）")
 
 
 if __name__ == "__main__":

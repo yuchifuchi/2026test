@@ -473,8 +473,8 @@ End If
 Dim want, staffOnly, f, missing, extra, bf, bfOk
 want = Array("default.asp", "entry.asp", "tasks.asp", "error.asp", "setup_check.asp", "probe1.asp", "probe2.asp", "probe3.asp", _
              "probe4.asp", "probe5.asp", "probe6.asp", "probe7.asp", "web.config", "include\auth.asp", "include\config.asp", _
-             "include\db.asp", "include\layout.asp", "include\sheet.asp", "include\sql.asp", "include\pdf.asp", "css\style.css")
-staffOnly = Array("staff.asp", "daily.asp", "report.asp", "printpdf.asp", "summary.asp", "check.asp", "master.asp")
+             "include\db.asp", "include\layout.asp", "include\sheet.asp", "include\grid.asp", "include\sql.asp", "include\pdf.asp", "css\style.css")
+staffOnly = Array("staff.asp", "daily.asp", "report.asp", "detail.asp", "printpdf.asp", "summary.asp", "check.asp", "master.asp")
 missing = ""
 For Each f In want
     If Not fso.FileExists(Server.MapPath(Replace(f, "\", "/"))) Then missing = missing & f & " "
@@ -493,7 +493,7 @@ Else
     Add "5. ファイル", "そろっているか", "ng", "足りません: " & missing
 End If
 If extra <> "" Then Add "5. ファイル", "置いてはいけないファイル", "ng", "パート職員用のフォルダに職員用の画面があります: " & extra & "（消してください）"
-For Each f In Array("include\auth.asp", "include\config.asp", "include\db.asp", "include\layout.asp", "include\sheet.asp", "include\sql.asp", "include\pdf.asp")
+For Each f In Array("include\auth.asp", "include\config.asp", "include\db.asp", "include\layout.asp", "include\sheet.asp", "include\grid.asp", "include\sql.asp", "include\pdf.asp")
     If fso.FileExists(Server.MapPath(Replace(f, "\", "/"))) Then
         bf = ReadBytes(Server.MapPath(Replace(f, "\", "/")), bfOk)
         If bfOk Then

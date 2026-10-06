@@ -139,6 +139,12 @@ Function SqlCallDelete()
     SqlCallDelete = "DELETE FROM [T_受電] WHERE [受電ID] = ?"
 End Function
 
+' 「1 件ずつ数える」：今の数に足す・引く（今の数を読んで書き戻すのではなく、足し算を Access にさせる）。
+' ? : (足す数（1 か -1）, 更新日時, 登録者, 受電ID)
+Function SqlCallAddDelta()
+    SqlCallAddDelta = "UPDATE [T_受電] SET [件数] = [件数] + ?, [更新日時] = ?, [登録者] = ? WHERE [受電ID] = ?"
+End Function
+
 ' ------------------------------------------------------------
 '  その他業務（①～⑬）
 ' ------------------------------------------------------------
@@ -175,6 +181,47 @@ End Function
 
 Function SqlTaskDelete()
     SqlTaskDelete = "DELETE FROM [T_業務実績] WHERE [実績ID] = ?"
+End Function
+
+' ------------------------------------------------------------
+'  受付メモ（特殊な問合せ「下記のとおり」の内容。1 日・1 人に 1 行）
+' ------------------------------------------------------------
+' ? : (開始日, 終了日の翌日, 担当者ID)
+Function SqlMemoOnePerson()
+    SqlMemoOnePerson = "SELECT M.[メモID], M.[内容] FROM [T_受付メモ] AS M WHERE M.[対象日] >= ? AND M.[対象日] < ? AND M.[担当者ID] = ?"
+End Function
+
+' その日の全員ぶん（日報の画面・個人別の受付表）。? : (開始日, 終了日の翌日)
+Function SqlMemosDay()
+    Dim s
+    s = "SELECT M.[担当者ID], M.[内容], T.[担当者コード], T.[氏名], T.[表示順] "
+    s = s & "FROM [T_受付メモ] AS M INNER JOIN [M_担当者] AS T ON M.[担当者ID] = T.[担当者ID] "
+    s = s & "WHERE M.[対象日] >= ? AND M.[対象日] < ? "
+    s = s & "ORDER BY T.[表示順], T.[担当者ID]"
+    SqlMemosDay = s
+End Function
+
+Function SqlMemoInsert()
+    SqlMemoInsert = "INSERT INTO [T_受付メモ] ([対象日], [担当者ID], [内容], [更新日時]) VALUES (?, ?, ?, ?)"
+End Function
+
+Function SqlMemoUpdate()
+    SqlMemoUpdate = "UPDATE [T_受付メモ] SET [内容] = ?, [更新日時] = ? WHERE [メモID] = ?"
+End Function
+
+Function SqlMemoDelete()
+    SqlMemoDelete = "DELETE FROM [T_受付メモ] WHERE [メモID] = ?"
+End Function
+
+' 受付表を出す人：その日に受付入力・その他業務・メモのどれかがある人。? : (開始日, 終了日の翌日) × 3
+Function SqlPeopleWithInput()
+    Dim s
+    s = "SELECT T.[担当者ID], T.[担当者コード], T.[姓], T.[氏名], T.[職員区分], T.[表示順] FROM [M_担当者] AS T "
+    s = s & "WHERE EXISTS (SELECT J.[受電ID] FROM [T_受電] AS J WHERE J.[担当者ID] = T.[担当者ID] AND J.[対象日] >= ? AND J.[対象日] < ?) "
+    s = s & "OR EXISTS (SELECT R.[実績ID] FROM [T_業務実績] AS R WHERE R.[担当者ID] = T.[担当者ID] AND R.[対象日] >= ? AND R.[対象日] < ?) "
+    s = s & "OR EXISTS (SELECT M.[メモID] FROM [T_受付メモ] AS M WHERE M.[担当者ID] = T.[担当者ID] AND M.[対象日] >= ? AND M.[対象日] < ?) "
+    s = s & "ORDER BY T.[表示順], T.[担当者ID]"
+    SqlPeopleWithInput = s
 End Function
 
 ' ------------------------------------------------------------

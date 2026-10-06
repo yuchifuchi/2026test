@@ -76,10 +76,11 @@ Sub LoadDay()
         End If
         prefill = False
         If UBound(att) < 0 And Not hasDaily Then
-            ' まだ出勤者を入れていない日は、入力のあった人にあらかじめ印を付ける
+            ' まだ出勤者を入れていない日は、入力のあったパート職員にあらかじめ印を付ける
+            ' （職員の分は、現行 Excel と同じく「顧客Ｇ」などの名前でまとめて入れることがあるので、印は付けない）
             For j = 0 To UBound(people)
                 key = CStr(ToLong(people(j)("担当者ID")))
-                If personCalls.Exists(key) Or personTasks.Exists(key) Then
+                If (personCalls.Exists(key) Or personTasks.Exists(key)) And ToStr(people(j)("職員区分")) <> "職員" Then
                     attSet(key) = True
                     prefill = True
                 End If
@@ -250,6 +251,18 @@ Sub ShowAttendance(locked)
     If shown = 0 Then ShowMsg "note", "この日に在籍している担当者がいません。「マスタ保守」で担当者を登録してください。"
 End Sub
 
+' 受付入力で書かれた「特殊な問合せの内容」（特記事項を書くときの材料）
+Sub ShowMemos()
+    Dim memos, j
+    memos = DbQuery(SqlMemosDay(), Array(d, d2))
+    If UBound(memos) < 0 Then Exit Sub
+    Response.Write "<div class=""memos""><b>受付入力に書かれた、特殊な問合せの内容</b>"
+    For j = 0 To UBound(memos)
+        Response.Write "<p>" & H(memos(j)("担当者コード")) & " " & H(memos(j)("氏名")) & "：" & HBr(memos(j)("内容")) & "</p>"
+    Next
+    Response.Write "</div>"
+End Sub
+
 Sub ShowTotals()
     Dim cols, brk, j, tot, s, ex, rf
     cols = DbQuery(SqlColumnTotals(), Array(d, d2))
@@ -289,11 +302,12 @@ Response.Write "<p><a class=""btn btn-sub btn-s"" href=""report.asp?d=" & YMD(d)
 <form method="post" action="daily.asp">
 <input type="hidden" name="d" value="<%= YMD(d) %>">
 <h2>出勤者</h2>
-<% If prefill Then ShowMsg "note", "受付入力・その他業務の入力があった人に、あらかじめ印を付けています。確かめて「保存する」を押してください。" %>
+<% If prefill Then ShowMsg "note", "受付入力・その他業務の入力があったパート職員に、あらかじめ印を付けています。確かめて「保存する」を押してください。" %>
 <% ShowAttendance (state = "確定") %>
 <h2>回線数</h2>
 <p><input type="text" name="lines" value="<%= H(lines) %>" class="num<%= NgCls("lines") %>" size="3" maxlength="2" inputmode="numeric"<% If state = "確定" Then Response.Write " disabled" %>> 回線</p>
 <h2>記述欄</h2>
+<% ShowMemos %>
 <p class="note">帳票の罫線は、特記事項 <%= SHEET_MEMO1_ROWS %> 行・職員に代わった案件 <%= SHEET_MEMO2_ROWS %> 行・要望 <%= SHEET_MEMO3_ROWS %> 行です（1 行は全角 <%= SHEET_LINE_WIDE \ 2 %> 文字。特記事項の 1 行目だけ全角 <%= SHEET_LINE_NARROW \ 2 %> 文字）。長い行は帳票で次の行に送られます。</p>
 <p>特記事項（報告書の電話件数だけでは伝わり難い事項など）<br><textarea name="t1" rows="4" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t1) %></textarea></p>
 <p>職員に代わった案件（概要）<br><textarea name="t2" rows="5" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t2) %></textarea></p>

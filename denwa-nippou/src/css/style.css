@@ -89,6 +89,53 @@ table.tw.grid th.kname { min-width: 14em; }
 table.tw.grid td { text-align: center; }
 table.tw.wide { width: 100%; }
 
+/* 受付の表（製品 × お問合せ内容）。include/grid.asp が作る。現行 Excel の記入用フォームと同じ並び */
+.tabs { margin: 12px 0 6px; }
+.tab { display: inline-block; padding: 6px 16px; margin-right: 6px; border: 1px solid #1f4e8c; border-radius: 4px; color: #1f4e8c; background: #fff; text-decoration: none; }
+.tab.on { background: #1f4e8c; color: #fff; font-weight: bold; }
+.gb { margin: 4px 0 10px; }
+.gscroll { overflow-x: auto; }
+table.tw.grid { margin-top: 4px; }
+table.tw.grid th { text-align: center; font-size: 13px; line-height: 1.35; padding: 3px 4px; }
+table.tw.grid th.pname { text-align: left; min-width: 12em; font-size: 14px; }
+table.tw.grid th.kh { min-width: 4.8em; max-width: 7.5em; }
+table.tw.grid th.kg { background: #d3deec; }
+table.tw.grid th.tot, table.tw.grid td.tot { background: #f1f4f9; font-weight: bold; }
+table.tw.grid td { padding: 2px 3px; }
+table.tw.grid td.n { text-align: right; padding: 2px 6px; }
+table.tw.grid tr.sum th, table.tw.grid tr.sum td { font-weight: bold; background: #f7f9fc; }
+table.tw.grid .to { display: block; font-size: 11px; color: #56677d; }
+table.tw.grid .note { display: block; font-size: 11px; }
+button.cnt { width: 4.4em; height: 30px; font-size: 16px; font-family: inherit; text-align: right; padding: 0 6px; border: 1px solid #8fa3bd; border-radius: 3px; background: #fbfcfe; color: #1a1a1a; cursor: pointer; }
+button.cnt:hover { background: #e6eefa; border-color: #1f4e8c; }
+button.cnt:focus { outline: 2px solid #1f4e8c; }
+button.cnt.last { background: #fff3c4; border: 2px solid #b45309; font-weight: bold; }
+.cnt-msg { margin: 4px 0; }
+textarea.memo { max-width: 900px; }
+.memos { background: #fff; border: 1px solid #c9d3e0; padding: 6px 12px; margin: 6px 0 12px; max-width: 900px; }
+.memos p { margin: 4px 0; }
+
+/* 個人別の受付表（1 人 1 枚）。画面（detail.asp）でも PDF でも同じ見た目。
+   現行 Excel の「印刷」マクロが、入力のあった人の記入用フォームを 1 枚ずつ印刷していたものにあたる。 */
+.psheet { background: #fff; width: 186mm; padding: 6mm 8mm; margin: 12px 0; border: 1px solid #c9d3e0; box-sizing: border-box; font-size: 9pt; line-height: 1.25; }
+.psheet + .psheet { break-before: page; page-break-before: always; }
+.psheet .ps-head { overflow: hidden; font-size: 11pt; font-weight: bold; margin-bottom: 1.5mm; }
+.psheet .ps-date { float: right; font-weight: normal; }
+.psheet .ps-hours { font-size: 9pt; margin-bottom: 1mm; }
+.psheet .gb { margin: 0 0 1.2mm; }
+.psheet .gscroll { overflow: visible; }
+.psheet h2 { font-size: 8.5pt; margin: 1.2mm 0 0.4mm; padding-left: 1.5mm; border-left: 2px solid #000; }
+.psheet table.tw { margin: 0; width: 100%; }
+.psheet table.tw th, .psheet table.tw td { padding: 0.1mm 0.8mm; font-size: 7pt; line-height: 1.1; border-color: #000; }
+.psheet table.tw th { background: #eef1f5; }
+.psheet table.tw.grid th.pname { min-width: 0; font-size: 7pt; }
+.psheet table.tw.grid th.kh { min-width: 0; max-width: none; }
+.psheet table.tw.grid td.n { padding: 0.1mm 1mm; }
+.psheet .ps-total { margin: 1.2mm 0; font-size: 9pt; }
+.psheet .ps-memo { border: 1px solid #000; padding: 0.6mm 1.5mm; margin: 1mm 0; font-size: 7.5pt; line-height: 1.2; }
+.psheet table.tw.ps-tasks td { width: 16.6%; }
+body.pdf .psheet { border: 0; margin: 0; padding: 0; width: auto; }
+
 /* 帳票を画面で見るときの台紙 */
 .paper { background: #fff; width: 186mm; padding: 10mm 12mm; margin: 12px 0; border: 1px solid #c9d3e0; }
 
@@ -168,4 +215,5 @@ body.pdf { background: #fff; margin: 0; }
   body { background: #fff; }
   .wrap { max-width: none; padding: 0; }
   .paper { border: 0; padding: 0; margin: 0; width: auto; }
+  .psheet { border: 0; padding: 0; margin: 0; width: auto; }
 }

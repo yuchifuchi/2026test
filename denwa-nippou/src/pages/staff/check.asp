@@ -61,7 +61,7 @@ Function PersonInPeriod(row, day)
 End Function
 
 Sub ShowPeople()
-    Dim j, key2, inP, onDuty, c, t, verdict, cls
+    Dim j, key2, inP, onDuty, c, t, verdict, cls, isStaffRow
     Response.Write "<table class=""tw""><tr><th>担当者</th><th class=""c"">出勤</th><th class=""c"">受付入力</th><th class=""c"">その他業務</th><th>判定</th></tr>"
     For j = 0 To UBound(people)
         key2 = CStr(ToLong(people(j)("担当者ID")))
@@ -69,9 +69,13 @@ Sub ShowPeople()
         onDuty = attSet.Exists(key2)
         c = Got(calls, key2)
         t = Got(tasks, key2)
+        isStaffRow = (ToStr(people(j)("職員区分")) = "職員")
         If inP Or onDuty Or c > 0 Or t > 0 Then
             cls = ""
-            If onDuty And c = 0 And t = 0 Then
+            If isStaffRow And Not onDuty And (c > 0 Or t > 0) Then
+                ' 職員の分（顧客Ｇなど）は出勤者に入れないのがふつうなので、知らせない
+                verdict = "<span class=""ok"">OK</span>（職員の分）"
+            ElseIf onDuty And c = 0 And t = 0 Then
                 verdict = "<span class=""ng"">出勤しているのに、入力がありません</span>"
                 problems = problems + 1
             ElseIf Not onDuty And (c > 0 Or t > 0) Then
