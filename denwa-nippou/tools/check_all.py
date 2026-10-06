@@ -18,6 +18,7 @@ STEPS = [
     ("困ったときの道具の検査", ["tests/test_troubleshoot.py"]),
     ("帳票（罫線・はみ出し・A4 1 枚）", ["render_sheet.py"]),
     ("手順書の検査", ["tests/test_docs.py"]),
+    ("画面の見本（モックアップ）を作る", ["mockup.py"]),
     ("納品前の検査と zip", ["package.py"]),
 ]
 

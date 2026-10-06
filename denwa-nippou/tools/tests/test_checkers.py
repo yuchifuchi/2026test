@@ -99,6 +99,18 @@ def run():
     if got != ["nippou\\part\\error.asp", "nippou\\staff\\new.asp"]:
         raise Fail(f"更新用の zip の中身の選び方が違います: {got}")
     CHECKS.append("更新用の zip には、データベース（.accdb）と config.asp を決して入れない")
+    if not package.update_blocker("x", "y") or not package.update_blocker(None, "y") or package.update_blocker("y", "y"):
+        raise Fail("データベースの形が変わったときに、更新用の zip を止められません")
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        base = "CREATE TABLE [A] ([x] LONG);\n-- 説明\nINSERT INTO [A] ([x]) VALUES (1);\n"
+        for name, body in (("a", base), ("b", base.replace("VALUES (1)", "VALUES (2)") + "-- 別の説明\n"),
+                           ("c", base.replace("[x] LONG", "[x] LONG, [y] TEXT(5)"))):
+            open(os.path.join(td, name), "w", encoding="utf-8").write(body)
+        sa, sb, sc = (package.db_shape(os.path.join(td, n)) for n in "abc")
+    if sa != sb or sa == sc:
+        raise Fail("データベースの形の照合値が、初期データや説明の違いで変わるか、列の追加で変わりません")
+    CHECKS.append("データベースの形が変わったときは、画面だけの更新用 zip を作らない（新しい表を読む画面がエラーになるため）")
     t = package.placement_table(got, old, new)
     if "nippou\\staff\\new.asp（新しいファイル）" not in t or "上書きしないもの" not in t:
         raise Fail("置き場所の表の書き方が違います:\n" + t)

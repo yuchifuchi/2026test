@@ -64,6 +64,9 @@ def stage():
     sample = os.path.join(ROOT, "build", "render", "normal.pdf")
     if os.path.exists(sample):
         shutil.copyfile(sample, os.path.join(STAGE, "参考", "帳票の見本.pdf"))
+    mock = os.path.join(ROOT, "build", "mockup", "画面の見本.html")      # tools/mockup.py が作る
+    if os.path.exists(mock):
+        shutil.copyfile(mock, os.path.join(STAGE, "参考", "画面の見本.html"))
 
 
 def check_file(path, rel):
@@ -144,6 +147,9 @@ def check_layout():
     extra = set(os.listdir(os.path.join(n, "data"))) - {DB_NAME, "web.config"}
     if extra:
         probs.append(f"data に余計なファイルがあります: {extra}")
+    for x in ("帳票の見本.pdf", "画面の見本.html"):
+        if not os.path.exists(os.path.join(STAGE, "参考", x)):
+            probs.append(f"参考 に {x} がありません（tools/render_sheet.py・tools/mockup.py を先に流す）")
     return probs
 
 
@@ -209,6 +215,31 @@ def never_update(rel):
     return rel.endswith("include\\config.asp") or (rel.startswith("nippou\\data\\") and rel.lower().endswith(".accdb"))
 
 
+def db_shape(path=os.path.join(ROOT, "db", "schema.sql")):
+    """データベースの形（表・列・索引・関連の定義）の照合値。初期データ（INSERT）は含めない。
+    .accdb のファイルそのものは作るたびに中の日時などが変わるので、形の比べには使えない。"""
+    text = "\n".join(l for l in open(path, encoding="utf-8").read().splitlines() if not l.strip().startswith("--"))
+    stmts = [re.sub(r"\s+", " ", x).strip() for x in text.split(";")]
+    ddl = [x for x in stmts if x and not x.upper().startswith("INSERT")]
+    return hashlib.sha256("\n".join(ddl).encode("utf-8")).hexdigest()
+
+
+def read_manifest(path):
+    """前回の納品の一覧。最初の版（manifest_v1）はファイルの一覧だけで、形の照合値が無い。"""
+    raw = json.load(open(path, encoding="utf-8"))
+    if "files" in raw and isinstance(raw["files"], dict):
+        return raw["files"], raw.get("db_shape")
+    return raw, None
+
+
+def update_blocker(old_shape, new_shape):
+    """変わったファイルだけの更新では済まないとき True。
+    データベースの形が変わると、新しい画面は新しい表を読むが、現地の .accdb は古い形のまま
+    （.accdb は上書きしないので）。画面だけ置くと、その表を読む画面がエラーになる。
+    前回の形が分からない（記録が無い）ときも、安全のため止める。"""
+    return old_shape is None or old_shape != new_shape
+
+
 def update_files(old, new):
     return [r for r, h in new.items() if old.get(r) != h and not never_update(r)]
 
@@ -250,19 +281,21 @@ def main():
             print("NG:", p)
         raise SystemExit(f"NG: 納品前の検査で {len(probs)} 件。zip は作りません")
     new = manifest(STAGE)
+    record = {"db_shape": db_shape(), "files": new}
     os.makedirs(RELEASE, exist_ok=True)
     if since is None:
         n = write_zip(STAGE, list(new), os.path.join(PKG, ZIP_NAME))
-        json.dump(new, open(os.path.join(PKG, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        json.dump(record, open(os.path.join(PKG, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print(f"OK: 納品前の検査（{len(new)} ファイル）")
         print(f"OK: {os.path.join(PKG, ZIP_NAME)}（{n} 項目・UTF-8 フラグ付き）")
         return
-    old = json.load(open(since, encoding="utf-8"))
+    old, old_shape = read_manifest(since)
     changed = update_files(old, new)
-    db_changed = [r for r, h in new.items() if r.lower().endswith(".accdb") and old.get(r) != h]
-    if db_changed:
-        print("注意: データベースの形（db/schema.sql）が前回と違います。更新には入れません。"
-              "現地のデータを残したまま形を変える手順（列の追加など）を、別に用意してください:", db_changed)
+    if update_blocker(old_shape, record["db_shape"]):
+        why = "前回の一覧に形の記録がありません" if old_shape is None else "表・列の定義が前回と違います"
+        raise SystemExit("NG: データベースの形（db/schema.sql）が前回と同じと言えないので、更新用の zip は作りません（" + why + "）。"
+                         "画面だけを置くと、新しい表を読む画面がエラーになります。全部入りの zip で設置し直すか、"
+                         "現地のデータを残したまま形を変える手順（表・列の追加）を別に用意してください。")
     if not changed:
         print("OK: 前回から変わったファイルはありません（更新用の zip は作りません）")
         return
@@ -278,7 +311,7 @@ def main():
     stamp = datetime.date.today().strftime("%Y%m%d")
     zpath = os.path.join(PKG, f"電話応対日報_更新_{stamp}.zip")
     n = write_zip(STAGE, ["置き場所の表.txt"] + changed, zpath)
-    json.dump(new, open(os.path.join(PKG, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json.dump(record, open(os.path.join(PKG, "manifest.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"OK: 変わったファイル {len(changed)} 個の更新用 zip: {zpath}")
 
 

@@ -21,24 +21,30 @@ python3 tools/check_all.py
 | 2 | `db/schema.sql` から Jackcess で .accdb を作り、形式バイト（0x14 が 0x02）と、表・索引・関連・初期データを、schema.sql を別の読み方で読んだものと突き合わせる。part / staff / data を組み立てる | tools/build.py, tools/java/BuildAccdb.java, tools/check_accdb.py |
 | 3 | ASP の静的検査（<% %> の対応、include の実在・`..` 禁止、定義されていない名前・引数の数、配列の添字あふれ、ブロックの対応、On Error Resume Next の中の Response.End 系、SQL の文字列連結、ページ先頭の決まり）と CSS の検査（表の規則は .tw / .sheet で囲む、帳票の罫線を消さない） | tools/lint_all.py, tools/vbsim/lint.py, tools/vbsim/csscheck.py |
 | 4 | 検査の道具の自己検査（わざと誤りを入れたものを必ず見つけるか） | tools/tests/test_checkers.py |
-| 5 | `sql.asp` の SQL 61 本を 1 本ずつ実行し、期待値（合計 20／申込 12／うち職員 2／出勤者 3 など）と突き合わせる | tools/tests/test_sql.py |
+| 5 | `sql.asp` の SQL 63 本を 1 本ずつ実行し、期待値（合計 20／申込 12／うち職員 2／出勤者 3 など）と突き合わせる | tools/tests/test_sql.py |
 | 6 | 画面を通した通しの検査（受付入力 → 日報確定 → 帳票・週の集計表・入力画面・入力もれチェックの数が一致、現行 Excel の 5 つの不具合が起きないこと） | tools/tests/test_flow.py |
 | 7 | 困ったときの道具（setup_check・probe1～7・error.asp・致命エラー画面）を、わざと壊した状態で確かめる | tools/tests/test_troubleshoot.py |
-| 8 | 帳票を printpdf.asp と同じ道筋で HTML・PDF にし、罫線が閉じている・はみ出し無し・A4 1 枚（上限いっぱいの内容でも）を確かめる | tools/render_sheet.py |
+| 8 | 帳票を printpdf.asp と同じ道筋で HTML・PDF にし、罫線が閉じている・はみ出し無し・A4 1 枚（上限いっぱいの内容でも）・罫線の位置が課の様式と 1.2mm 以内で合うことを確かめる | tools/render_sheet.py |
 | 9 | 手順書の「　」の言葉が画面に実在するか、使わない言葉が無いか、各段に「できたことの確かめ方」があるか | tools/tests/test_docs.py |
-| 10 | 全ファイルの文字コード・改行・制御文字・.accdb の形式・part/staff の分け方を検査し、通ったら UTF-8 フラグ付きの zip を作る | tools/package.py |
+| 10 | 画面の見本（`参考\画面の見本.html`）を作る。本物の ASP を試しのデータで動かした出力を、そのまま 1 枚の HTML に入れる（手で写さないので、画面を直せば見本も変わる）。外のファイルを読まないこと・使わない言葉が無いことも確かめる | tools/mockup.py, tools/mockup_template.html |
+| 11 | 全ファイルの文字コード・改行・制御文字・.accdb の形式・part/staff の分け方を検査し、通ったら UTF-8 フラグ付きの zip を作る | tools/package.py |
 
 必要なもの: Python 3.11、Java 17 以上、`/opt/pw-browsers/chromium`（帳票の検査）、poppler（pdfinfo / pdftoppm）。
 
 ### 2 回目以降の納品（変わったファイルだけ）
 
 ```
-python3 tools/package.py --since release/manifest_v1_20261006.json
+python3 tools/package.py --since release/manifest_v2_20261006.json
 ```
 
 前回の納品の一覧（`release/`）と比べ、変わったファイルだけの zip と「置き場所の表.txt」（CP932・CRLF）を作ります。
 `data\*.accdb`（現地の実データ）と `include\config.asp`（現地の設定）は決して入れません。
+データベースの形（`db/schema.sql` の表・列・索引・関連の定義。初期データは除く）が前回と違うときは、更新用の zip を作らずに止まります。
+画面だけを置くと、新しい表を読む画面がエラーになるためです（.accdb は上書きしないので、現地の形は古いまま）。
 納品したら、そのときの `build/package/manifest.json` を `release/` に日付付きで置いてください。
+
+- `manifest_v1_20261006.json` … 最初の納品。帳票を課の様式に合わせる前の版で、形の照合値がありません。
+- `manifest_v2_20261006.json` … 帳票を課の様式に合わせた版（表 `M_回覧` を足したので、v1 からは全部入りの zip で設置し直す）。
 
 ## フォルダ
 
