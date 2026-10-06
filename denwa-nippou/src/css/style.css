@@ -93,62 +93,74 @@ table.tw.wide { width: 100%; }
 .paper { background: #fff; width: 186mm; padding: 10mm 12mm; margin: 12px 0; border: 1px solid #c9d3e0; }
 
 /* ---------- 帳票（.sheet）A4 縦 ----------
-   用紙 A4（210 × 297mm）、余白 上下 9mm・左右 12mm → 中身は 186 × 279mm。
-   行の高さ・文字の大きさは固定。長い文字は折り返す（縮めない）。
-   入る文字の長さは、マスタ保守・日報の画面で上限を決めて止めている（include/sheet.asp の SHEET_*_MAX）。
-   tools/render_sheet.py が、上限いっぱいの内容でも A4 1 枚に収まり、罫線が閉じていることを確かめる。 */
+   課の「日報集計印刷用フォーム.xlsm」の印刷用シートに合わせた様式。
+   Excel の 1 行（16 ピクセル）を 5.65mm、横幅 527 ピクセルを 186mm として、罫線の位置を写した。
+   （欄の高さを 5.4mm にしているのは、罫線の太さを足して 1 行がちょうど 5.65mm になるようにするため）
+   用紙 A4（210 × 297mm）、余白 上下 9mm・左右 12mm → 中身は 186 × 279mm（使うのは約 264mm）。
+   行の高さ・文字の大きさは固定。記述欄の文字は include/sheet.asp で行に分けてから載せる（ここでは折り返さない）。
+   tools/render_sheet.py が、上限いっぱいの内容でも A4 1 枚に収まり、枠が閉じていることを確かめる。 */
 @page { size: A4 portrait; margin: 9mm 12mm; }
 body.pdf { background: #fff; margin: 0; }
 .sheet {
   width: 186mm; margin: 0 auto; background: #fff; color: #000;
   font-family: "ＭＳ ゴシック", "MS Gothic", "IPAGothic", "IPAゴシック", monospace;
-  font-size: 10pt; line-height: 1.3;
+  font-size: 11pt; line-height: 1.2;
 }
 .sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0; }
 .sheet th, .sheet td {
-  border: 0.75pt solid #000; padding: 0.4mm 1.2mm;
-  font-weight: normal; vertical-align: middle; word-break: break-all; overflow-wrap: break-word;
+  height: 5.4mm; padding: 0 1.2mm; font-weight: normal; text-align: left; vertical-align: middle; white-space: nowrap;
 }
-.sheet .sh-limit { text-align: right; }
-.sheet .sh-date { text-align: right; font-size: 10.5pt; }
-.sheet .sh-title { text-align: center; font-size: 15pt; font-weight: bold; letter-spacing: 0.15em; margin: 1.5mm 0 3mm; }
 
-.sheet col.w-a1 { width: 7mm; }
-.sheet col.w-a2 { width: 12mm; }
-.sheet col.w-a3 { width: 7mm; }
-.sheet col.w-a4 { width: 46mm; }
-/* 備考は 2 人ぶんで 2 行になることがあるので、どの行も 2 行入る高さに固定する（行の高さが日によって変わらないように） */
-.sheet .sh-att td, .sheet .sh-att th { height: 7.2mm; }
-.sheet .sh-att th.a-h { height: 5.2mm; }
-.sheet .a-lbl { text-align: center; line-height: 1.25; }
-.sheet .a-num { text-align: center; font-size: 14pt; }
-.sheet .a-mei { text-align: center; }
-.sheet .a-h { text-align: center; }
-.sheet .a-note { font-size: 8pt; line-height: 1.15; }
+/* 上の部分：課内限り・日付・回覧の押印欄・表題 */
+.sheet .s-top { position: relative; height: 5.6mm; }
+.sheet .s-limit { position: absolute; left: 0; top: 0.6mm; font-size: 7pt; font-weight: bold; }
+.sheet .s-date { position: absolute; right: 0; top: 0; font-size: 12pt; }
+.sheet .s-date .d2 { display: inline-block; width: 10.5mm; text-align: right; }
+.sheet .s-kairan { height: 5mm; line-height: 5mm; font-size: 11pt; font-weight: bold; }
+.sheet .s-stamps { position: relative; height: 19.8mm; }
+.sheet table.s-stamp { position: absolute; top: 0; width: 63.5mm; }
+.sheet table.s-stamp-l { left: 0; }
+.sheet table.s-stamp-r { left: 101mm; width: 65mm; }
+.sheet .s-stamp th { height: 4.9mm; padding: 0; font-size: 6.5pt; text-align: center; border: 0.75pt solid #000; }
+.sheet .s-stamp td { height: 14.8mm; padding: 0; border: 0.75pt solid #000; }
+.sheet .s-title { height: 11.3mm; line-height: 11.3mm; text-align: center; font-size: 16pt; letter-spacing: 0.4em; padding-left: 0.4em; }
 
-.sheet .sh-lines { margin: 1.2mm 0; }
+/* 6 つのまとまり。それぞれ外枠の閉じた表。続く表は外枠を 1 本ぶん重ねて、線が二重にならないようにする */
+.sheet table.s-blk { border: 1.5pt solid #000; }
+.sheet table.s-blk + table.s-blk { margin-top: -1.5pt; }
+.sheet .ln { border: 0.5pt solid #000; }
+.sheet .lbl { border-right: 0.5pt solid #000; }
+.sheet .num { display: inline-block; text-align: right; }
 
-.sheet .sh-cnt th { text-align: center; }
-.sheet .sh-cnt td { text-align: center; height: 11mm; }
-.sheet .sh-cnt .c-q { width: 13mm; line-height: 1.2; }
-.sheet .sh-cnt .c-tot { width: 34mm; }
-.sheet .big { display: block; font-size: 15pt; line-height: 1.1; }
-.sheet .sub { display: block; font-size: 8pt; line-height: 1.15; }
-.sheet .sh-cnt td.c-tot .big { font-size: 20pt; font-weight: bold; }
-.sheet .sh-cnt-note { text-align: right; font-size: 7.5pt; }
-.sheet .sh-uchi { text-align: right; margin: 0.5mm 0 2mm; }
+/* 出勤者 */
+.sheet col.w-lbl { width: 39.5mm; }
+.sheet col.w-nm { width: 40.75mm; }
+.sheet .s-att th.ln { text-align: center; }
+.sheet .s-att .num { width: 19mm; }
+.sheet .s-att td.a-note { border-left: 0.5pt solid #000; vertical-align: top; padding-top: 0.8mm; font-size: 8.5pt; line-height: 1.25; }
 
-.sheet .sh-box { margin-bottom: 1.8mm; }
-.sheet .b-h { text-align: left; }
-.sheet .b-txt { height: 13.5mm; vertical-align: top; }
+/* 問合せ件数 */
+.sheet col.w-c { width: 24.35mm; }
+.sheet .s-cnt th.ln { text-align: center; }
+.sheet .s-cnt td.c-col { text-align: right; }
+.sheet .s-cnt .c-tot .num { width: 19mm; }
+.sheet .s-cnt td.c-note { border-left: 0.5pt solid #000; text-align: center; font-size: 7.5pt; line-height: 1.35; white-space: normal; }
+.sheet .st { float: left; font-size: 6pt; line-height: 1; margin-top: 0.4mm; }
+.sheet .st-r { float: right; margin-top: 1.4mm; }
 
-.sheet .sh-task { margin-top: 0.5mm; }
-.sheet .t-head { text-align: left; }
-.sheet .sh-task td { height: 5.6mm; }
-.sheet col.w-t1 { width: 7mm; }
-.sheet col.w-t3 { width: 20mm; }
-.sheet .t-no { text-align: center; }
-.sheet .t-n { text-align: right; white-space: nowrap; }
+/* 記述欄（点線の罫線） */
+.sheet col.w-memo1 { width: 137.3mm; }
+.sheet tr.rl td { border-bottom: 0.5pt dotted #000; }
+.sheet .m-uchi .u-num { width: 16mm; }
+
+/* 電話対応以外の業務 */
+.sheet col.w-tno { width: 7mm; }
+.sheet col.w-tnm1 { width: 55mm; }
+.sheet col.w-tn { width: 19mm; }
+.sheet col.w-tgap { width: 13mm; }
+.sheet col.w-tnm2 { width: 61mm; }
+.sheet .t-no { padding: 0 0 0 1mm; }
+.sheet .t-n { text-align: right; }
 
 /* ---------- 印刷 ---------- */
 @media print {

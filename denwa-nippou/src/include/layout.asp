@@ -326,31 +326,4 @@ Sub DateBar(page, d, extraName, extraVal)
     Response.Write "</form>"
 End Sub
 
-' 記述欄が帳票（A4 1 枚）の何行ぶんになるか。全角 1 文字を 2、半角を 1 と数える。
-Function TextLines(s, perLine)
-    Dim lines, i, w, j, c, n
-    n = 0
-    If s = "" Then
-        TextLines = 0
-        Exit Function
-    End If
-    lines = Split(Replace(Replace(s, vbCrLf, vbLf), vbCr, vbLf), vbLf)
-    For i = 0 To UBound(lines)
-        w = 0
-        For j = 1 To Len(lines(i))
-            c = Mid(lines(i), j, 1)
-            If AscW(c) >= 32 And AscW(c) < 127 Then
-                w = w + 1
-            Else
-                w = w + 2
-            End If
-        Next
-        If w = 0 Then
-            n = n + 1
-        Else
-            n = n + ((w + perLine * 2 - 1) \ (perLine * 2))
-        End If
-    Next
-    TextLines = n
-End Function
 %>

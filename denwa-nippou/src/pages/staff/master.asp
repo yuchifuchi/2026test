@@ -21,7 +21,7 @@ Dim tab, idParam, msgNg, msgOk, vals, bad, blocks, colsAll, j
 
 RequireStaff
 tab = QueryVal("t")
-If tab <> "kubun" And tab <> "seihin" And tab <> "block" And tab <> "gyomu" And tab <> "col" Then tab = "tanto"
+If tab <> "kubun" And tab <> "seihin" And tab <> "block" And tab <> "gyomu" And tab <> "col" And tab <> "stamp" Then tab = "tanto"
 idParam = QueryVal("id")
 msgNg = ""
 msgOk = ""
@@ -39,6 +39,7 @@ If IsPost() Then
     If tab = "block" Then SaveBlock
     If tab = "gyomu" Then SaveGyomu
     If tab = "col" Then SaveCol
+    If tab = "stamp" Then SaveStamp
 End If
 
 ' ============================================================
@@ -683,10 +684,53 @@ Sub ShowCol()
     Response.Write "</table>"
 End Sub
 
+' ============================================================
+'  回覧の欄（帳票の上の押印欄の名前だけ直せる）
+' ============================================================
+Sub SaveStamp()
+    vals("name") = FormVal("name")
+    MaxLen "name", "押印欄の名前", SHEET_STAMP_NAME_MAX
+    If Not IsEdit() Then AddNg "回覧の欄は 8 つ（左 4・右 4）で決まっています。名前を直すことだけができます。"
+    If msgNg <> "" Then Exit Sub
+    DbExec SqlStampRename(), Array(FVal("name"), EditId())
+    Go "master.asp?t=stamp&saved=1"
+End Sub
+
+Sub ShowStamp()
+    Dim rows, k, r
+    rows = DbQuery(SqlStampsAll(), Array())
+    If idParam <> "" And IsEdit() Then
+        If msgNg = "" Then
+            For k = 0 To UBound(rows)
+                If ToLong(rows(k)("回覧ID")) = EditId() Then vals("name") = ToStr(rows(k)("表示名"))
+            Next
+        End If
+        FormStart "回覧の欄の名前を直す"
+        TextRow "押印欄の名前", "name", 10, SHEET_STAMP_NAME_MAX, "例 藤本課長（" & SHEET_STAMP_NAME_MAX & " 文字まで。空にすると枠だけ出ます）"
+        FormEnd
+        Exit Sub
+    End If
+    Response.Write "<p class=""note"">日報の上の「回覧」の押印欄です。左に 4 つ、右に 4 つ並びます。人が替わったら名前を直してください。</p>"
+    Response.Write "<table class=""tw""><tr><th class=""c"">場所</th><th>押印欄の名前</th><th></th></tr>"
+    For k = 0 To UBound(rows)
+        Set r = rows(k)
+        Response.Write "<tr><td>" & StampPlace(k) & "</td><td>" & HCell(r("表示名")) & "</td><td><a href=""master.asp?t=stamp&amp;id=" & ToLong(r("回覧ID")) & """>直す</a></td></tr>"
+    Next
+    Response.Write "</table>"
+End Sub
+
+Function StampPlace(k)
+    If k < 4 Then
+        StampPlace = "左の " & (k + 1) & " 番目"
+    Else
+        StampPlace = "右の " & (k - 3) & " 番目"
+    End If
+End Function
+
 Sub Tabs()
     Dim names, labels, k
-    names = Array("tanto", "kubun", "seihin", "block", "gyomu", "col")
-    labels = Array("担当者", "区分", "製品", "ブロック", "業務項目（①～⑬）", "日報の列")
+    names = Array("tanto", "kubun", "seihin", "block", "gyomu", "col", "stamp")
+    labels = Array("担当者", "区分", "製品", "ブロック", "業務項目（①～⑬）", "日報の列", "回覧の欄")
     Response.Write "<p class=""noprint"">"
     For k = 0 To UBound(names)
         If names(k) = tab Then
@@ -708,5 +752,6 @@ If tab = "seihin" Then ShowSeihin
 If tab = "block" Then ShowBlock
 If tab = "gyomu" Then ShowGyomu
 If tab = "col" Then ShowCol
+If tab = "stamp" Then ShowStamp
 PageFoot
 %>

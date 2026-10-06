@@ -58,9 +58,13 @@ def entry(sim, folder, tid, cells, expect_redirect=True, ver=None):
 
 def sheet_numbers(html):
     out = {}
-    for cid, big, sub in re.findall(r'data-col="(\w+)"><span class="big">(\d+)</span><span class="sub">\((\d+)\)</span>', html):
+    # 5 列：(職員) を数字の左に小さく、件数を右に
+    for cid, sub, big in re.findall(r'data-col="(\d+)"><span class="st">\((\d+)\)</span><span class="v">(\d+)</span>', html):
         out[cid] = (int(big), int(sub))
-    m = re.search(r'class="a-num">(\d+)<', html)
+    m = re.search(r'data-col="total"><span class="num">(\d+)</span> 件<span class="st st-r">\((\d+)\)</span>', html)
+    if m:
+        out["total"] = (int(m.group(1)), int(m.group(2)))
+    m = re.search(r'class="num a-num">(\d+)</span> 名', html)
     out["att"] = int(m.group(1)) if m else None
     out["交換"] = int(re.search(r'data-k="交換">(\d+)<', html).group(1))
     out["返金"] = int(re.search(r'data-k="返金">(\d+)<', html).group(1))
@@ -113,11 +117,12 @@ def run():
         ok(nums[cid[name]] == exp, f"帳票の {name} が {exp[0]}（うち職員 {exp[1]}）: 実際 {nums[cid[name]]}")
     ok(nums["att"] == 3, f"帳票の出勤者数が 3: 実際 {nums['att']}")
     ok(nums["交換"] == 1 and nums["返金"] == 1, "帳票の 内 交換 1 件・内 返金 1 件")
-    ok("令和 8年 8月25日（火）" in rep.text, "帳票の日付が和暦（令和 8年 8月25日（火））")
-    ok("（ 5 回線 ）" in rep.text, "帳票に（ 5 回線 ）が出る")
+    ok(re.search(r"令和\s*8\s*年\s*8\s*月\s*25\s*日（火）", strip_tags(rep.text)), "帳票の日付が和暦（令和　8年　　8月　　25日（火））")
+    ok(re.search(r'（<span class="num">5</span> 回線）', rep.text), "帳票の出勤者の枠に（ 5 回線）が出る")
+    ok(rep.text.count('<table class="s-stamp') == 2 and "藤本課長" in rep.text, "帳票の上に回覧の押印欄（左 4・右 4）が出る")
     ok("山田：9:00-13:00" in rep.text, "出勤者の備考に勤務時間が出る")
-    ok(re.search(r'class="t-no">①</td><td class="t-nm">申込書の入力</td><td class="t-n">15 件', rep.text), "その他業務 ① が 15 件（全員の合計）")
-    ok(re.search(r'class="t-no">⑬</td><td class="t-nm">その他</td><td class="t-n">2 件', rep.text), "その他業務 ⑬ が 2 件（全角の ２ を受け付けた）")
+    ok(re.search(r'class="t-no">①</td><td class="t-nm">受注入力</td><td class="t-n"><span class="num">15</span> 件', rep.text), "その他業務 ① 受注入力 が 15 件（全員の合計）")
+    ok(re.search(r'class="t-no">⑬</td><td class="t-nm">顧客整理</td><td class="t-n"><span class="num">2</span> 件', rep.text), "その他業務 ⑬ 顧客整理 が 2 件（全角の ２ を受け付けた）")
 
     # ---- 入力画面の合計（1 人ずつ）を足すと帳票と同じ ----
     tot = 0
@@ -186,7 +191,7 @@ def run():
     import vbsim.builtins as B
     B.NOW_OVERRIDE[0] = datetime.datetime(2026, 8, 26, 9, 0, 0)
     rep = get(sim, f"/nippou/staff/report.asp?d={DAY}")
-    ok("令和 8年 8月25日（火）" in rep.text and sheet_numbers(rep.text)["total"] == (14, 3), "翌日に開いても、帳票の日付と数は 8/25 のまま")
+    ok(re.search(r"令和\s*8\s*年\s*8\s*月\s*25\s*日（火）", strip_tags(rep.text)) and sheet_numbers(rep.text)["total"] == (14, 3), "翌日に開いても、帳票の日付と数は 8/25 のまま")
     r = get(sim, "/nippou/part/entry.asp")
     ok('value="2026-08-26"' in r.text, "日付を指定しないで開くと今日（8/26）になる")
     B.NOW_OVERRIDE[0] = datetime.datetime(2026, 8, 25, 10, 0, 0)
@@ -199,6 +204,13 @@ def run():
     ok("田中" not in r.text, "在籍終了日を過ぎた人は、入力画面の担当者の候補から消える")
     r = get(sim, "/nippou/part/entry.asp?d=2026-08-20&t=0")
     ok("田中" in r.text, "在籍していた日を開けば、候補に出る（過去は残る）")
+
+    # ---- 記述欄が帳票の罫線に入りきらないときは保存しない ----
+    long_form = {"act": "save", "d": DAY, "lines": "5", "t1": "\r\n".join(["あ"] * 5), "t2": "", "t3": ""}
+    for name in ("山田", "佐藤", "鈴木"):
+        long_form[f"att_{pid[name]}"] = "1"
+    r = post(sim, "/nippou/staff/daily.asp", long_form)
+    ok(r.code == 200 and "特記事項が 5 行になります" in r.text, "特記事項が帳票の罫線（4 行）に入りきらないときは、理由を出して保存しない")
 
     # ---- 入力もれ：出勤なのに入力なし ----
     form = {"act": "save", "d": DAY, "lines": "5", "t1": "", "t2": "", "t3": ""}

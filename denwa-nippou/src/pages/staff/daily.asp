@@ -6,6 +6,7 @@ Response.CharSet = "utf-8" : Response.CodePage = 65001
 <!--#include file="include/db.asp"-->
 <!--#include file="include/auth.asp"-->
 <!--#include file="include/layout.asp"-->
+<!--#include file="include/sheet.asp"-->
 <%
 ' ============================================================
 '  日報の作成・確定（職員用）
@@ -14,10 +15,7 @@ Response.CharSet = "utf-8" : Response.CodePage = 65001
 '  件数そのものは、ここでは入力しない（受付入力の数を T_受電 から数えるだけ）。
 ' ============================================================
 
-' 記述欄が帳票の A4 1 枚に収まるための決まり（tools/render_sheet.py で、上限いっぱいでも 1 枚に収まることを確かめている）
-Const TEXT_PER_LINE = 46      ' 記述欄 1 行に入る全角の文字数
-Const TEXT_MIN_LINES = 3      ' 1 つの欄が最低でも取る行数（空でもこの高さの枠がある）
-Const TEXT_TOTAL_LINES = 15   ' 3 つの欄の合計の行数の上限
+' 記述欄・備考が帳票の罫線に入りきるかは、帳票と同じ行分け（include/sheet.asp の SheetWrap）で調べる。
 Const ATT_MAX = 14            ' 出勤者の上限（帳票の氏名欄 2 列 × 7 行）
 Const ATT_NOTE_MAX = 12       ' 勤務時間と備考を合わせた文字数の上限（帳票の備考欄に収まるように）
 
@@ -116,16 +114,19 @@ Function PersonInPeriod(row, day)
     End If
 End Function
 
-Function TextBudget(a, b, c)
-    TextBudget = MaxOf(TextLines(a, TEXT_PER_LINE), TEXT_MIN_LINES) + MaxOf(TextLines(b, TEXT_PER_LINE), TEXT_MIN_LINES) + MaxOf(TextLines(c, TEXT_PER_LINE), TEXT_MIN_LINES)
-End Function
-
-Function MaxOf(a, b)
-    If a > b Then MaxOf = a Else MaxOf = b
+' 出勤に印のある人の「勤務時間・備考」が、帳票の備考の欄で何行になるか
+Function NoteLinesTotal()
+    Dim j, key, n
+    n = 0
+    For j = 0 To UBound(people)
+        key = CStr(ToLong(people(j)("担当者ID")))
+        If attSet.Exists(key) Then n = n + SheetNoteLines(ToStr(people(j)("姓")), ToStr(hrs(key)), ToStr(notes(key)))
+    Next
+    NoteLinesTotal = n
 End Function
 
 Sub SaveDaily(fix)
-    Dim j, key, n, cnt, stamp, cur, newState, fixedAt, lineVal
+    Dim j, key, n, cnt, stamp, cur, newState, fixedAt, lineVal, fit
     If Not ParseYMD(FormVal("d"), dd) Then
         msgNg = "日付が読めません。"
         Exit Sub
@@ -173,9 +174,10 @@ Sub SaveDaily(fix)
         bad("lines") = True
         msgNg = "確定するときは、回線数を入れてください。"
     End If
-    If TextBudget(t1, t2, t3) > TEXT_TOTAL_LINES Then
+    fit = SheetFitProblem(t1, t2, t3, NoteLinesTotal())
+    If fit <> "" Then
         bad("text") = True
-        msgNg = "記述欄が長すぎて、帳票が A4 1 枚に収まりません（今 " & TextBudget(t1, t2, t3) & " 行ぶん、" & TEXT_TOTAL_LINES & " 行まで）。短くしてください。"
+        msgNg = fit & " 帳票の罫線に入りきらないので、短くしてください。"
     End If
     If msgNg <> "" Then Exit Sub
     stamp = Now()
@@ -292,10 +294,10 @@ Response.Write "<p><a class=""btn btn-sub btn-s"" href=""report.asp?d=" & YMD(d)
 <h2>回線数</h2>
 <p><input type="text" name="lines" value="<%= H(lines) %>" class="num<%= NgCls("lines") %>" size="3" maxlength="2" inputmode="numeric"<% If state = "確定" Then Response.Write " disabled" %>> 回線</p>
 <h2>記述欄</h2>
-<p class="note">3 つの欄を合わせて、帳票でおよそ <%= TEXT_TOTAL_LINES %> 行（1 行は全角 <%= TEXT_PER_LINE %> 文字）までです。今は <%= TextBudget(t1, t2, t3) %> 行ぶんです。</p>
-<p>特記事項<br><textarea name="t1" rows="4" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t1) %></textarea></p>
-<p>職員に代わった案件（概要）<br><textarea name="t2" rows="4" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t2) %></textarea></p>
-<p>要望<br><textarea name="t3" rows="4" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t3) %></textarea></p>
+<p class="note">帳票の罫線は、特記事項 <%= SHEET_MEMO1_ROWS %> 行・職員に代わった案件 <%= SHEET_MEMO2_ROWS %> 行・要望 <%= SHEET_MEMO3_ROWS %> 行です（1 行は全角 <%= SHEET_LINE_WIDE \ 2 %> 文字。特記事項の 1 行目だけ全角 <%= SHEET_LINE_NARROW \ 2 %> 文字）。長い行は帳票で次の行に送られます。</p>
+<p>特記事項（報告書の電話件数だけでは伝わり難い事項など）<br><textarea name="t1" rows="4" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t1) %></textarea></p>
+<p>職員に代わった案件（概要）<br><textarea name="t2" rows="5" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t2) %></textarea></p>
+<p>要望（お客様からの問い合わせを減らすための改善提案等）<br><textarea name="t3" rows="6" class="<%= Mid(NgCls("text"), 2) %>"<% If state = "確定" Then Response.Write " disabled" %>><%= H(t3) %></textarea></p>
 <div class="actions">
 <% If state = "確定" Then %>
 <button type="submit" name="act" value="unfix" class="btn btn-warn">確定を取り消す</button>

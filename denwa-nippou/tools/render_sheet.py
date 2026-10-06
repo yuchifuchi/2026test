@@ -33,22 +33,39 @@ OUT = os.path.join(ROOT, "build", "render")
 CHROME = "/opt/pw-browsers/chromium"
 DAY = "2026-08-25"
 
+# 様式（課の印刷用シート）から測った寸法。画像の 1 ピクセル = 186/527 mm。
+# まとまりの高さ（mm）：出勤者・問合せ件数・特記事項・職員に代わった案件・要望・電話対応以外の業務
+FORM_BLOCK_MM = [45.7, 11.6, 28.6, 34.2, 39.9, 62.3]
+# 枠の上端までの高さ（課内限り・回覧・押印欄・表題）
+FORM_FRAME_TOP_MM = 41.6
+# 縦線の位置（枠の左端からの mm）
+FORM_ATT_X_MM = [39.5, 80.5, 121.1]                       # 出勤者：左の欄｜氏名｜氏名｜備考
+FORM_CNT_X_MM = [39.5, 64.2, 88.6, 113.0, 137.3, 161.7]   # 問合せ件数：申込｜抽選｜払込用紙｜商品発送｜その他｜注記
+FORM_STAMP_MM = [(0.0, 63.5), (101.0, 165.9)]             # 回覧の押印欄（左・右）の左端と右端
+FORM_TOL_MM = 1.2
+
 CHECK_JS = r"""
 <script>
 (function(){
-  var out = {tables: [], problems: [], height_mm: 0};
+  var out = {tables: [], problems: [], height_mm: 0, geo: {}};
   var mm = 96 / 25.4;
   var sheet = document.querySelector('.sheet');
-  out.height_mm = sheet.getBoundingClientRect().height / mm;
+  var sr = sheet.getBoundingClientRect();
+  out.height_mm = sr.height / mm;
+  function bw(cs, side) { var w = parseFloat(cs['border' + side + 'Width']), st = cs['border' + side + 'Style']; return (w > 0 && st !== 'none' && st !== 'hidden') ? st : ''; }
   var tables = sheet.querySelectorAll('table');
   for (var t = 0; t < tables.length; t++) {
-    var tb = tables[t], grid = [], rows = tb.rows;
+    var tb = tables[t], grid = [], rows = tb.rows, isBlk = tb.className.indexOf('s-blk') >= 0, isStamp = tb.className.indexOf('s-stamp') >= 0;
+    var tcs = getComputedStyle(tb);
+    if (isBlk) ['Top', 'Right', 'Bottom', 'Left'].forEach(function (side) { if (!bw(tcs, side)) out.problems.push('外枠が閉じていない: 表' + t + ' ' + side); });
     for (var r = 0; r < rows.length; r++) {
       var c = 0;
       grid[r] = grid[r] || [];
+      var ruled = rows[r].className.indexOf('rl') >= 0;
       for (var k = 0; k < rows[r].cells.length; k++) {
         var cell = rows[r].cells[k];
         while (grid[r][c]) c++;
+        var c0 = c, r0 = r;
         for (var dr = 0; dr < cell.rowSpan; dr++) for (var dc = 0; dc < cell.colSpan; dc++) {
           grid[r + dr] = grid[r + dr] || [];
           if (grid[r + dr][c + dc]) out.problems.push('升目の重なり: 表' + t + ' 行' + (r + dr) + ' 列' + (c + dc));
@@ -56,12 +73,14 @@ CHECK_JS = r"""
         }
         c += cell.colSpan;
         var cs = getComputedStyle(cell);
-        ['Top', 'Right', 'Bottom', 'Left'].forEach(function (side) {
-          var w = parseFloat(cs['border' + side + 'Width']), st = cs['border' + side + 'Style'];
-          if (!(w > 0) || st === 'none' || st === 'hidden') out.problems.push('罫線が無い: 表' + t + ' 行' + r + ' 欄' + k + ' ' + side);
-        });
-        if (cell.innerHTML.replace(/\s/g, '') === '') out.problems.push('空の欄（&nbsp; が無い）: 表' + t + ' 行' + r + ' 欄' + k);
-        if (cell.scrollWidth > cell.clientWidth + 1) out.problems.push('文字のはみ出し: 表' + t + ' 行' + r + ' 「' + cell.textContent.slice(0, 20) + '」');
+        if (isStamp || cell.className.split(' ').indexOf('ln') >= 0) {
+          ['Top', 'Right', 'Bottom', 'Left'].forEach(function (side) {
+            if (!bw(cs, side)) out.problems.push('罫線が無い: 表' + t + ' 行' + r0 + ' 欄' + k + ' ' + side);
+          });
+        }
+        if (ruled && !bw(cs, 'Bottom')) out.problems.push('点線の罫線が無い: 表' + t + ' 行' + r0 + ' 欄' + k);
+        if (cell.innerHTML.replace(/\s/g, '') === '') out.problems.push('空の欄（&nbsp; が無い）: 表' + t + ' 行' + r0 + ' 欄' + k);
+        if (cell.scrollWidth > cell.clientWidth + 1) out.problems.push('文字のはみ出し: 表' + t + ' 行' + r0 + ' 「' + cell.textContent.slice(0, 20) + '」');
       }
     }
     var width = 0;
@@ -69,6 +88,18 @@ CHECK_JS = r"""
     for (var r2 = 0; r2 < grid.length; r2++) for (var c2 = 0; c2 < width; c2++) if (!grid[r2][c2]) out.problems.push('升目の欠け: 表' + t + ' 行' + r2 + ' 列' + c2);
     out.tables.push({rows: grid.length, cols: width});
   }
+  // 様式との突き合わせに使う寸法
+  var blks = sheet.querySelectorAll('table.s-blk');
+  var f = blks[0].getBoundingClientRect();
+  out.geo.frame_top = (f.top - sr.top) / mm;
+  out.geo.blocks = [];
+  for (var b = 0; b < blks.length; b++) out.geo.blocks.push(blks[b].getBoundingClientRect().height / mm);
+  function xs(row) { var a = []; for (var q = 1; q < row.cells.length; q++) a.push((row.cells[q].getBoundingClientRect().left - f.left) / mm); return a; }
+  out.geo.att_x = xs(blks[0].rows[0]);
+  out.geo.cnt_x = xs(blks[1].rows[0]);
+  out.geo.stamps = [];
+  var st = sheet.querySelectorAll('table.s-stamp');
+  for (var s2 = 0; s2 < st.length; s2++) { var rr = st[s2].getBoundingClientRect(); out.geo.stamps.push([(rr.left - f.left) / mm, (rr.right - f.left) / mm]); }
   var pre = document.createElement('pre'); pre.id = '__result'; pre.textContent = JSON.stringify(out);
   document.body.appendChild(pre);
 })();
@@ -76,11 +107,16 @@ CHECK_JS = r"""
 """
 
 
+def sheet_const(name):
+    src = open(os.path.join(ROOT, "src", "include", "sheet.asp"), encoding="utf-8").read()
+    return int(re.search(rf"Const {name} = (\d+)", src).group(1))
+
+
 def worst_people():
     out = []
     for i in range(14):
-        # 氏名は画面で止めている上限（12 文字）いっぱい
-        out.append({"code": f"{i + 1:03d}", "sei": "勅使河原", "mei": "久美子（旧姓）" if i % 2 == 0 else "由紀子（旧姓）", "kind": "パート"})
+        # 氏名は画面で止めている上限（SHEET_NAME_MAX = 9 文字）いっぱい
+        out.append({"code": f"{i + 1:03d}", "sei": "勅使河原", "mei": "久美子旧" if i % 2 == 0 else "由紀子旧", "kind": "パート"})
     return out
 
 
@@ -115,13 +151,13 @@ def build(scenario):
     add_people(sim, people)
     pid = sorted(ids_all(sim))
     # 列の名前・業務の名前を上限いっぱいに
-    for cid, nm in enumerate(["申込受付件数", "抽選結果照会", "払込用紙再発", "商品発送状況", "その他全般分"], start=1):
+    for cid, nm in enumerate(["申込受付件", "抽選結果照", "払込用紙再", "商品発送状", "その他全般"], start=1):
         r = post(sim, f"/nippou/staff/master.asp?t=col", {"id": str(cid), "name": nm})
         if r.code != 302:
             raise Fail("列の名前を直せません: " + strip_tags(r.text)[:500])
     for g in range(1, 14):
         r = post(sim, "/nippou/staff/master.asp?t=gyomu", {"id": str(g), "no": "⑬", "name": "長い業務の名前",
-                                                           "label": "長い業務の名前長い業務の名前長い", "order": str(g), "active": "1"})
+                                                           "label": ("長い業務の名前" * 3)[:sheet_const("SHEET_TASK_LABEL_MAX")], "order": str(g), "active": "1"})
         if r.code != 302:
             raise Fail("業務項目を直せません: " + strip_tags(r.text)[:500])
     for t in pid:
@@ -129,17 +165,25 @@ def build(scenario):
         form = {"act": "save", "d": DAY, "t": str(t)}
         form.update({f"g_{g}": "9999" for g in range(1, 14)})
         post(sim, "/nippou/part/tasks.asp", form)
-    # 記述欄を上限（daily.asp の TEXT_TOTAL_LINES）いっぱいに
-    per, total = daily_limits()
-    line = "あ" * per
-    each = total // 3
-    form = {"act": "fix", "d": DAY, "lines": "99",
-            "t1": "\r\n".join([line] * each), "t2": "\r\n".join([line] * each), "t3": "\r\n".join([line] * (total - 2 * each))}
+    # 回覧の欄の名前も上限いっぱいに
+    for k in range(1, 9):
+        r = post(sim, "/nippou/staff/master.asp?t=stamp", {"id": str(k), "name": "藤本課長補佐"[:sheet_const("SHEET_STAMP_NAME_MAX")]})
+        if r.code != 302:
+            raise Fail("回覧の欄を直せません: " + strip_tags(r.text)[:500])
+    # 記述欄を、帳票の罫線の数と 1 行の幅（sheet.asp の SHEET_*）いっぱいに
+    wide = "あ" * (sheet_const("SHEET_LINE_WIDE") // 2)
+    narrow = "い" * (sheet_const("SHEET_LINE_NARROW") // 2)
+    t1 = [narrow] + [wide] * (sheet_const("SHEET_MEMO1_ROWS") - 1)
+    t2 = [wide] * sheet_const("SHEET_MEMO2_ROWS")
+    t3 = [wide] * sheet_const("SHEET_MEMO3_ROWS")
+    form = {"act": "fix", "d": DAY, "lines": "99", "t1": "\r\n".join(t1), "t2": "\r\n".join(t2), "t3": "\r\n".join(t3)}
     note_max = att_note_max()
-    for t in pid:
+    for n, t in enumerate(pid):
         form[f"att_{t}"] = "1"
-        form[f"h_{t}"] = "9:00-13:00"[:note_max]
-        form[f"n_{t}"] = "早退あり予定"[:max(0, note_max - len(form[f"h_{t}"]))]
+        if n < sheet_const("SHEET_NOTE_ROWS"):
+            # 備考の欄の行数いっぱいの人数に、勤務時間＋備考を上限の文字数まで
+            form[f"h_{t}"] = "9:00-13:00"[:note_max]
+            form[f"n_{t}"] = "早退あり予定"[:max(0, note_max - len(form[f"h_{t}"]))]
     r = post(sim, "/nippou/staff/daily.asp", form)
     if r.code != 302:
         raise Fail("日報（上限いっぱい）の確定に失敗: " + strip_tags(r.text)[:800])
@@ -149,13 +193,6 @@ def build(scenario):
 def ids_all(sim):
     _, rows = sim.bridge.query("SELECT T.[担当者ID] FROM [M_担当者] AS T", [])
     return [r[0] for r in rows]
-
-
-def daily_limits():
-    src = open(os.path.join(ROOT, "src", "pages", "staff", "daily.asp"), encoding="utf-8").read()
-    per = int(re.search(r"Const TEXT_PER_LINE = (\d+)", src).group(1))
-    total = int(re.search(r"Const TEXT_TOTAL_LINES = (\d+)", src).group(1))
-    return per, total
 
 
 def att_note_max():
@@ -182,6 +219,27 @@ def check_html(html_path):
     return json.loads(m.group(1).replace("&quot;", '"').replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
 
 
+def form_problems(g):
+    """様式（課の印刷用シート）の寸法と、作った帳票の寸法を mm で突き合わせる。"""
+    p = []
+    def near(a, b):
+        return abs(a - b) <= FORM_TOL_MM
+    if not near(g["frame_top"], FORM_FRAME_TOP_MM):
+        p.append(f"枠の上端の位置が様式と違います（{g['frame_top']:.1f}mm、様式 {FORM_FRAME_TOP_MM}mm）")
+    if len(g["blocks"]) != len(FORM_BLOCK_MM):
+        p.append(f"まとまりの数が様式と違います（{len(g['blocks'])}）")
+    for i, (a, b) in enumerate(zip(g["blocks"], FORM_BLOCK_MM)):
+        if not near(a, b):
+            p.append(f"{i + 1} つ目のまとまりの高さが様式と違います（{a:.1f}mm、様式 {b}mm）")
+    for name, got, want in (("出勤者", g["att_x"], FORM_ATT_X_MM), ("問合せ件数", g["cnt_x"], FORM_CNT_X_MM)):
+        if len(got) != len(want) or any(not near(a, b) for a, b in zip(got, want)):
+            p.append(f"{name}の縦線の位置が様式と違います（{[round(x, 1) for x in got]}、様式 {want}）")
+    for (a1, a2), (b1, b2) in zip(g["stamps"], FORM_STAMP_MM):
+        if not (near(a1, b1) and near(a2, b2)):
+            p.append(f"回覧の押印欄の位置が様式と違います（{a1:.1f}～{a2:.1f}mm、様式 {b1}～{b2}mm）")
+    return p
+
+
 def run():
     if os.path.exists(OUT):
         shutil.rmtree(OUT)
@@ -204,7 +262,7 @@ def run():
         pages, size = pdf_pages(pdf)
         res = check_html(html)
         subprocess.run(["pdftoppm", "-r", "80", "-png", "-singlefile", pdf, os.path.join(OUT, scenario)], check=True)
-        probs = list(res["problems"])
+        probs = list(res["problems"]) + form_problems(res["geo"])
         if pages != 1:
             probs.append(f"PDF が {pages} 枚です（A4 1 枚でなければならない）")
         if abs(size[0] - 595.3) > 2 or abs(size[1] - 841.9) > 2:
@@ -212,14 +270,14 @@ def run():
         results.append((scenario, pages, res["height_mm"], res["tables"], probs))
     ok = True
     for scenario, pages, h, tables, probs in results:
-        print(f"{scenario}: PDF {pages} 枚・帳票の高さ {h:.1f}mm（上限 279mm）・表 {len(tables)} 個 {[(t['rows'], t['cols']) for t in tables]}")
+        print(f"{scenario}: PDF {pages} 枚・帳票の高さ {h:.1f}mm（上限 279mm）・表 {len(tables)} 個")
         for p in probs:
             print("   NG:", p)
             ok = False
     bridge().shutdown()
     if not ok:
         sys.exit(1)
-    print("OK: 帳票（罫線が閉じている・はみ出し無し・A4 1 枚）")
+    print("OK: 帳票（課の様式と寸法が一致・枠が閉じている・はみ出し無し・A4 1 枚）")
 
 
 if __name__ == "__main__":

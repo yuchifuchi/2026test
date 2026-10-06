@@ -324,6 +324,15 @@ Function SqlProductUseCount()
     SqlProductUseCount = "SELECT Count(J.[受電ID]) AS [件数] FROM [T_受電] AS J WHERE J.[製品ID] = ?"
 End Function
 
+' 帳票の上の「回覧」の押印欄（表示順 1～4 が左、5～8 が右）
+Function SqlStampsAll()
+    SqlStampsAll = "SELECT S.[回覧ID], S.[表示名], S.[表示順] FROM [M_回覧] AS S ORDER BY S.[表示順], S.[回覧ID]"
+End Function
+
+Function SqlStampRename()
+    SqlStampRename = "UPDATE [M_回覧] SET [表示名] = ? WHERE [回覧ID] = ?"
+End Function
+
 Function SqlTaskItemsAll()
     SqlTaskItemsAll = "SELECT G.[業務項目ID], G.[番号], G.[項目名], G.[帳票表示名], G.[表示順], G.[有効] FROM [M_業務項目] AS G ORDER BY G.[表示順], G.[業務項目ID]"
 End Function
