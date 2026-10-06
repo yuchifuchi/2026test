@@ -1,0 +1,159 @@
+@charset "utf-8";
+/* ============================================================
+   電話応対日報 集計システム
+   画面の見た目と、帳票（A4 縦 1 枚）の見た目。
+
+   決まり（変えると帳票の罫線が消えます）:
+   ・表（table / tr / td / th）に当てる規則は、必ず .tw（画面の表）か .sheet（帳票）で囲む。
+     「tbody tr:last-child td { border-bottom: 0 }」のような囲まない規則は、帳票にも効いて下の線が消える。
+   ・帳票（.sheet）では罫線を消す規則を書かない。
+   ・文字の大きさは固定。欄に入りきらない文字は縮めずに折り返す（現行 Excel の「縮小して全体を表示」で
+     文字の大きさが勝手に変わった問題を、作りの上で起こさないため）。
+   ・IE モードでも同じに見えるよう、CSS 変数（var）と grid は使わない。
+   tools/vbsim/csscheck.py がこの決まりを検査する。
+   ============================================================ */
+
+/* ---------- 画面 ---------- */
+html, body { margin: 0; padding: 0; }
+body {
+  background: #eef2f7; color: #1a1a1a;
+  font-family: "Meiryo UI", "メイリオ", Meiryo, "Yu Gothic UI", "Yu Gothic", "IPAGothic", sans-serif;
+  font-size: 16px; line-height: 1.6;
+}
+a { color: #1f4e8c; }
+.band { background: #1f4e8c; color: #fff; }
+.band-ng { background: #9b1c1c; }
+.band-in { max-width: 1180px; margin: 0 auto; padding: 10px 16px; overflow: hidden; }
+.band .app { font-size: 20px; font-weight: bold; }
+.band .role { display: inline-block; margin-left: 12px; padding: 0 10px; border: 1px solid #fff; border-radius: 10px; font-size: 13px; }
+.band .role-staff { background: #f5c518; color: #1a1a1a; border-color: #f5c518; }
+.band .home { float: right; color: #fff; font-size: 16px; padding: 2px 10px; border: 1px solid #fff; border-radius: 4px; text-decoration: none; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 4px 16px 48px; }
+h1 { font-size: 22px; margin: 16px 0 12px; }
+h2 { font-size: 18px; margin: 26px 0 8px; padding-left: 8px; border-left: 6px solid #1f4e8c; }
+p { margin: 8px 0; }
+.note { color: #555; font-size: 14px; }
+.pre { white-space: pre-wrap; word-break: break-all; }
+
+.btn {
+  display: inline-block; padding: 10px 22px; font-size: 16px; line-height: 1.4;
+  background: #1f4e8c; color: #fff; border: 1px solid #1f4e8c; border-radius: 4px;
+  text-decoration: none; cursor: pointer; font-family: inherit;
+}
+.btn-s { padding: 4px 12px; font-size: 14px; }
+.btn-sub { background: #fff; color: #1f4e8c; }
+.btn-warn { background: #b45309; border-color: #b45309; }
+.btn-ok { background: #1b7f3b; border-color: #1b7f3b; }
+.menu .btn { display: block; width: 340px; max-width: 100%; margin: 16px 0; padding: 22px 16px; font-size: 22px; text-align: center; }
+.menu .btn small { display: block; font-size: 14px; }
+.menu-cols { overflow: hidden; }
+.menu-col { float: left; width: 360px; max-width: 100%; margin-right: 24px; }
+
+.msg { padding: 10px 14px; border-radius: 4px; margin: 12px 0; }
+.msg-ok { background: #e6f4ea; border: 1px solid #34a853; }
+.msg-ng { background: #fde8e8; border: 1px solid #c62828; color: #8b0000; font-weight: bold; }
+.msg-note { background: #fff8e1; border: 1px solid #f0b400; }
+
+.bar { background: #fff; padding: 8px 12px; border: 1px solid #c9d3e0; margin: 8px 0 12px; line-height: 2.2; }
+.bar label { margin-right: 6px; }
+.bar-date { font-weight: bold; margin-left: 12px; font-size: 18px; }
+.in-date { font-size: 16px; padding: 3px; font-family: inherit; }
+select, input, textarea { font-family: inherit; font-size: 16px; }
+input.num { width: 3.6em; text-align: right; padding: 3px; }
+input.ng, textarea.ng, select.ng { background: #ffe0e0; border: 2px solid #c62828; }
+textarea { width: 100%; max-width: 760px; box-sizing: border-box; padding: 6px; }
+.stamp { display: inline-block; padding: 2px 12px; border-radius: 4px; font-weight: bold; }
+.stamp-done { background: #1b7f3b; color: #fff; }
+.stamp-draft { background: #f5c518; color: #1a1a1a; }
+.ok { color: #1b7f3b; font-weight: bold; }
+.ng { color: #c62828; font-weight: bold; }
+.warn { color: #b45309; font-weight: bold; }
+.totals { background: #fff; border: 1px solid #c9d3e0; padding: 8px 12px; margin: 8px 0 12px; }
+.totals b { font-size: 20px; }
+.actions { margin: 18px 0; }
+.actions .btn { margin-right: 10px; }
+
+/* 画面の表（.tw） */
+table.tw { border-collapse: collapse; background: #fff; margin: 6px 0 14px; }
+table.tw th, table.tw td { border: 1px solid #9aa8ba; padding: 4px 8px; vertical-align: middle; }
+table.tw th { background: #e3eaf3; font-weight: normal; text-align: left; }
+table.tw th.c, table.tw td.c { text-align: center; }
+table.tw th.n, table.tw td.n { text-align: right; }
+table.tw tr.off td { color: #777; background: #f2f2f2; }
+table.tw tr.sum td { font-weight: bold; background: #f7f9fc; }
+table.tw tr.sat td { background: #eef5ff; }
+table.tw tr.sun td { background: #fff0f0; }
+table.tw td.zero { color: #aaa; }
+table.tw.err5 th { width: 7em; }
+table.tw.grid th.kname { min-width: 14em; }
+table.tw.grid td { text-align: center; }
+table.tw.wide { width: 100%; }
+
+/* 帳票を画面で見るときの台紙 */
+.paper { background: #fff; width: 186mm; padding: 10mm 12mm; margin: 12px 0; border: 1px solid #c9d3e0; }
+
+/* ---------- 帳票（.sheet）A4 縦 ----------
+   用紙 A4（210 × 297mm）、余白 上下 9mm・左右 12mm → 中身は 186 × 279mm。
+   行の高さ・文字の大きさは固定。長い文字は折り返す（縮めない）。
+   入る文字の長さは、マスタ保守・日報の画面で上限を決めて止めている（include/sheet.asp の SHEET_*_MAX）。
+   tools/render_sheet.py が、上限いっぱいの内容でも A4 1 枚に収まり、罫線が閉じていることを確かめる。 */
+@page { size: A4 portrait; margin: 9mm 12mm; }
+body.pdf { background: #fff; margin: 0; }
+.sheet {
+  width: 186mm; margin: 0 auto; background: #fff; color: #000;
+  font-family: "ＭＳ ゴシック", "MS Gothic", "IPAGothic", "IPAゴシック", monospace;
+  font-size: 10pt; line-height: 1.3;
+}
+.sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0; }
+.sheet th, .sheet td {
+  border: 0.75pt solid #000; padding: 0.4mm 1.2mm;
+  font-weight: normal; vertical-align: middle; word-break: break-all; overflow-wrap: break-word;
+}
+.sheet .sh-limit { text-align: right; }
+.sheet .sh-date { text-align: right; font-size: 10.5pt; }
+.sheet .sh-title { text-align: center; font-size: 15pt; font-weight: bold; letter-spacing: 0.15em; margin: 1.5mm 0 3mm; }
+
+.sheet col.w-a1 { width: 7mm; }
+.sheet col.w-a2 { width: 12mm; }
+.sheet col.w-a3 { width: 7mm; }
+.sheet col.w-a4 { width: 46mm; }
+/* 備考は 2 人ぶんで 2 行になることがあるので、どの行も 2 行入る高さに固定する（行の高さが日によって変わらないように） */
+.sheet .sh-att td, .sheet .sh-att th { height: 7.2mm; }
+.sheet .sh-att th.a-h { height: 5.2mm; }
+.sheet .a-lbl { text-align: center; line-height: 1.25; }
+.sheet .a-num { text-align: center; font-size: 14pt; }
+.sheet .a-mei { text-align: center; }
+.sheet .a-h { text-align: center; }
+.sheet .a-note { font-size: 8pt; line-height: 1.15; }
+
+.sheet .sh-lines { margin: 1.2mm 0; }
+
+.sheet .sh-cnt th { text-align: center; }
+.sheet .sh-cnt td { text-align: center; height: 11mm; }
+.sheet .sh-cnt .c-q { width: 13mm; line-height: 1.2; }
+.sheet .sh-cnt .c-tot { width: 34mm; }
+.sheet .big { display: block; font-size: 15pt; line-height: 1.1; }
+.sheet .sub { display: block; font-size: 8pt; line-height: 1.15; }
+.sheet .sh-cnt td.c-tot .big { font-size: 20pt; font-weight: bold; }
+.sheet .sh-cnt-note { text-align: right; font-size: 7.5pt; }
+.sheet .sh-uchi { text-align: right; margin: 0.5mm 0 2mm; }
+
+.sheet .sh-box { margin-bottom: 1.8mm; }
+.sheet .b-h { text-align: left; }
+.sheet .b-txt { height: 13.5mm; vertical-align: top; }
+
+.sheet .sh-task { margin-top: 0.5mm; }
+.sheet .t-head { text-align: left; }
+.sheet .sh-task td { height: 5.6mm; }
+.sheet col.w-t1 { width: 7mm; }
+.sheet col.w-t3 { width: 20mm; }
+.sheet .t-no { text-align: center; }
+.sheet .t-n { text-align: right; white-space: nowrap; }
+
+/* ---------- 印刷 ---------- */
+@media print {
+  .noprint { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .paper { border: 0; padding: 0; margin: 0; width: auto; }
+}

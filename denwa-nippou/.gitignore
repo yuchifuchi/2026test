@@ -1,0 +1,6 @@
+# 生成物（tools/build.py・tools/package.py などで作り直せるもの）
+build/
+# 検査用の Java 部品（tools/fetch_deps.py で取得する）
+tools/lib/
+__pycache__/
+*.pyc
