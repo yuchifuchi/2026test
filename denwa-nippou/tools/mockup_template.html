@@ -1,7 +1,9 @@
 <title>電話応対日報 画面の見本</title>
 {{FONTS}}
 <style>
-/* 左に画面の一覧。右に「この画面」の説明と、ブラウザーの窓に入れた本物の画面（窓の中は本物の見た目のまま、いつも明るい色） */
+/* 画面の見本の外枠。JavaScript を使わない（スクリプトを止めた表示でも、すべての画面が出るように）。
+   上に画面の一覧（ページの中のリンク）、その下に 1 画面ずつ「説明」と「ブラウザーの窓に入れた本物の画面」を縦に並べる。
+   外枠の名前はすべて pg- で始める（本物の画面の css と混ざらないように）。窓の中は本物の見た目のまま、いつも明るい色。 */
 :root {
   --bg: #edf0f4;
   --surface: #ffffff;
@@ -9,16 +11,12 @@
   --muted: #536072;
   --line: #d3d9e2;
   --accent: #1f4e8c;
-  --on-accent: #ffffff;
-  --accent-soft: #e2eaf5;
   --staff: #f5c518;
   --on-staff: #1a1a1a;
   --chrome: #dfe4eb;
   --pdf: #525659;
   --app-bg: #eef2f7;   /* 窓の中（本物の画面）の地の色。画面は明るい色だけなので、暗い表示でも変えない */
   --paper: #ffffff;
-  --toast-bg: #17202b;
-  --toast-ink: #ffffff;
   --display: "BIZ UDPMincho", "BIZ UDP明朝 Medium", "BIZ UDP明朝", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
   --body: "BIZ UDPGothic", "BIZ UDPゴシック", "Yu Gothic UI", "Meiryo UI", Meiryo, "Hiragino Sans", system-ui, sans-serif;
   --mono: "BIZ UDGothic", "BIZ UDゴシック", Consolas, ui-monospace, monospace;
@@ -26,363 +24,87 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f141b; --surface: #18202a; --ink: #e4e9f0; --muted: #9ba6b5; --line: #2c3643;
-    --accent: #8fb4e8; --on-accent: #0f141b; --accent-soft: #1c2a3d; --staff: #e6b800; --on-staff: #141414;
-    --chrome: #222c38; --pdf: #34383c; --toast-bg: #e4e9f0; --toast-ink: #0f141b;
+    --accent: #8fb4e8; --staff: #e6b800; --on-staff: #141414; --chrome: #222c38; --pdf: #34383c;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f141b; --surface: #18202a; --ink: #e4e9f0; --muted: #9ba6b5; --line: #2c3643;
-  --accent: #8fb4e8; --on-accent: #0f141b; --accent-soft: #1c2a3d; --staff: #e6b800; --on-staff: #141414;
-  --chrome: #222c38; --pdf: #34383c; --toast-bg: #e4e9f0; --toast-ink: #0f141b;
+  --accent: #8fb4e8; --staff: #e6b800; --on-staff: #141414; --chrome: #222c38; --pdf: #34383c;
   color-scheme: dark;
 }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+.pg-page { max-width: 1320px; margin: 0 auto; padding: 28px 24px 64px; box-sizing: border-box; }
+.pg-top { max-width: 70ch; margin-bottom: 20px; }
+.pg-eyebrow { margin: 0; font-size: 13px; letter-spacing: 0.06em; color: var(--muted); }
+.pg-top h1 { margin: 2px 0 6px; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.35; letter-spacing: 0.04em; }
+.pg-lead { margin: 0 0 4px; }
+.pg-sample { margin: 0; font-size: 13px; color: var(--muted); }
 
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 15px;
-  line-height: 1.7;
+.pg-toc { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; }
+.pg-toc h2 { margin: 0 0 8px; font-size: 16px; }
+.pg-toc-groups { display: flex; flex-wrap: wrap; gap: 8px 40px; }
+.pg-toc-group h3 { margin: 6px 0 2px; font-size: 13px; color: var(--muted); font-weight: 700; }
+.pg-toc-group h3 code { font-family: var(--mono); font-weight: 400; font-size: 12px; margin-left: 6px; }
+.pg-toc-group ol { margin: 0; padding-left: 1.6em; }
+.pg-toc a, .pg-back a { color: var(--accent); }
+
+.pg-screen { margin: 0 0 40px; }
+.pg-about { max-width: 78ch; margin-bottom: 12px; }
+.pg-about-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pg-about h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.4; }
+.pg-role { display: inline-block; font-size: 12px; line-height: 1.6; padding: 1px 10px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); background: var(--surface); }
+.pg-role.pg-staff { background: var(--staff); color: var(--on-staff); border-color: var(--staff); }
+.pg-role.pg-trouble { border-color: var(--muted); color: var(--muted); }
+.pg-facts { margin: 6px 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; font-size: 14px; }
+.pg-facts dt { color: var(--muted); }
+.pg-facts dd { margin: 0; }
+.pg-points { margin: 0; padding-left: 1.3em; }
+.pg-points li { margin: 3px 0; }
+
+.pg-window { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.pg-chrome { padding: 8px 10px; background: var(--chrome); border-bottom: 1px solid var(--line); }
+.pg-url { font-family: var(--mono); font-size: 13px; line-height: 1.5; padding: 4px 12px; border-radius: 14px; background: var(--surface); color: var(--ink); overflow-wrap: anywhere; }
+.pg-host { color: var(--muted); }
+.pg-view { overflow-x: auto; background: var(--app-bg); }
+.pg-view.pg-pdf { background: var(--pdf); padding: 20px 12px; text-align: center; }
+.pg-sheet { display: inline-block; width: 100%; max-width: 794px; height: auto; background: var(--paper); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); vertical-align: top; }
+.pg-back { margin: 8px 0 0; font-size: 14px; }
+
+@media (max-width: 700px) {
+  .pg-page { padding: 20px 16px 56px; }
+  .pg-top h1 { font-size: 24px; }
 }
-.page { max-width: 1520px; margin: 0 auto; padding: 28px 24px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
-
-/* ---- 見出し ---- */
-.top { display: grid; gap: 6px; max-width: 70ch; }
-.eyebrow { margin: 0; font-size: 13px; letter-spacing: 0.06em; color: var(--muted); }
-.top h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 30px; line-height: 1.35; letter-spacing: 0.04em; text-wrap: balance; }
-.lead { margin: 0; color: var(--ink); }
-.sample { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
-
-/* ---- 2 段組み ---- */
-.layout { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); gap: 24px; align-items: start; }
-.side { display: grid; gap: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
-.group { display: grid; gap: 6px; }
-.group h2 { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
-.group h2 code { font-family: var(--mono); font-weight: 400; font-size: 12px; }
-.group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.nav-btn {
-  width: 100%; text-align: left; font: inherit; font-size: 14px; line-height: 1.4;
-  padding: 7px 10px; border: 1px solid transparent; border-radius: 6px;
-  background: transparent; color: var(--ink); cursor: pointer;
-}
-.nav-btn:hover { background: var(--surface); border-color: var(--line); }
-.nav-btn[aria-current="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.nav-btn:focus-visible, .tool:focus-visible { outline: 3px solid var(--staff); outline-offset: 1px; }
-
-/* ---- この画面の説明 ---- */
-main { display: grid; gap: 16px; min-width: 0; }
-.about { display: grid; gap: 10px; max-width: 78ch; }
-.about-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.about h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.4; text-wrap: balance; }
-.role { display: inline-block; font-size: 12px; line-height: 1.6; padding: 1px 10px; border-radius: 10px; border: 1px solid var(--accent); color: var(--accent); background: var(--surface); }
-.role.staff { background: var(--staff); color: var(--on-staff); border-color: var(--staff); }
-.role.trouble { border-color: var(--muted); color: var(--muted); }
-.facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; font-size: 14px; }
-.facts dt { color: var(--muted); }
-.facts dd { margin: 0; }
-.points { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
-
-/* ---- ブラウザーの窓 ---- */
-.window { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); min-width: 0; }
-.chrome { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; background: var(--chrome); border-bottom: 1px solid var(--line); }
-.url {
-  flex: 1 1 18rem; min-width: 0; font-family: var(--mono); font-size: 13px; line-height: 1.5;
-  padding: 4px 12px; border-radius: 14px; background: var(--surface); color: var(--ink);
-  overflow-wrap: anywhere;
-}
-.url .host { color: var(--muted); }
-.tool {
-  font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 6px; cursor: pointer;
-  background: var(--surface); color: var(--ink); border: 1px solid var(--line);
-}
-.tool[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-.view { overflow: auto; background: var(--app-bg); max-height: 82vh; }
-.view.is-paper { background: var(--pdf); padding: 20px 12px; display: flex; justify-content: center; }
-.paper { margin: 0; width: 100%; max-width: 794px; }
-.paper { display: grid; gap: 18px; }
-.paper img { display: block; width: 100%; height: auto; background: var(--paper); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); }
-#screen-host { width: 1240px; }
-
-/* ---- 知らせ ---- */
-.toast {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-  max-width: min(36rem, calc(100% - 32px)); padding: 10px 16px; border-radius: 8px;
-  background: var(--toast-bg); color: var(--toast-ink); font-size: 14px; line-height: 1.6;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-
-@media (max-width: 900px) {
-  .page { padding: 20px 16px 56px; }
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .side { position: static; }
-  .group ul { display: flex; flex-wrap: wrap; gap: 6px; }
-  .nav-btn { width: auto; border-color: var(--line); background: var(--surface); }
-  .top h1 { font-size: 24px; }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .toast { transition: opacity 0.2s ease; }
+/* PDF にするとき（目次のあと、1 画面ずつ新しいページから。窓の中は縮めて A4 の幅に入れる） */
+@page { size: A4 portrait; margin: 10mm; }
+@media print {
+  body { background: #fff; }
+  .pg-page { padding: 0; max-width: none; }
+  .pg-screen { break-before: page; margin: 0; }
+  .pg-back { display: none; }
+  .pg-view { overflow: visible; }
+  .pg-zoom { zoom: 0.58; }
+  .pg-view.pg-pdf { padding: 6px; }
+  .pg-sheet { max-width: 520px; box-shadow: none; border: 1px solid #999; }
 }
 </style>
+<style>
+/* ---- ここから下は本物の画面の css（.m-root の中だけに効くように直したもの） ---- */
+{{APPCSS}}
+</style>
 <!--HEAD-END-->
-<div class="page">
-  <header class="top">
-    <p class="eyebrow">造幣局 販売・顧客サービス課　電話応対報告書 日報集計システム</p>
+<div class="pg-page">
+  <header class="pg-top">
+    <p class="pg-eyebrow">造幣局 販売・顧客サービス課　電話応対報告書 日報集計システム</p>
     <h1>電話応対日報 画面の見本</h1>
-    <p class="lead">本物の画面を、試しのデータを入れて動かし、そのまま写したものです。画面の中のリンクやボタンを押すと、つながる画面に移ります（保存はされません）。</p>
-    <p class="sample">試しのデータ：2026 年 8 月 25 日（火）、パート職員 6 人と職員の分（顧客Ｇ）。人の名前と数は、見本のためのもので本物ではありません。区分（お問合せ内容）と製品は、今の Excel の記入用フォームから写したものです。</p>
+    <p class="pg-lead">本物の画面を、試しのデータを入れて動かし、そのまま写したものです。下の一覧から見たい画面を選んでください（画面の中のボタンは、見本なので押しても動きません）。</p>
+    <p class="pg-sample">試しのデータ：2026 年 8 月 25 日（火）、パート職員 6 人と職員の分（顧客Ｇ）。人の名前と数は、見本のためのもので本物ではありません。区分（お問合せ内容）と製品は、今の Excel の記入用フォームから写したものです。</p>
   </header>
-  <div class="layout">
-    <nav class="side" id="side" aria-label="画面の一覧"></nav>
-    <main>
-      <section class="about" aria-live="polite">
-        <div class="about-head"><span class="role" id="about-role"></span><h2 id="about-title"></h2></div>
-        <dl class="facts">
-          <dt>使う人</dt><dd id="about-who"></dd>
-          <dt>開き方</dt><dd id="about-how"></dd>
-        </dl>
-        <ul class="points" id="about-points"></ul>
-      </section>
-      <div class="window">
-        <div class="chrome">
-          <div class="url" id="url"></div>
-          <button type="button" class="tool" id="fit" aria-pressed="false">実寸で見る</button>
-        </div>
-        <div class="view" id="view">
-          <div id="screen-host"></div>
-          <figure class="paper" id="pg-paper" hidden></figure>
-        </div>
-      </div>
-    </main>
-  </div>
+  <nav class="pg-toc" id="pg-toc" aria-label="画面の一覧">
+    <h2>画面の一覧</h2>
+    <div class="pg-toc-groups">
+{{TOC}}
+    </div>
+  </nav>
+{{SECTIONS}}
 </div>
-<div class="toast" id="toast" role="status" hidden></div>
-<script type="application/json" id="mock-data">{{DATA}}</script>
-<script>
-(function () {
-  "use strict";
-  var DATA = JSON.parse(document.getElementById("mock-data").textContent);
-  var SCREENS = DATA.screens;
-  var byId = {};
-  SCREENS.forEach(function (s) { byId[s.id] = s; });
-  var GROUP_INFO = {
-    "パート職員の画面": { folder: "/nippou/part/", role: "パート職員用", cls: "" },
-    "職員の画面": { folder: "/nippou/staff/", role: "職員用", cls: "staff" },
-    "うまく動かないとき": { folder: "", role: "困ったとき", cls: "trouble" }
-  };
-  var DAY_JA = "8 月 25 日（火）";
-
-  var host = document.getElementById("screen-host");
-  var root = host.attachShadow({ mode: "open" });
-  var view = document.getElementById("view");
-  var paper = document.getElementById("pg-paper");
-  var fitBtn = document.getElementById("fit");
-  var fitMode = true;
-  var cur = null;
-
-  // ---- 一覧 ----
-  var side = document.getElementById("side");
-  var groups = [];
-  SCREENS.forEach(function (s) { if (s.nav && groups.indexOf(s.group) < 0) groups.push(s.group); });
-  groups.forEach(function (g) {
-    var box = document.createElement("div");
-    box.className = "group";
-    var h = document.createElement("h2");
-    h.textContent = g;
-    if (GROUP_INFO[g] && GROUP_INFO[g].folder) {
-      var c = document.createElement("code");
-      c.textContent = GROUP_INFO[g].folder;
-      h.appendChild(c);
-    }
-    box.appendChild(h);
-    var ul = document.createElement("ul");
-    SCREENS.forEach(function (s) {
-      if (!s.nav || s.group !== g) return;
-      var li = document.createElement("li");
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "nav-btn";
-      b.id = "nav-" + s.id;
-      b.textContent = s.title;
-      b.addEventListener("click", function () { show(s.id, true); });
-      li.appendChild(b);
-      ul.appendChild(li);
-    });
-    box.appendChild(ul);
-    side.appendChild(box);
-  });
-
-  // ---- 1 枚を出す ----
-  function show(id, fromNav) {
-    var s = byId[id];
-    if (!s) return;
-    cur = s;
-    document.getElementById("about-title").textContent = s.title;
-    var gi = GROUP_INFO[s.group] || { role: "", cls: "" };
-    var role = document.getElementById("about-role");
-    role.textContent = gi.role;
-    role.className = "role " + gi.cls;
-    document.getElementById("about-who").textContent = s.who;
-    document.getElementById("about-how").textContent = s.how;
-    var ul = document.getElementById("about-points");
-    ul.textContent = "";
-    s.points.forEach(function (p) {
-      var li = document.createElement("li");
-      li.textContent = p;
-      ul.appendChild(li);
-    });
-    var url = document.getElementById("url");
-    url.textContent = "";
-    var hs = document.createElement("span");
-    hs.className = "host";
-    hs.textContent = "http://（サーバーの名前）";
-    url.appendChild(hs);
-    url.appendChild(document.createTextNode(s.url));
-
-    SCREENS.forEach(function (x) {
-      var b = document.getElementById("nav-" + x.id);
-      if (b) b.setAttribute("aria-current", x.id === s.parent ? "true" : "false");
-    });
-    if (s.kind === "paper") {
-      root.innerHTML = "";
-      host.hidden = true;
-      paper.hidden = false;
-      paper.textContent = "";
-      s.imgs.forEach(function (src, i) {
-        var im = document.createElement("img");
-        im.src = src;
-        im.alt = s.title + "（" + (i + 1) + " 枚目）";
-        paper.appendChild(im);
-      });
-      view.classList.add("is-paper");
-      fitBtn.hidden = true;
-    } else {
-      paper.hidden = true;
-      host.hidden = false;
-      view.classList.remove("is-paper");
-      fitBtn.hidden = false;
-      root.innerHTML = "<style>:host{all:initial;display:block}" + DATA.css + "</style>" +
-        '<div class="m-root ' + s.bodyClass + '">' + s.body + "</div>";
-    }
-    view.scrollTop = 0;
-    view.scrollLeft = 0;
-    applyFit();
-    try { history.replaceState(null, "", "#" + s.id); } catch (e) { /* 履歴が使えなくても見本は動く */ }
-    if (fromNav && window.matchMedia("(max-width: 900px)").matches) {
-      document.querySelector(".about").scrollIntoView({ block: "start" });
-    }
-  }
-
-  // ---- 窓の幅に合わせる／実寸 ----
-  function applyFit() {
-    if (!cur || cur.kind === "paper") { host.style.zoom = ""; return; }
-    var w = view.clientWidth;
-    var z = fitMode ? Math.min(1, w / 1240) : 1;
-    host.style.zoom = z < 1 ? String(Math.floor(z * 1000) / 1000) : "";
-  }
-  fitBtn.addEventListener("click", function () {
-    fitMode = !fitMode;
-    fitBtn.setAttribute("aria-pressed", fitMode ? "false" : "true");
-    applyFit();
-  });
-  if (window.ResizeObserver) new ResizeObserver(applyFit).observe(view);
-  else window.addEventListener("resize", applyFit);
-
-  // ---- 知らせ ----
-  var toastEl = document.getElementById("toast");
-  var toastTimer = null;
-  function toast(msg) {
-    toastEl.textContent = msg;
-    toastEl.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.hidden = true; }, 5200);
-  }
-
-  // ---- 画面の中のリンクとボタン ----
-  function sigOf(file, q) {
-    if (file === "master.asp") {
-      var s = q.get("t") || "tanto";
-      var id = q.get("id");
-      if (id) s += id === "new" ? ":new" : ":edit";
-      return s;
-    }
-    return "";
-  }
-  function resolve(href) {
-    var u = new URL(href, "http://srv/nippou/" + cur.folder + "/");
-    var seg = u.pathname.split("/").filter(Boolean);
-    if (seg[0] !== "nippou" || seg.length < 2) return null;
-    var folder = decodeURIComponent(seg[1]);
-    var file = seg[2] ? decodeURIComponent(seg[2]) : "default.asp";
-    if (folder === "staff" && file === "default.asp") file = "staff.asp";
-    return { folder: folder, file: file, q: u.searchParams };
-  }
-  function find(folder, file, sig) {
-    for (var i = 0; i < SCREENS.length; i++) {
-      var s = SCREENS[i];
-      if (s.folder === folder && s.file === file && s.sig === sig) return s;
-    }
-    return null;
-  }
-  function otherDay(d) {
-    return d && d !== DATA.day;
-  }
-  function go(href) {
-    var r = resolve(href);
-    if (!r) { toast("この先の画面は、見本には入れていません。"); return; }
-    if (otherDay(r.q.get("d"))) {
-      toast("見本で用意しているのは " + DAY_JA + " の画面だけです。本物では、その日の画面に移ります。");
-      return;
-    }
-    var s = find(r.folder, r.file, sigOf(r.file, r.q));
-    if (!s && r.file === "master.asp") s = find(r.folder, r.file, (r.q.get("t") || "tanto"));
-    if (!s) { toast("この先の画面は、見本には入れていません。"); return; }
-    show(s.id, false);
-  }
-  root.addEventListener("click", function (e) {
-    var a = e.target.closest ? e.target.closest("a[href]") : null;
-    if (!a) return;
-    e.preventDefault();
-    go(a.getAttribute("href"));
-  });
-  root.addEventListener("submit", function (e) {
-    e.preventDefault();
-    var f = e.target;
-    var sub = e.submitter;
-    var actInput = f.querySelector('input[name="act"]');
-    var act = (sub && sub.name === "act") ? sub.value : (actInput ? actInput.value : "");
-    var r = resolve(f.getAttribute("action") || cur.file);
-    var file = r ? r.file : cur.file;
-    if (act === "go" || f.classList.contains("bar")) {
-      var dIn = f.querySelector('[name="d"]');
-      if (dIn && otherDay(dIn.value)) {
-        toast("見本で用意しているのは " + DAY_JA + " の画面だけです。本物では、選んだ日の画面に移ります。");
-      } else {
-        toast("見本では、表示を切り替えても同じ画面のままです。本物では、選んだ人・日の画面に移ります。");
-      }
-      return;
-    }
-    var saved = "見本なので、保存はしていません。本物では、ここでサーバーに保存されます。";
-    if (file === "entry.asp" && act === "save") {
-      var bad = Array.prototype.some.call(f.querySelectorAll('input[name^="c_"]'), function (i) {
-        var v = i.value.replace(/^[\s　]+|[\s　]+$/g, "");
-        return v !== "" && !/^[0-9０-９]+$/.test(v);
-      });
-      show(bad ? "entry_ng" : "entry_saved", false);
-      toast(bad ? "数字でない欄があるので、本物でも保存されません（赤い欄を直します）。" : saved);
-      return;
-    }
-    if (file === "tasks.asp" && act === "save") { show("tasks_saved", false); toast(saved); return; }
-    if (file === "daily.asp" && act === "fix") { show("daily_fixed", false); toast(saved); return; }
-    if (file === "daily.asp" && act === "unfix") { show("daily", false); toast("見本なので、確定は取り消していません。本物では、日報が確定の前に戻ります。"); return; }
-    toast(saved);
-  });
-
-  var start = (location.hash || "").replace(/^#/, "");
-  show(byId[start] ? start : "part_menu", false);
-})();
-</script>

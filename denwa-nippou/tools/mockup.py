@@ -2,18 +2,21 @@
 
 本物の ASP を模擬の IIS で動かし、試しのデータを入れた状態の画面を 1 枚の HTML にまとめる。
 画面の中身は ASP が出した HTML そのもの（手で写していない）なので、画面を直せば見本も同じに変わる。
+JavaScript は使わない（スクリプトを止めた表示や、メールの添付の中でも、すべての画面が出るように）。
 
   python3 tools/mockup.py
     → build/mockup/画面の見本.html          （納品の zip の 参考 に入れる。閉じた網でも見られるよう、外のファイルを読まない）
-    → build/mockup/画面の見本_公開用.html    （Artifact として公開するもの。文字の形だけ Google Fonts から読む）
+    → build/mockup/画面の見本.pdf           （同じものを PDF にしたもの。1 画面ずつ新しいページから）
+    → build/mockup/画面の見本_公開用.html    （公開するときのもの。文字の形だけ Google Fonts から読む）
 """
 import base64
-import json
+import html as htmlmod
 import os
 import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "tests"))
@@ -21,6 +24,7 @@ from harness import (new_sim, get, post, follow, add_people, ids, strip_tags, Fa
 import test_docs  # noqa: E402
 
 OUT = os.path.join(ROOT, "build", "mockup")
+CHROME = "/opt/pw-browsers/chromium"
 DAY = "2026-08-25"
 PREV = "2026-08-24"
 
@@ -115,7 +119,7 @@ ABOUT = {
         "下に、その人の総合計と日報の列ごとの数、特殊な問合せの内容、電話応対以外の業務（①～⑬）が出ます。",
     ]),
     "paper_detail": ("職員", "個人別の受付表の「PDF で出す（1 人 1 枚）」", [
-        "1 人 1 枚の PDF です（この見本では、7 人ぶんのうち初めの 2 枚を載せています）。",
+        "1 人 1 枚の PDF です（この見本では、7 人ぶんのうち初めの 1 枚を載せています）。",
         "すべての欄が 4 けたの数で埋まっていても、1 人ぶんが A4 縦 1 枚に収まることを確かめています。",
     ]),
     "master_kubun": ("職員", "マスタ保守の「区分」", [
@@ -305,14 +309,14 @@ def build_screens():
     return S
 
 
-def paper(sim, sid, title, kind, max_pages=2):
+def paper(sim, sid, title, kind, max_pages=1):
     q = f"&kind={kind}" if kind else ""
     r = sim.request("GET", f"/nippou/staff/printpdf.asp?d={DAY}{q}")
     if not r.body.startswith(b"%PDF"):
         raise Fail("PDF ができません: " + strip_tags(r.text)[:800])
     pdf = os.path.join(OUT, sid + ".pdf")
     open(pdf, "wb").write(r.body)
-    subprocess.run(["pdftoppm", "-r", "110", "-png", "-f", "1", "-l", str(max_pages), pdf, os.path.join(OUT, sid)], check=True)
+    subprocess.run(["pdftoppm", "-r", "96", "-png", "-f", "1", "-l", str(max_pages), pdf, os.path.join(OUT, sid)], check=True)
     imgs = []
     for fn in sorted(f for f in os.listdir(OUT) if f.startswith(sid + "-") and f.endswith(".png")):
         imgs.append("data:image/png;base64," + base64.b64encode(open(os.path.join(OUT, fn), "rb").read()).decode("ascii"))
@@ -322,22 +326,136 @@ def paper(sim, sid, title, kind, max_pages=2):
             "imgs": imgs, "who": who, "how": how, "points": points}
 
 
+def css_blocks(text):
+    """css を「セレクター { 中身 }」の並びに分ける（入れ子の @media にも使う）"""
+    out = []
+    i = 0
+    while True:
+        j = text.find("{", i)
+        if j < 0:
+            return out
+        depth, k = 1, j + 1
+        while depth:
+            if text[k] == "{":
+                depth += 1
+            elif text[k] == "}":
+                depth -= 1
+            k += 1
+        out.append((text[i:j].strip(), text[j + 1:k - 1]))
+        i = k
+
+
+def scope_css(text):
+    """本物の画面の css を、見本の中の .m-root の中だけに効くように直す。
+    html・body の規則は .m-root に移す。@page と印刷用（@media print）は捨てる（見本は画面の見た目を見せるため）。"""
+    out = []
+    for sel, body in css_blocks(text):
+        if sel.startswith("@media"):
+            if "print" not in sel:
+                out.append(sel + " {\n" + scope_css(body) + "\n}")
+        elif sel.startswith("@"):
+            continue
+        else:
+            sels = []
+            for one in sel.split(","):
+                one = one.strip()
+                if one in ("html", "body"):
+                    sels.append(".m-root")
+                elif re.match(r"body\b", one):
+                    sels.append(".m-root" + one[4:])
+                else:
+                    sels.append(".m-root " + one)
+            out.append(", ".join(dict.fromkeys(sels)) + " {" + body + "}")
+    return "\n".join(out)
+
+
 def app_css():
-    """画面の css を、見本の中の「窓」だけに効くように直す（html・body の規則を窓の外枠に移す）"""
     css = open(os.path.join(DIST, "staff", "css", "style.css"), encoding="utf-8").read()
-    css = css.replace("@charset \"utf-8\";", "")
-    css = css.replace("html, body {", ".m-root {")
-    css = re.sub(r"(^|[\s,}])body(?=[\s.{,:])", r"\1.m-root", css)
-    return css
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S).replace('@charset "utf-8";', "")
+    return scope_css(css)
+
+
+GROUPS = [("パート職員の画面", "/nippou/part/", "パート職員用", ""),
+          ("職員の画面", "/nippou/staff/", "職員用", "pg-staff"),
+          ("うまく動かないとき", "", "困ったとき", "pg-trouble")]
+
+
+def anchor(sid):
+    return "v-" + sid
+
+
+def link_target(href, folder, index):
+    """画面の中のリンクの行き先が、見本に入っている画面ならその場所（#v-…）。入っていなければ None"""
+    u = urllib.parse.urlsplit(urllib.parse.urljoin(f"http://srv/nippou/{folder}/", htmlmod.unescape(href)))
+    seg = [x for x in u.path.split("/") if x]
+    if len(seg) < 2 or seg[0] != "nippou":
+        return None
+    fol, file = seg[1], (seg[2] if len(seg) > 2 else "default.asp")
+    if fol == "staff" and file == "default.asp":
+        file = "staff.asp"
+    q = dict(urllib.parse.parse_qsl(u.query))
+    if q.get("d") and q["d"] != DAY:
+        return None
+    return index.get((fol, file, sig_of(file, u.query)))
+
+
+def static_body(sc, index):
+    """見本の中では、リンクは見本の中の画面へ。フォームは送らない（ボタンは押しても何も起きない）"""
+    body = sc["body"]
+
+    def fix_link(m):
+        target = link_target(m.group(2), sc["folder"], index)
+        if target:
+            return m.group(1) + ' href="#' + anchor(target) + '"'
+        return m.group(1)
+    body = re.sub(r'(<a\b[^>]*?)\shref="([^"]*)"', fix_link, body)
+    body = re.sub(r"<form\b([^>]*)>", lambda m: "<div" + re.sub(r'\s(?:action|method)="[^"]*"', "", m.group(1)) + ">", body)
+    body = body.replace("</form>", "</div>")
+    body = body.replace('type="submit"', 'type="button"')
+    return body
+
+
+def section_html(sc, index):
+    role = {g[0]: (g[2], g[3]) for g in GROUPS}[sc["group"]]
+    h = htmlmod.escape
+    s = [f'<section class="pg-screen" id="{anchor(sc["id"])}">',
+         '<div class="pg-about">',
+         f'<div class="pg-about-head"><span class="pg-role {role[1]}">{h(role[0])}</span><h2>{h(sc["title"])}</h2></div>',
+         f'<dl class="pg-facts"><dt>使う人</dt><dd>{h(sc["who"])}</dd><dt>開き方</dt><dd>{h(sc["how"])}</dd></dl>',
+         '<ul class="pg-points">' + "".join(f"<li>{h(p)}</li>" for p in sc["points"]) + "</ul>",
+         '</div>',
+         '<div class="pg-window">',
+         f'<div class="pg-chrome"><div class="pg-url"><span class="pg-host">http://（サーバーの名前）</span>{h(sc["url"])}</div></div>']
+    if sc["kind"] == "paper":
+        s.append('<div class="pg-view pg-pdf">' + "".join(
+            f'<img class="pg-sheet" src="{src}" alt="{h(sc["title"])}（{n} 枚目）">' for n, src in enumerate(sc["imgs"], 1)) + "</div>")
+    else:
+        s.append(f'<div class="pg-view"><div class="pg-zoom"><div class="m-root {h(sc["bodyClass"])}">{static_body(sc, index)}</div></div></div>')
+    s.append('</div>')
+    s.append('<p class="pg-back"><a href="#pg-toc">画面の一覧へ戻る</a></p>')
+    s.append('</section>')
+    return "\n".join(s)
+
+
+def toc_html(shown):
+    h = htmlmod.escape
+    out = []
+    for name, folder, _, _ in GROUPS:
+        items = [sc for sc in shown if sc["group"] == name]
+        code = f"<code>{folder}</code>" if folder else ""
+        out.append(f'<div class="pg-toc-group"><h3>{h(name)}{code}</h3><ol>' +
+                   "".join(f'<li><a href="#{anchor(sc["id"])}">{h(sc["title"])}</a></li>' for sc in items) + "</ol></div>")
+    return "\n".join(out)
 
 
 def page(screens, public):
     tpl = open(os.path.join(HERE, "mockup_template.html"), encoding="utf-8").read()
-    data = json.dumps({"day": DAY, "screens": screens, "css": app_css()}, ensure_ascii=False)
-    data = data.replace("</", "<\\/")
+    shown = [sc for sc in screens if sc["nav"]]
+    index = {(sc["folder"], sc["file"], sc["sig"]): sc["id"] for sc in shown}
     fonts = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700'
              '&family=BIZ+UDGothic&family=BIZ+UDPMincho:wght@400;700&display=swap">') if public else ""
-    html = tpl.replace("{{FONTS}}", fonts).replace("{{DATA}}", data)
+    html = (tpl.replace("{{FONTS}}", fonts).replace("{{APPCSS}}", app_css())
+            .replace("{{TOC}}", toc_html(shown)).replace("{{SECTIONS}}", "\n".join(section_html(sc, index) for sc in shown)))
     if not public:
         html = ('<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
                 '<meta name="viewport" content="width=device-width, initial-scale=1">\n') + \
@@ -345,6 +463,14 @@ def page(screens, public):
     else:
         html = html.replace("<!--HEAD-END-->", "")
     return html
+
+
+def to_pdf(html_path, pdf_path):
+    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-pdf-header-footer",
+                    f"--print-to-pdf={pdf_path}", "file://" + html_path], capture_output=True, timeout=180)
+    r = subprocess.run(["pdfinfo", pdf_path], capture_output=True, text=True)
+    m = re.search(r"Pages:\s+(\d+)", r.stdout)
+    return int(m.group(1)) if m else 0
 
 
 def check_offline(html):
@@ -356,6 +482,12 @@ def check_offline(html):
         probs.append("外のファイルを読む所があります: " + html[m.start():m.start() + 80])
     if "@import" in html:
         probs.append("@import があります")
+    if re.search(r"<script\b", html, re.I):
+        probs.append("<script> があります（スクリプトを止めた表示でも見えるよう、使わない決まり）")
+    if re.search(r"<form\b", html, re.I) or 'type="submit"' in html:
+        probs.append("送れるフォームが残っています（見本のボタンから、無い画面へ移らないように）")
+    if re.search(r'href="(?!#)', html.split("</head>")[-1]):
+        probs.append("見本の外へ移るリンクが残っています")
     return probs
 
 
@@ -383,11 +515,16 @@ def main():
         for p in probs:
             print("NG:", p)
         sys.exit(1)
-    open(os.path.join(OUT, "画面の見本.html"), "w", encoding="utf-8", newline="\n").write(offline)
+    path = os.path.join(OUT, "画面の見本.html")
+    open(path, "w", encoding="utf-8", newline="\n").write(offline)
     open(os.path.join(OUT, "画面の見本_公開用.html"), "w", encoding="utf-8", newline="\n").write(page(screens, public=True))
     n = sum(1 for s in screens if s["nav"])
+    pages = to_pdf(path, os.path.join(OUT, "画面の見本.pdf"))
+    if pages < n + 1:
+        print(f"NG: 画面の見本の PDF が {pages} ページしかありません（目次と {n} 画面で {n + 1} ページ以上のはず）")
+        sys.exit(1)
     kb = len(offline.encode("utf-8")) // 1024
-    print(f"OK: 画面の見本（一覧に {n} 枚・つながる画面を合わせて {len(screens)} 枚、{kb} KB、外のファイルを読まない）")
+    print(f"OK: 画面の見本（{n} 画面、{kb} KB、スクリプトなし・外のファイルを読まない。PDF {pages} ページ）")
 
 
 if __name__ == "__main__":
