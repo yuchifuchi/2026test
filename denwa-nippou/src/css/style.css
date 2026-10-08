@@ -90,9 +90,6 @@ table.tw.grid td { text-align: center; }
 table.tw.wide { width: 100%; }
 
 /* 受付の表（製品 × お問合せ内容）。include/grid.asp が作る。現行 Excel の記入用フォームと同じ並び */
-.tabs { margin: 12px 0 6px; }
-.tab { display: inline-block; padding: 6px 16px; margin-right: 6px; border: 1px solid #1f4e8c; border-radius: 4px; color: #1f4e8c; background: #fff; text-decoration: none; }
-.tab.on { background: #1f4e8c; color: #fff; font-weight: bold; }
 .gb { margin: 4px 0 10px; }
 .gscroll { overflow-x: auto; }
 table.tw.grid { margin-top: 4px; }
@@ -102,15 +99,11 @@ table.tw.grid th.kh { min-width: 4.8em; max-width: 7.5em; }
 table.tw.grid th.kg { background: #d3deec; }
 table.tw.grid th.tot, table.tw.grid td.tot { background: #f1f4f9; font-weight: bold; }
 table.tw.grid td { padding: 2px 3px; }
+table.tw.grid input.num:focus { background: #fff8d6; outline: 2px solid #1f4e8c; }
 table.tw.grid td.n { text-align: right; padding: 2px 6px; }
 table.tw.grid tr.sum th, table.tw.grid tr.sum td { font-weight: bold; background: #f7f9fc; }
 table.tw.grid .to { display: block; font-size: 11px; color: #56677d; }
 table.tw.grid .note { display: block; font-size: 11px; }
-button.cnt { width: 4.4em; height: 30px; font-size: 16px; font-family: inherit; text-align: right; padding: 0 6px; border: 1px solid #8fa3bd; border-radius: 3px; background: #fbfcfe; color: #1a1a1a; cursor: pointer; }
-button.cnt:hover { background: #e6eefa; border-color: #1f4e8c; }
-button.cnt:focus { outline: 2px solid #1f4e8c; }
-button.cnt.last { background: #fff3c4; border: 2px solid #b45309; font-weight: bold; }
-.cnt-msg { margin: 4px 0; }
 textarea.memo { max-width: 900px; }
 .memos { background: #fff; border: 1px solid #c9d3e0; padding: 6px 12px; margin: 6px 0 12px; max-width: 900px; }
 .memos p { margin: 4px 0; }

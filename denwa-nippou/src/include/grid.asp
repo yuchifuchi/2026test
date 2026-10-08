@@ -11,8 +11,7 @@
 '  表の数は、画面を開くたびに T_受電 から読み直したもの（Excel のように欄に数を持ち続けない）。
 '
 '  mode:
-'    "count" … 欄がボタン。押すと 1 件足す（受付入力の「1 件ずつ数える」）
-'    "edit"  … 欄が入力欄（受付入力の「数をまとめて入れる・直す」）
+'    "edit"  … 欄が入力欄（受付入力。数字を直接入れる）
 '    "view"  … 数だけ（確定した日の受付入力・個人別の受付表の画面）
 '    "print" … 数だけ・日報の列の案内なし（個人別の受付表の PDF）
 ' ============================================================
@@ -150,7 +149,7 @@ Function GridColumnName(colId)
     Next
 End Function
 
-' 欄の名前（「製品・お問合せ内容」）。ボタンの説明と、数えたあとの知らせに使う。
+' 欄の名前（「製品・お問合せ内容」）。入力欄の説明（マウスを重ねたときに出る）に使う。
 Function GridCellName(key)
     Dim parts, j, kname, pname
     parts = Split(key, "_")
@@ -167,16 +166,6 @@ Function GridCellName(key)
     Else
         GridCellName = pname & "・" & kname
     End If
-End Function
-
-' "区分ID_製品ID" がどのまとまりの欄か（数えたあと、そのまとまりへ画面を戻すため）
-Function GridBlockOfKey(key)
-    Dim parts, j
-    parts = Split(key, "_")
-    GridBlockOfKey = 0
-    For j = 0 To UBound(gKubun)
-        If ToLong(gKubun(j)("区分ID")) = CLng(parts(0)) Then GridBlockOfKey = ToLong(gKubun(j)("ブロックID"))
-    Next
 End Function
 
 ' 区分名を上の段と下の段に分ける。「／」が無ければ上の段は ""。
@@ -255,15 +244,10 @@ Function GridNum(v)
 End Function
 
 ' 1 つの欄
-Function GridCellHtml(mode, key, ex, posted, bad, lastKey)
-    Dim v, cls, raw, nm
+Function GridCellHtml(mode, key, ex, posted, bad)
+    Dim v, cls, raw
     v = GridVal(ex, key)
-    If mode = "count" Then
-        cls = "cnt"
-        If key = lastKey Then cls = "cnt last"
-        nm = GridCellName(key)
-        GridCellHtml = "<td class=""c""><button type=""submit"" name=""k"" value=""" & key & """ class=""" & cls & """ title=""" & H(nm) & " を 1 件数える"">" & GridNum(v) & "</button></td>"
-    ElseIf mode = "edit" Then
+    If mode = "edit" Then
         If posted.Exists(key) Then
             raw = posted(key)
         ElseIf v = 0 Then
@@ -279,21 +263,16 @@ Function GridCellHtml(mode, key, ex, posted, bad, lastKey)
     End If
 End Function
 
-' すべてのまとまりの表。notice は、lastKey の欄があるまとまりの見出しの下に出す知らせ（HTML）。
-Function GridHtml(mode, day, ex, posted, bad, lastKey, notice)
-    Dim b, bid, kl, pl, j, m, key, v, s, out, rowSum, colSum(), grand, showHint, hasLast, pnote
+' すべてのまとまりの表
+Function GridHtml(mode, day, ex, posted, bad)
+    Dim b, bid, kl, pl, j, m, key, v, s, out, rowSum, colSum(), grand, showHint, pnote
     showHint = (mode <> "print")
     out = ""
     For b = 0 To UBound(gBlocks)
         bid = ToLong(gBlocks(b)("ブロックID"))
         kl = GridBlockKubun(bid, ex)
         If UBound(kl) >= 0 Then
-            hasLast = False
-            If lastKey <> "" Then
-                If GridBlockOfKey(lastKey) = bid Then hasLast = True
-            End If
             s = "<section class=""gb"" id=""b" & bid & """><h2>" & H(gBlocks(b)("ブロック名")) & "</h2>"
-            If hasLast And notice <> "" Then s = s & notice
             s = s & "<div class=""gscroll""><table class=""tw grid"">"
             ReDim colSum(UBound(kl))
             For j = 0 To UBound(kl)
@@ -310,7 +289,7 @@ Function GridHtml(mode, day, ex, posted, bad, lastKey, notice)
                     s = s & "<tr><th class=""pname"">" & H(pl(m)(1)) & pnote & "</th>"
                     For j = 0 To UBound(kl)
                         key = GridKey(kl(j)("区分ID"), pl(m)(0))
-                        s = s & GridCellHtml(mode, key, ex, posted, bad, lastKey)
+                        s = s & GridCellHtml(mode, key, ex, posted, bad)
                         v = GridVal(ex, key)
                         rowSum = rowSum + v
                         colSum(j) = colSum(j) + v
@@ -328,7 +307,7 @@ Function GridHtml(mode, day, ex, posted, bad, lastKey, notice)
                 s = s & "<tr>"
                 For j = 0 To UBound(kl)
                     key = GridKey(kl(j)("区分ID"), 0)
-                    s = s & GridCellHtml(mode, key, ex, posted, bad, lastKey)
+                    s = s & GridCellHtml(mode, key, ex, posted, bad)
                     grand = grand + GridVal(ex, key)
                 Next
                 s = s & "<td class=""n tot"" data-block=""" & bid & """>" & grand & "</td></tr>"
@@ -358,7 +337,7 @@ Function PersonSheetHtml(day, person)
     If ToStr(person("職員区分")) = "職員" Then s = s & "（職員）"
     s = s & "</span><span class=""ps-date"">" & Wareki(day) & "</span></div>"
     If hours <> "" Then s = s & "<div class=""ps-hours"">勤務時間・備考　" & H(hours) & "</div>"
-    s = s & GridHtml("print", day, ex, empty1, empty1, "", "")
+    s = s & GridHtml("print", day, ex, empty1, empty1)
     ' 日報の 5 列に入る数（日報と同じ SQL で数える）
     cols = DbQuery(SqlColumnTotalsOnePerson(), Array(day, DateAdd("d", 1, day), t))
     tot = 0

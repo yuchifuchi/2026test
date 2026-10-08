@@ -355,19 +355,6 @@ main { display: grid; gap: 16px; min-width: 0; }
     var sub = e.submitter;
     var actInput = f.querySelector('input[name="act"]');
     var act = (sub && sub.name === "act") ? sub.value : (actInput ? actInput.value : "");
-    if (f.classList.contains("countform")) {
-      // 1 件ずつ数える：押した欄の数をその場で 1 つ増やして見せる（本物では、サーバーに保存して画面を出し直す）
-      if (sub && sub.name === "undo") {
-        toast("見本なので、戻していません。本物では、押した欄が 1 件減ります。");
-      } else if (sub && sub.name === "k") {
-        var n = parseInt(sub.textContent.replace(/[^0-9]/g, ""), 10) || 0;
-        sub.textContent = String(n + 1);
-        Array.prototype.forEach.call(f.querySelectorAll("button.cnt.last"), function (b) { b.classList.remove("last"); });
-        sub.classList.add("last");
-        toast("「" + (sub.title || "").replace(/ を 1 件数える$/, "") + "」を 1 件数えました（いま " + (n + 1) + " 件）。見本なので、保存はしていません。");
-      }
-      return;
-    }
     var r = resolve(f.getAttribute("action") || cur.file);
     var file = r ? r.file : cur.file;
     if (act === "go" || f.classList.contains("bar")) {
@@ -390,7 +377,6 @@ main { display: grid; gap: 16px; min-width: 0; }
       return;
     }
     if (file === "tasks.asp" && act === "save") { show("tasks_saved", false); toast(saved); return; }
-    if (file === "entry.asp" && act === "memo") { toast(saved); return; }
     if (file === "daily.asp" && act === "fix") { show("daily_fixed", false); toast(saved); return; }
     if (file === "daily.asp" && act === "unfix") { show("daily", false); toast("見本なので、確定は取り消していません。本物では、日報が確定の前に戻ります。"); return; }
     toast(saved);

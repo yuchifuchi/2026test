@@ -166,11 +166,13 @@ def build(scenario):
         form.update({f"g_{g}": "9999" for g in range(1, 14)})
         post(sim, "/nippou/part/tasks.asp", form)
     # 1 人目は、受付の表のすべての欄を 4 けたにし、特殊な問合せの内容も上限いっぱいに（個人別の受付表が 1 枚に収まるかを見る）
-    r = sim.request("GET", f"/nippou/part/entry.asp?d={DAY}&t={pid[0]}&m=edit")
+    r = sim.request("GET", f"/nippou/part/entry.asp?d={DAY}&t={pid[0]}")
     cells = {k: 9999 for k in re.findall(r'name="c_(\d+_\d+)"', r.text)}
     test_flow.entry(sim, "part", pid[0], cells)
     memo_max = int(re.search(r"Const MEMO_MAX = (\d+)", open(os.path.join(ROOT, "src", "pages", "common", "entry.asp"), encoding="utf-8").read()).group(1))
-    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": DAY, "t": str(pid[0]), "memo": "う" * memo_max})
+    r = sim.request("GET", f"/nippou/part/entry.asp?d={DAY}&t={pid[0]}")
+    ver = re.search(r'name="ver" value="([^"]*)"', r.text).group(1)
+    r = post(sim, "/nippou/part/entry.asp", {"act": "save", "d": DAY, "t": str(pid[0]), "ver": ver, "memo": "う" * memo_max})
     if r.code != 302:
         raise Fail("特殊な問合せの内容を保存できません: " + strip_tags(r.text)[:500])
     # 回覧の欄の名前も上限いっぱいに

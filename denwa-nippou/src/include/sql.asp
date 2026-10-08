@@ -139,12 +139,6 @@ Function SqlCallDelete()
     SqlCallDelete = "DELETE FROM [T_受電] WHERE [受電ID] = ?"
 End Function
 
-' 「1 件ずつ数える」：今の数に足す・引く（今の数を読んで書き戻すのではなく、足し算を Access にさせる）。
-' ? : (足す数（1 か -1）, 更新日時, 登録者, 受電ID)
-Function SqlCallAddDelta()
-    SqlCallAddDelta = "UPDATE [T_受電] SET [件数] = [件数] + ?, [更新日時] = ?, [登録者] = ? WHERE [受電ID] = ?"
-End Function
-
 ' ------------------------------------------------------------
 '  その他業務（①～⑬）
 ' ------------------------------------------------------------

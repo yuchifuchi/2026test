@@ -74,17 +74,13 @@ ABOUT = {
     ]),
     "entry": ("パート職員（職員の分は「顧客Ｇ」として、職員メニューから入れます）", "メニューの「受付入力」", [
         "今の Excel の記入用フォームと同じ並びです（行が製品、列がお問合せ内容。下に顧客情報・イベント関係などのまとまり）。",
-        "電話を 1 本受けるたびに、その欄を押します。押すとその場で 1 件増えて保存されます（この見本でも、押すと数が増えます）。",
-        "押し間違えたときは、出てくる「1 件戻す」で戻せます。続けて 2 回押してしまったときは、2 回目を数えません。",
-        "見出しの下の「→申込」などは、その件数が日報のどの列に入るかです（今の Excel では転記用シートの 2 行目に隠れていた番号です）。",
-        "人は名前ではなく番号で覚えているので、名前の書き方が違って数が抜け落ちることがありません。",
-    ]),
-    "entry_edit": ("パート職員・職員", "受付入力の「数をまとめて入れる・直す」", [
-        "紙に控えた数をまとめて入れるときや、数を直すときに使います。欄に今の件数を書いて「保存する」を押します。",
+        "欄に件数を数字で直接入れて「保存する」を押します。「保存する」は表の上と下にあり、どちらを押しても同じです。",
         "保存は「その欄の今の件数」で上書きします（足し算ではないので、同じ数を 2 回足してしまうことがありません）。",
-        "日報が確定した日は、どちらの入れ方でも直せません（紙に出した数と食い違わないように）。",
+        "特殊な問合せの内容（Excel の「下記のとおり」の欄）も、いちばん下に書いて、件数と一緒に保存します。",
+        "見出しの下の「→申込」などは、その件数が日報のどの列に入るかです（今の Excel では転記用シートの 2 行目に隠れていた番号です）。",
+        "人は名前ではなく番号で覚えているので、名前の書き方が違って数が抜け落ちることがありません。日報が確定した日は直せません。",
     ]),
-    "entry_ng": ("パート職員", "「数をまとめて入れる・直す」で、数字でない文字を入れて「保存する」を押したとき", [
+    "entry_ng": ("パート職員", "受付入力で、数字でない文字を入れて「保存する」を押したとき", [
         "数字でない欄が赤くなり、どこが違うかが上に出ます。",
         "1 つでも誤りがあれば、正しい欄も含めて何も保存しません（半分だけ保存されて数が合わなくなることがありません）。",
         "全角の数字（１２）は、そのまま数として受け付けます。",
@@ -176,8 +172,6 @@ def sig_of(file, query):
         if q.get("id"):
             s += ":new" if q["id"] == "new" else ":edit"
         return s
-    if file == "entry.asp":
-        return "edit" if q.get("m") == "edit" else ""
     if file == "printpdf.asp":
         return q.get("kind", "")
     return ""
@@ -228,8 +222,6 @@ def build_screens():
     if r.code != 302:
         raise Fail("前の日の確定に失敗: " + strip_tags(r.text)[:800])
     for name, cells in CALLS[DAY].items():
-        if name == "佐藤":
-            cells = {k: v for k, v in cells.items() if k != "3_15"}     # 佐藤さんの抽選結果は、下で「押して」数える
         r = entry(sim, pid[name], DAY, cells)
         if r.code != 302:
             raise Fail("受付入力に失敗: " + strip_tags(r.text)[:800])
@@ -239,32 +231,27 @@ def build_screens():
         if post(sim, "/nippou/part/tasks.asp", form).code != 302:
             raise Fail("その他業務の保存に失敗")
     for name, text in SPECIAL.items():
-        if post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": DAY, "t": str(pid[name]), "memo": text}).code != 302:
+        r = get(sim, f"/nippou/part/entry.asp?d={DAY}&t={pid[name]}")
+        ver = re.search(r'name="ver" value="([^"]*)"', r.text).group(1)
+        if post(sim, "/nippou/part/entry.asp", {"act": "save", "d": DAY, "t": str(pid[name]), "ver": ver, "memo": text}).code != 302:
             raise Fail("特殊な問合せの内容の保存に失敗")
 
     S = []
     P, ST, TR = "パート職員の画面", "職員の画面", "うまく動かないとき"
     capture(S, sim, "part_menu", P, "パート職員のメニュー", "/nippou/part/")
-    # 佐藤さんの受付入力：アジア大会記念貨の「抽選結果」を 1 回押したところ
+    # 佐藤さんの受付入力
     sato = pid["佐藤"]
-    r = get(sim, f"/nippou/part/entry.asp?d={DAY}&t={sato}")
-    ver = re.search(r'name="ver" value="([^"]*)"', r.text).group(1)
-    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": DAY, "t": str(sato), "ver": ver, "k": "3_15"})
-    if r.code != 302:
-        raise Fail("欄を押して数えられません: " + strip_tags(r.text)[:800])
-    r = follow(sim, r)
-    capture(S, sim, "entry", P, "受付入力（1 件ずつ数える）", f"/nippou/part/entry.asp?d={DAY}&t={sato}", r=r)
-    capture(S, sim, "entry_edit", P, "受付入力（数をまとめて入れる・直す）", f"/nippou/part/entry.asp?d={DAY}&t={sato}&m=edit")
+    capture(S, sim, "entry", P, "受付入力", f"/nippou/part/entry.asp?d={DAY}&t={sato}")
     bad = {k: v for k, v in CALLS[DAY]["佐藤"].items()}
     bad["1_17"] = "５"
     bad["23_0"] = "1け"
     r = entry(sim, sato, DAY, bad)
     if "まだ保存していません" not in r.text:
         raise Fail("入れ間違いの画面が出ません")
-    capture(S, sim, "entry_ng", P, "受付入力（入れ間違い）", f"/nippou/part/entry.asp?m=edit", r=r)
+    capture(S, sim, "entry_ng", P, "受付入力（入れ間違い）", "/nippou/part/entry.asp", r=r)
     S[-1]["sig"] = "ng"
     r = follow(sim, entry(sim, sato, DAY, CALLS[DAY]["佐藤"]))
-    capture(S, sim, "entry_saved", P, "受付入力（保存のあと）", f"/nippou/part/entry.asp?d={DAY}&t={sato}&m=edit", nav=False, r=r, about="entry_edit")
+    capture(S, sim, "entry_saved", P, "受付入力（保存のあと）", f"/nippou/part/entry.asp?d={DAY}&t={sato}", nav=False, r=r, about="entry")
     S[-1]["sig"] = "saved"
     capture(S, sim, "tasks", P, "その他業務", f"/nippou/part/tasks.asp?d={DAY}&t={pid['山田']}")
     form = {"act": "save", "d": DAY, "t": str(pid["山田"])}

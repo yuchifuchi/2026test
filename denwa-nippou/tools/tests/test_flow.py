@@ -214,52 +214,51 @@ def run():
     r = post(sim, "/nippou/staff/daily.asp", long_form)
     ok(r.code == 200 and "特記事項が 5 行になります" in r.text, "特記事項が帳票の罫線（4 行）に入りきらないときは、理由を出して保存しない")
 
-    # ---- 1 件ずつ数える（現行 Excel の「欄を選んでボタンを押す」にあたる） ----
+    # ---- 受付入力の形（現行 Excel の記入用フォームと同じ並び。数字を直接入れる） ----
     D2 = "2026-08-27"
-
-    def cnt_on(k, prod):
-        _, rows = sim.bridge.query("SELECT J.[対象日], J.[件数] FROM [T_受電] AS J WHERE J.[区分ID] = ? AND J.[製品ID] = ?", [{"t": "int", "v": k}, {"t": "int", "v": prod}])
-        return [row[1] for row in rows if str(row[0]).startswith(D2)]
     url = f"/nippou/part/entry.asp?d={D2}&t={pid['山田']}"
     r = get(sim, url)
-    ok('name="k" value="3_4"' in r.text and '<th class="kg" colspan="4">払込用紙</th>' in r.text and '<th class="pname" rowspan="2">製品</th>' in r.text,
+    ok('name="c_3_4"' in r.text and '<th class="kg" colspan="4">払込用紙</th>' in r.text and '<th class="pname" rowspan="2">製品</th>' in r.text,
        "受付入力は Excel の記入用フォームと同じ並び（行が製品・列がお問合せ内容・払込用紙は 2 段の見出し）")
     ok(r.text.count('<section class="gb"') == 8, "まとまり 7 つ（製品別 2・顧客情報・イベント・その他①②・特殊な問合せ）と、特殊な問合せの内容の欄が出る")
-    v0 = ver_of(r.text)
-    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": v0, "k": "3_4"})
-    ok(r.code == 302 and "op=add" in r.headers["Location"] and r.headers["Location"].endswith("#b1"), "欄を押すと 1 件数え、押した欄のまとまりへ戻る")
-    r = follow(sim, r)
-    ok('value="3_4" class="cnt last"' in r.text and "を 1 件数えました（いま 1 件）" in r.text, "押した欄が目立ち、「1 件数えました（いま 1 件）」と出る")
-    r2 = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": v0, "k": "3_4"})
-    ok(r2.code == 302 and "op=dup" in r2.headers["Location"], "続けて 2 回押された（古い画面からの 2 回目）は数えない")
-    r2 = follow(sim, r2)
-    ok("いま押した分は数えていません" in r2.text, "2 回目を数えなかったことを、押した欄の近くで知らせる")
-    ok(cnt_on(3, 4) == [1], "2 回押しても 1 件のまま")
-    for _ in range(2):
-        r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "3_4"}))
-    r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "50_0"}))
-    ok(cnt_on(3, 4) == [3], "押した回数だけ数える（3 回 → 3 件）")
-    r = follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "undo": "50_0", "k": ""}))
-    ok("を 1 件戻しました（いま 0 件）" in r.text, "押し間違いは「1 件戻す」で戻せる")
-    ok(cnt_on(50, 0) == [], "0 件に戻した欄は行ごと消える")
-    nums = sheet_numbers(get(sim, f"/nippou/staff/report.asp?d={D2}").text)
-    ok(nums[cid["抽選"]] == (3, 0) and nums["total"] == (3, 0), "数えた数がそのまま帳票に出る（抽選 3）")
-    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "99_1"})
-    ok(r.code == 200 and "押された欄が見つかりません" in r.text, "無い欄を送られても数えない")
-    r = get(sim, url + "&m=edit")
-    ok('name="c_3_4" value="3"' in r.text, "「数をまとめて入れる・直す」では、数えた数が入力欄に出る")
+    ok('name="k"' not in r.text and r.text.count('<button type="submit" class="btn">保存する</button>') == 2,
+       "欄はすべて数字の入力欄で、「保存する」は上と下の 2 か所（どちらも同じフォーム）")
+    ok(r.text.index('name="c_3_4"') < r.text.index('name="memo"') < r.text.rindex("保存する</button>"),
+       "特殊な問合せの内容の欄も、件数と同じフォームの中にある")
 
-    # ---- 特殊な問合せの内容（Excel の記入用フォームの「下記のとおり」の欄） ----
-    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": D2, "t": str(pid["山田"]), "memo": "見学の団体予約の問合せ（3 件）"})
-    ok(r.code == 302 and "op=memo" in r.headers["Location"], "特殊な問合せの内容を保存できる")
+    # 件数と特殊な問合せの内容を、「保存する」1 回で一緒に保存する
+    form = {"act": "save", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "c_3_4": "3", "c_16_0": "２",
+            "memo": "見学の団体予約の問合せ（3 件）"}
+    r = post(sim, "/nippou/part/entry.asp", form)
+    ok(r.code == 302 and "op=saved" in r.headers["Location"], "件数と特殊な問合せの内容を、「保存する」1 回で保存できる")
+    r = follow(sim, r)
+    ok('name="c_3_4" value="3"' in r.text and 'name="c_16_0" value="2"' in r.text and "見学の団体予約の問合せ（3 件）</textarea>" in r.text,
+       "保存した件数（全角の ２ は 2）と内容が、開き直しても出る")
+    nums = sheet_numbers(get(sim, f"/nippou/staff/report.asp?d={D2}").text)
+    ok(nums[cid["抽選"]] == (3, 0) and nums[cid["その他"]] == (2, 0) and nums["total"] == (5, 0), "入れた数がそのまま帳票に出る（抽選 3・その他 2）")
     r = get(sim, f"/nippou/staff/daily.asp?d={D2}")
     ok("見学の団体予約の問合せ（3 件）" in r.text, "書いた内容は、日報の画面で職員が読める")
-    r = post(sim, "/nippou/part/entry.asp", {"act": "memo", "d": D2, "t": str(pid["山田"]), "memo": "あ" * 401})
-    ok(r.code == 200 and "400 文字まで" in r.text, "長すぎる内容は保存しない")
+
+    # 誤りが 1 つでもあれば、件数も内容も保存しない（書いたものは消さずに出し直す）
+    r = get(sim, url)
+    form = {"act": "save", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "c_3_4": "4", "c_16_0": "x", "memo": "書き直した内容"}
+    r = post(sim, "/nippou/part/entry.asp", form)
+    ok(r.code == 200 and 'class="num ng"' in r.text and "書き直した内容</textarea>" in r.text and 'name="c_3_4" value="4"' in r.text,
+       "誤りがあるときは赤く出し、打った数と内容を消さずに出し直す")
+    r = post(sim, "/nippou/part/entry.asp", dict(form, c_16_0="2", memo="あ" * 401, ver=ver_of(r.text)))
+    ok(r.code == 200 and "400 文字まで" in r.text, "内容が長すぎるときも、何も保存しない")
+    r = get(sim, url)
+    ok('name="c_3_4" value="3"' in r.text and "見学の団体予約の問合せ（3 件）</textarea>" in r.text, "誤りのあった保存では、件数も内容も前のまま")
+    r = post(sim, "/nippou/part/entry.asp", {"act": "save", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "c_3_4": "3", "c_16_0": "2", "memo": ""})
+    r2 = get(sim, f"/nippou/staff/daily.asp?d={D2}")
+    ok(r.code == 302 and "見学の団体予約" not in r2.text, "内容を空にして保存すると、内容は消える")
+    r = get(sim, url)
+    follow(sim, post(sim, "/nippou/part/entry.asp", {"act": "save", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text),
+                                                    "c_3_4": "3", "c_16_0": "2", "memo": "見学の団体予約の問合せ（3 件）"}))
 
     # ---- 個人別の受付表（Excel の「印刷」マクロにあたる。入力のあった人を 1 人 1 枚） ----
     r = get(sim, f"/nippou/staff/detail.asp?d={D2}")
-    ok(r.text.count('<div class="psheet">') == 1 and "見学の団体予約の問合せ（3 件）" in r.text and f'data-total="{pid["山田"]}">3<' in r.text,
+    ok(r.text.count('<div class="psheet">') == 1 and "見学の団体予約の問合せ（3 件）" in r.text and f'data-total="{pid["山田"]}">5<' in r.text,
        "個人別の受付表に、入力のあった人だけが出る（数とメモつき）")
     r = get(sim, f"/nippou/staff/detail.asp?d={DAY}")
     ok(r.text.count('<div class="psheet">') == 3, "個人別の受付表：8/25 は入力のあった 3 人ぶん")
@@ -270,9 +269,9 @@ def run():
     form = {"act": "fix", "d": D2, "lines": "5", "t1": "", "t2": "", "t3": "", f"att_{pid['山田']}": "1"}
     ok(follow(sim, post(sim, "/nippou/staff/daily.asp", form)).text.count("確定しました") == 1, "8/27 を確定できる")
     r = get(sim, url)
-    ok('name="k"' not in r.text, "確定した日は、欄がボタンにならない")
-    r = post(sim, "/nippou/part/entry.asp", {"act": "add", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "k": "3_4"})
-    ok(r.code == 200 and "確定済み" in r.text, "確定した日に数えようとしても数えない")
+    ok('name="c_3_4"' not in r.text and "保存する</button>" not in r.text, "確定した日は、入力欄も「保存する」も出ない")
+    r = post(sim, "/nippou/part/entry.asp", {"act": "save", "d": D2, "t": str(pid["山田"]), "ver": ver_of(r.text), "c_3_4": "9"})
+    ok(r.code == 200 and "確定済み" in r.text, "確定した日に保存しようとしても保存しない")
 
     # ---- 職員の分（Excel の「顧客Ｇ」）は、出勤者に印を付けず、もれとも言わない ----
     D3 = "2026-08-28"

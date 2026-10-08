@@ -254,11 +254,6 @@ def run():
     x("SqlCallUpdate", [i(8), iso(DAY), s("検査"), i(new_id)])
     _, rows = br.query("SELECT J.[件数] FROM [T_受電] AS J WHERE J.[受電ID] = ?", [i(new_id)])
     eq("SqlCallUpdate", rows, [[8]])
-    x("SqlCallAddDelta", [i(1), iso(DAY), s("検査"), i(new_id)])
-    x("SqlCallAddDelta", [i(1), iso(DAY), s("検査"), i(new_id)])
-    x("SqlCallAddDelta", [i(-1), iso(DAY), s("検査"), i(new_id)])
-    _, rows = br.query("SELECT J.[件数] FROM [T_受電] AS J WHERE J.[受電ID] = ?", [i(new_id)])
-    eq("SqlCallAddDelta（8 に +1 +1 -1 → 9）", rows, [[9]])
     n = x("SqlCallDelete", [i(new_id)])
     eq("SqlCallDelete（1 行）", n, 1)
     try:
